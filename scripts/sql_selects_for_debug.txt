@@ -1,0 +1,3 @@
+< 2024.10.3 | "Eseti json-tömb" > {
+    SELECT * FROM [local].[Tablet_Munkalap_eseti_reszletezo] ('zUAcgDoRLBK35MJ6RLm46RPcsZhxFb97', '2024.10.03', 12459)
+}

@@ -1,0 +1,5 @@
+SELECT e.Eszkoz_id,tl.szerviz_id,tl.szerviz_megnevezes,e.verzio,e.belepes_idopontja
+  FROM [mosaic].[dbo].[Eszkozok] e
+  LEFT JOIN [mezandmol_szerviz].[dbo].[tablet_lista] tl ON e.Eszkoz_id=tl.Eszkoz_id
+  where Ugyfel_id='mezandmol_szerviz' 
+  ORDER BY verzio

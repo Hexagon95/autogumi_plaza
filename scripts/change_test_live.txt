@@ -1,0 +1,11 @@
+-- Teszt rendszer
+
+UPDATE [mosaic].[dbo].[Eszkozok]
+SET [Ugyfel_id]='mezandmol_szerviz_test'
+WHERE Eszkoz_id='zUAcgDoRLBK35MJ6RLm46RPcsZhxFb97';
+
+-- Éles rendszer
+
+UPDATE [mosaic].[dbo].[Eszkozok]
+SET [Ugyfel_id]='mezandmol_szerviz'
+WHERE Eszkoz_id='zUAcgDoRLBK35MJ6RLm46RPcsZhxFb97';

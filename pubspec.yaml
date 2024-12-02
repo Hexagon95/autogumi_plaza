@@ -45,6 +45,7 @@ dependencies:
   masked_text: ^1.1.2
   ota_update: ^6.0.0
   signature: ^5.5.0
+  icons_launcher: ^3.0.0
 
 dev_dependencies:
   flutter_test:
@@ -99,3 +100,11 @@ flutter:
   #
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/to/font-from-package
+
+icons_launcher:
+  image_path: "images/logo.jpg"
+  platforms:
+    android:
+      enable: true
+    ios:
+      enable: true

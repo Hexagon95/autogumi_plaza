@@ -11,7 +11,7 @@ class PhotoPreview extends StatefulWidget{
   // ---------- < Variables [1] > -------- ---------- ---------- ----------  
 
   // ---------- < Constructor > ---------- ---------- ---------- ----------
-  const PhotoPreview({Key? key}) : super(key: key);
+  const PhotoPreview({super.key});
 
   @override
   State<PhotoPreview> createState() => PhotoPreviewState();

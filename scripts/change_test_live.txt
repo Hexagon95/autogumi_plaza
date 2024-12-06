@@ -1,11 +1,11 @@
 -- Teszt rendszer
 
 UPDATE [mosaic].[dbo].[Eszkozok]
-SET [Ugyfel_id]='mezandmol_szerviz_test'
+SET [Ugyfel_id]='mercarius_test'
 WHERE Eszkoz_id='zUAcgDoRLBK35MJ6RLm46RPcsZhxFb97';
 
 -- Éles rendszer
 
 UPDATE [mosaic].[dbo].[Eszkozok]
-SET [Ugyfel_id]='mezandmol_szerviz'
+SET [Ugyfel_id]='mercarius'
 WHERE Eszkoz_id='zUAcgDoRLBK35MJ6RLm46RPcsZhxFb97';

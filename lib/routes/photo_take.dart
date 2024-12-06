@@ -15,7 +15,7 @@ class TakePictureScreen extends StatefulWidget {
   final CameraDescription camera;
 
   // ---------- < Constructor > ---------- ---------- ---------- ----------
-  const TakePictureScreen({Key? key,required this.camera}) : super(key: key);  
+  const TakePictureScreen({super.key,required this.camera});  
 
   @override
   TakePictureScreenState createState() => TakePictureScreenState();

@@ -5,9 +5,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 // ---------- - < Enums > ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ----------
-enum NextRoute    {logIn,   calendar,       tabForm,        photoPreview, photoTake,  photoCheck, signature,  esetiMunkalapFelvitele, default0, abroncsIgenyles, szezonalisMunkalapFelvitele}
+enum NextRoute    {logIn,   calendar,       tabForm,        photoPreview, photoTake,  photoCheck, signature,  esetiMunkalapFelvitele, default0, abroncsIgenyles, szezonalisMunkalapFelvitele, probeMeasuring}
 enum ButtonState  {hidden,  loading,        disabled,       error,        default0}
-enum QuickCall    {tabForm, giveDatas,      chainGiveDatas, verzio,       askPhotos,  default0, cancelWork, tabletBelep, saveEsetiMunkalapFelvitele, saveAbroncsIgenyles, chainGiveDatasFormOpen, chainGiveDatas_old, saveSzezonalisMunkalapFelvitele, askIncompleteDays, askPlateNumber}
+enum QuickCall    {tabForm, giveDatas,      chainGiveDatas, verzio,       askPhotos,  default0, cancelWork, tabletBelep, saveEsetiMunkalapFelvitele, saveAbroncsIgenyles, chainGiveDatasFormOpen, saveSzezonalisMunkalapFelvitele, askIncompleteDays, askPlateNumber}
+enum Probe        {bluetoothCheck, deviceSearch, measureCommand, default0}
 
 class Global{
   // ---------- < Variables [Static] > -------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ----------
@@ -28,6 +29,7 @@ class Global{
       case NextRoute.photoPreview:                routes[check(3)] = value; break;
       case NextRoute.photoCheck:                  routes[check(3)] = value; break;
       case NextRoute.signature:                   routes[check(3)] = value; break;
+      case NextRoute.probeMeasuring:              routes[check(3)] = value; break;
       default: throw Exception('Default route has been thrown!!!');
     }
     _printRoutes;
@@ -200,18 +202,18 @@ class Global{
     // --------- < Widgets [1] > -------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- //
     Widget cancel =   TextButton(child: const Text('Mégsem'), onPressed: () => Navigator.pop(context, null));
     Widget drawButton(String input) => Padding(
-    padding:  const EdgeInsets.symmetric(vertical: 10),
-    child:    SizedBox(height: 40, width: 220, child: TextButton(          
-      style:      ButtonStyle(
-        side:            WidgetStateProperty.all(BorderSide(color: Global.getColorOfIcon(ButtonState.default0))),
-        backgroundColor: WidgetStateProperty.all(Global.getColorOfButton(ButtonState.default0))
-      ),
-      onPressed:  () => Navigator.pop(context, input),
-      child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-        Text(input, style: TextStyle(fontSize: 18, color: Global.getColorOfIcon(ButtonState.default0)))
-      ])
-    ))
-  );
+      padding:  const EdgeInsets.symmetric(vertical: 10),
+      child:    SizedBox(height: 40, width: 220, child: TextButton(          
+        style:      ButtonStyle(
+          side:            WidgetStateProperty.all(BorderSide(color: Global.getColorOfIcon(ButtonState.default0))),
+          backgroundColor: WidgetStateProperty.all(Global.getColorOfButton(ButtonState.default0))
+        ),
+        onPressed:  () => Navigator.pop(context, input),
+        child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+          Text(input, style: TextStyle(fontSize: 18, color: Global.getColorOfIcon(ButtonState.default0)))
+        ])
+      ))
+    );
 
     // --------- < Methods [1] > -------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- //
     List<Widget> drawButtonList(){

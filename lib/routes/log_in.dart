@@ -6,7 +6,7 @@ import 'package:autogumi_plaza/data_manager.dart';
 import 'package:ota_update/ota_update.dart';
 
 class LogIn extends StatefulWidget {
-  const LogIn({Key? key}) : super(key: key);
+  const LogIn({super.key});
 
   @override
   State<LogIn> createState() => LogInState();

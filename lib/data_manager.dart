@@ -18,7 +18,7 @@ import 'routes/log_in.dart';
 
 class DataManager{
   // ---------- < Variables [Static] > - ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ----------
-  static bool test =                                false; // <--- Set test/live here!!!!!!!
+  static bool test =                                true; // <--- Set test/live here!!!!!!!
   static List<dynamic> data =                       List<dynamic>.empty(growable: true);
   static List<dynamic> dataQuickCall =              List<dynamic>.empty(growable: true);
   static List<dynamic> materials =                  List<dynamic>.empty(growable: true);
@@ -378,6 +378,7 @@ class DataManager{
           var queryParameters = {
             'customer':   customer,
             'parameter':  (input['lezart'] != 1 && input['quickSave'] == null)? jsonEncode(DataFormState.rawData) : jsonEncode(dataQuickCall[0]),
+            'user_id':    data[0][1]['dolgozo_kod'],
             'lezart':     input['lezart']
           };
           Uri uriUrl = Uri.parse('${urlPath}save_eseti_munkalap.php');
@@ -393,6 +394,7 @@ class DataManager{
           var queryParameters = {
             'customer':   customer,
             'parameter':  jsonEncode(dataQuickCall[0]),
+            'user_id':    data[0][1]['dolgozo_kod'],
             'lezart':     input['lezart']
           };
           Uri uriUrl =              Uri.parse('${urlPath}finish_worksheet.php');
@@ -540,8 +542,10 @@ class DataManager{
         case NextRoute.signature:
           var queryParameters = {
             'customer':   customer,
-            'parameter':  jsonEncode(dataQuickCall[0])
+            'parameter':  jsonEncode(dataQuickCall[0]),
+            'user_id':    data[0][1]['dolgozo_kod'],
           };
+          if(kDebugMode)dev.log(queryParameters.toString());
           Uri uriUrl =              Uri.parse('${urlPath}finish_worksheet.php');
           http.Response response =  await http.post(uriUrl, body: json.encode(queryParameters), headers: headers);
           if(kDebugMode) dev.log(response.body);

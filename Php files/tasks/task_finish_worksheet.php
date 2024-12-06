@@ -22,6 +22,7 @@ class Task{
             $this->sqlCommand->exec_tabletSzezonalisFelvitele(),
             [
                 'parameter' =>  $this->request['parameter'],
+                'user_id' =>    $this->request['user_id'],
                 'lezart' =>     is_null($this->request['lezart'])? 1 : $this->request['lezart']
             ],
             $this->request['customer']

@@ -1,4 +1,5 @@
 // ignore_for_file: use_build_context_synchronously, deprecated_member_use
+import 'package:autogumi_plaza/routes/probe_measuring.dart';
 import 'package:autogumi_plaza/routes/signature.dart';
 import 'package:flutter_datetime_picker_plus/flutter_datetime_picker_plus.dart' as picker;
 import 'package:autogumi_plaza/routes/photo_preview.dart';
@@ -39,6 +40,7 @@ class DataFormState extends State<DataForm> {//-- ---------- ---------- --------
   static bool quickSaveLock =                         false;
   static bool isClosed =                              false;
   static bool isExtraForm =                           false;
+  static bool isScreenLocked =                        false;
   static int? amount;
   static int get currentProgress{
     if(progress.isNotEmpty) for(int i = 0; i < progress.length; i++) {if(!progress[i]) return i;}
@@ -87,7 +89,7 @@ class DataFormState extends State<DataForm> {//-- ---------- ---------- --------
 
   // ---------- < WidgetBuild [1] > -- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ----------
   @override
-   Widget build(BuildContext context) => GestureDetector(
+   Widget build(BuildContext context) => AbsorbPointer(absorbing: isScreenLocked, child: GestureDetector(
       onTap:  () => setState((){}),
       child:  WillPopScope(
         onWillPop:  _handlePop,
@@ -125,7 +127,7 @@ class DataFormState extends State<DataForm> {//-- ---------- ---------- --------
           )
         )
       )
-    );
+    ));
 
   // ---------- < WidgetBuild [2] > -- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ----------
   Widget get _drawFormList{
@@ -499,20 +501,26 @@ class DataFormState extends State<DataForm> {//-- ---------- ---------- --------
       case 'number':
       case 'integer': switch(input['name']){
 
-        case 'number': return SizedBox(height: 55, width: getWidth(index), child: TextFormField(
-          enabled:            (editable && !isClosed),          
-          controller:         controller[index],
-          onEditingComplete:  () => setState(() {_checkDouble(thisData, controller[index].text, input, index); _handleSelectChange(thisData, controller[index].text, index); focusNode[index].unfocus();}),
-          onTapOutside:       (PointerDownEvent varPointerDownEvent) => setState(() {_checkDouble(thisData, controller[index].text, input, index); _handleSelectChange(thisData, controller[index].text, index); focusNode[index].unfocus();}),
-          focusNode:          focusNode[index],
-          decoration:         InputDecoration(
-            contentPadding:     const EdgeInsets.all(10),
-            labelText:          input['name'],
-            border:             InputBorder.none,
-          ),
-          style:        TextStyle(color: (editable && !isClosed)? const Color.fromARGB(255, 51, 51, 51) : const Color.fromARGB(255, 153, 153, 153)),
-          keyboardType: TextInputType.number,
-        ));
+        case 'Profilmélység': return Stack(children: [
+          SizedBox(height: 55, width: getWidth(index), child: TextFormField(
+            enabled:            (editable && !isClosed),          
+            controller:         controller[index],
+            onEditingComplete:  () => setState(() {_checkDouble(thisData, controller[index].text, input, index); _handleSelectChange(thisData, controller[index].text, index); focusNode[index].unfocus();}),
+            onTapOutside:       (PointerDownEvent varPointerDownEvent) => setState(() {_checkDouble(thisData, controller[index].text, input, index); _handleSelectChange(thisData, controller[index].text, index); focusNode[index].unfocus();}),
+            focusNode:          focusNode[index],
+            decoration:         InputDecoration(
+              contentPadding:     const EdgeInsets.all(10),
+              labelText:          input['name'],
+              border:             InputBorder.none, 
+            ),
+            style:        TextStyle(color: (editable && !isClosed)? const Color.fromARGB(255, 51, 51, 51) : const Color.fromARGB(255, 153, 153, 153)),
+            keyboardType: TextInputType.number,
+          )),
+          SizedBox(height: 55, width: getWidth(index), child: Row(
+            mainAxisAlignment:  MainAxisAlignment.end,
+            children:           [IconButton(onPressed: () => _measureProfilmelyseg(index: index), icon: const Icon(Icons.line_weight_sharp, size: 30))]
+          ))
+        ]);
 
         default: return SizedBox(height: 55, width: getWidth(index), child: TextFormField(
           enabled:            (editable && !isClosed),          
@@ -824,9 +832,7 @@ class DataFormState extends State<DataForm> {//-- ---------- ---------- --------
     await Navigator.pushNamed(context, '/photo/take');
   }
 
-  Future get _buttonBackPressed async{
-    if(await _handlePop()) {Navigator.pop(context);}
-  }
+  Future get _buttonBackPressed async {if(await _handlePop()) {Navigator.pop(context);}}
 
   Future get _buttonCancelPressed async {if(isClosed || await Global.yesNoDialog(context,
     title:    'Adatlap elhagyása',
@@ -847,7 +853,7 @@ class DataFormState extends State<DataForm> {//-- ---------- ---------- --------
   Future _buttonListPicturesPressed(int i) async{
     setState(() => buttonListPictures[i] = ButtonState.loading);
     Global.routeNext =                NextRoute.photoCheck;
-    PhotoPreviewState.selectedIndex = i;
+    PhotoPreviewState.selectedIndex = i; 
     await Navigator.pushNamed(context, '/photo/preview');
   }
 
@@ -863,13 +869,29 @@ class DataFormState extends State<DataForm> {//-- ---------- ---------- --------
     rawDataCopy =             List.from(rawData);
     dataQuickCall1Copy =      List.from(DataManager.dataQuickCall[1]);
     listOfLookupDatasCopy =   Map.from(listOfLookupDatas);
-    isExtraForm =               true;
+    isExtraForm =             true;
     rawDataExtra =            await DataManager().getJsonFromSql(input: rawData[index]['buttons'][0]['sql_input']);
     _resetController(rawDataExtra);
     await DataManager(quickCall: QuickCall.giveDatas, input: {'rawDataInput': rawDataExtra}).beginQuickCall;
     indexOfExtraForm = index;
     _setButtonContinue;
     setState((){});
+  }
+
+  Future _measureProfilmelyseg({required int index}) async{
+    if(await Global.yesNoDialog(context,
+      title: 'Profilmélység Mérése Szondával',
+      content: 'Kívánja az abroncs profilmélységét szondával mérni?'
+    )){
+      Global.routeNext =          NextRoute.probeMeasuring;
+      ProbeMeasuringState.index = index;
+      await Navigator.of(context).push(
+        PageRouteBuilder(
+          opaque:       false,
+          pageBuilder:  (_, __, ___) => const ProbeMeasuring()
+        )
+      );
+    }
   }
 
   // ---------- < Methods [2] > ------ ---------- ---------- ---------- ---------- ---------- ---------- ---------- ----------
@@ -937,6 +959,7 @@ class DataFormState extends State<DataForm> {//-- ---------- ---------- --------
   }
 
   Future<bool> _handlePop() async{
+    if(isScreenLocked) return false;
     switch(currentProgress){
       case 0:
         if(isClosed || await Global.yesNoDialog(context,

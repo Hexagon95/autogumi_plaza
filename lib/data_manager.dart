@@ -18,7 +18,7 @@ import 'routes/log_in.dart';
 
 class DataManager{
   // ---------- < Variables [Static] > - ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ----------
-  static bool test =                                true; // <--- Set test/live here!!!!!!!
+  static bool test =                                false; // <--- Set test/live here!!!!!!!
   static List<dynamic> data =                       List<dynamic>.empty(growable: true);
   static List<dynamic> dataQuickCall =              List<dynamic>.empty(growable: true);
   static List<dynamic> materials =                  List<dynamic>.empty(growable: true);
@@ -27,7 +27,7 @@ class DataManager{
   static List<dynamic> comboboxQueriesAdditional =  List<dynamic>.empty();
   static bool isServerAvailable =                   true;
   static String customer =                          'mosaic';
-  static String thisVersion =                       '1.21';
+  static String thisVersion =                       '1.22';
   static String actualVersion =                     thisVersion;
   static String get sqlUrlLink =>                   'https://app.mosaic.hu/sql/ExternalInputChangeSQL.php?ceg=mezandmol&SQL=';
   static const String nameOfApp =                   'MezandMol Szervíz';

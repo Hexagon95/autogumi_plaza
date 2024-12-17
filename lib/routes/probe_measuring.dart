@@ -1,8 +1,7 @@
 // ignore_for_file: deprecated_member_use, use_build_context_synchronously
 import '../global.dart';
-import 'package:flutter_blue_plus/flutter_blue_plus.dart';
-import 'package:bluetooth_classic/bluetooth_classic.dart';
-import 'package:bluetooth_classic/models/device.dart';
+//import 'package:flutter_blue_plus/flutter_blue_plus.dart';
+//import 'package:bluetooth_classic/models/device.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'dart:developer' as dev;
@@ -19,7 +18,7 @@ class ProbeMeasuringState extends State<ProbeMeasuring> {//-- ---------- -------
   static int index =    0;
 
   // ---------- < Wariables [1] > ---- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ----------
-  List<Device> deviceList =           [];
+  //List<Device> deviceList =           [];
   ButtonState buttonCancel =          ButtonState.default0;
   BoxDecoration customBoxDecoration = const BoxDecoration(
     color:        Colors.white,
@@ -119,7 +118,7 @@ class ProbeMeasuringState extends State<ProbeMeasuring> {//-- ---------- -------
   // ---------- < Methods [2] > ------ ---------- ---------- ---------- ---------- ---------- ---------- ---------- ----------
   Future get _runBluetoothCheck async{
     try{
-      await FlutterBluePlus.turnOn();
+      //await FlutterBluePlus.turnOn();
       setState(() => probe = Probe.deviceSearch);
     }
     catch(e){

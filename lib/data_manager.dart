@@ -596,7 +596,7 @@ class DataManager{
       }
     }
     catch(e) {
-      if(kDebugMode)print('$e');
+      if(kDebugMode)dev.log(e.toString());
       isServerAvailable = false;
       errorMessage =      e.toString();
     }

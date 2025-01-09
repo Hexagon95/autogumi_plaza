@@ -1,5 +1,5 @@
 // ignore_for_file: use_build_context_synchronously, deprecated_member_use
-//import 'package:autogumi_plaza/routes/probe_measuring.dart';
+import 'package:autogumi_plaza/routes/probe_measuring.dart';
 import 'package:autogumi_plaza/routes/signature.dart';
 import 'package:flutter_datetime_picker_plus/flutter_datetime_picker_plus.dart' as picker;
 import 'package:autogumi_plaza/routes/photo_preview.dart';
@@ -879,7 +879,7 @@ class DataFormState extends State<DataForm> {//-- ---------- ---------- --------
   }
 
   Future _measureProfilmelyseg({required int index}) async{
-    /*if(await Global.yesNoDialog(context,
+    if(await Global.yesNoDialog(context,
       title: 'Profilmélység Mérése Szondával',
       content: 'Kívánja az abroncs profilmélységét szondával mérni?'
     )){
@@ -891,7 +891,7 @@ class DataFormState extends State<DataForm> {//-- ---------- ---------- --------
           pageBuilder:  (_, __, ___) => const ProbeMeasuring()
         )
       );
-    }*/
+    }
   }
 
   // ---------- < Methods [2] > ------ ---------- ---------- ---------- ---------- ---------- ---------- ---------- ----------

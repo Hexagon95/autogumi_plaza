@@ -221,13 +221,9 @@ class DataFormState extends State<DataForm> {//-- ---------- ---------- --------
       color:  Global.getColorOfButton(ButtonState.default0),
       child:  Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: switch (currentProgress) {
         0 => [_drawButtonBack, _drawButtonNext],
-        1 => (buttonListPictures.isEmpty)
-          ? [_drawButtonBack, _drawButtonCamera, _drawButtonNext]
-          : [_drawButtonBack, _drawButtonCamera, _drawButtonListPictures, _drawButtonNext]
+        1 => [_drawButtonBack, _drawButtonCamera, _drawButtonListPictures, _drawButtonNext]
         ,
-        _ => (buttonListPictures.isEmpty)
-          ? [Row(children: [_drawButtonBack, _drawButtonCopy]), _drawButtonCamera, _drawButtonNext]
-          : [Row(children: [_drawButtonBack, _drawButtonCopy]), _drawButtonCamera, _drawButtonListPictures, _drawButtonNext]
+        _ => [Row(children: [_drawButtonBack, _drawButtonCopy]), _drawButtonCamera, _drawButtonListPictures, _drawButtonNext]
         ,
       })
     );
@@ -358,6 +354,7 @@ class DataFormState extends State<DataForm> {//-- ---------- ---------- --------
   Widget get _drawButtonListPictures{
     List<Widget> listButtons = List<Widget>.empty(growable: true);
 
+    refreshImages;
     for(int i = 0; i < buttonListPictures.length; i++) {listButtons.add(TextButton(
       onPressed:  () async => (buttonListPictures[i] == ButtonState.default0)? _buttonListPicturesPressed(i) : null,
       style:      ButtonStyle(backgroundColor: MaterialStateProperty.all(Colors.transparent)),
@@ -858,7 +855,7 @@ class DataFormState extends State<DataForm> {//-- ---------- ---------- --------
   }
 
   String get _getTitleString {switch(Global.currentRoute){
-    case NextRoute.abroncsIgenyles:             return 'Abroncs Igénylés';
+    case NextRoute.abroncsIgenyles:             return 'Igénylés';
     case NextRoute.esetiMunkalapFelvitele:      return 'Eseti Munkalap Foglalás';
     case NextRoute.szezonalisMunkalapFelvitele: return 'Szezonális Munkalap Foglalás';
     default:                                    return 'Foglalás';
@@ -1038,9 +1035,27 @@ class DataFormState extends State<DataForm> {//-- ---------- ---------- --------
     setState((){});
   }
 
+  void get refreshImages{
+    dynamic getNumberOfPicturesItem() {for(dynamic item in rawData) {if(item['id'] == 'id_number_of_pictures_1') return item;} return null;}
+    void resetButtonListPictures()    {for(int i = 0; i < numberOfPictures[currentProgress]; i++) {buttonListPictures.add(ButtonState.default0);}}
+
+    buttonListPictures =            List<ButtonState>.empty(growable: true);
+    dynamic numberOfPicturesItem =  getNumberOfPicturesItem();
+    if(numberOfPicturesItem != null){
+      if(numberOfPictures[currentProgress] < int.parse(numberOfPicturesItem['value'].toString())){
+        for(int i = 0; i < int.parse(numberOfPicturesItem['value'].toString()); i++) {buttonListPictures.add(ButtonState.disabled);}
+        for(int i = 0; i < numberOfPictures[currentProgress]; i++) {buttonListPictures[i] = ButtonState.default0;}
+      }
+      else {resetButtonListPictures();}
+    }
+    else {resetButtonListPictures();}
+    buttonListPictures;
+  }
+
   // ---------- < Methods [3] > ------ ---------- ---------- ---------- ---------- ---------- ---------- ---------- ----------
   bool get _isAllMandatoryFilled{
     try{
+      if(buttonListPictures.contains(ButtonState.disabled)) return false;
       for(dynamic item in (isExtraForm)? rawDataExtra : rawData) {if(
         (item['value'] == null || item['value'].isEmpty) && item['mandatory'].toString() == '1'
       ) return false;}

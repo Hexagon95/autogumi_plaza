@@ -127,7 +127,7 @@ class DataManager{
               };
               Uri uriUrl =              Uri.parse('${urlPath}worksheetForm.php');          
               http.Response response =  await http.post(uriUrl, body: json.encode(queryParameters), headers: headers);
-              dataQuickCall[check(0)] = await jsonDecode(await jsonDecode(response.body));
+            dataQuickCall[check(0)] = await jsonDecode(await jsonDecode(response.body));
             break;
           }
           break;
@@ -171,9 +171,10 @@ class DataManager{
 
           try {input['rawDataInput'][input['index']]['kod'] = Global.where(DataFormState.listOfLookupDatas[input['rawDataInput'][input['index']]['id']],'megnevezes',input['newValue'])['id'];}
           catch(e) {/*input['rawDataInput'][input['index']]['kod'] = null;*/}
-
-          if(input['rawDataInput'][input['index']]['update_items'] == null) return;
-          for(dynamic item in input['rawDataInput'][input['index']]['update_items']) {
+          
+          dynamic updateItemsItem = await json.decode(input['rawDataInput'][input['index']]['update_items'].toString());
+          if(updateItemsItem == null) return;
+          for(dynamic item in updateItemsItem) {
             try{
               bool varIsLookupDataOnTheSide =     isLookupDataOnTheSide(item['id']);
               dynamic varGetItemFromId =          getItemFromId(id: item['id']);
@@ -226,6 +227,7 @@ class DataManager{
               DataFormState.listOfLookupDatas[item['id']] = await _getLookupData(thisData: input['rawDataInput'], input: item['lookup_data'], isPhp: (item['php'].toString() == '1'));
               //if(varIsLookupDataOnTheSide) {input['rawDataInput'][getIndexFromId(id: item['id'])]['value'] = null;}
               //else {varGetItemFromId['value'] = null;}
+
 
               if(varGetItemFromId['input_field'] == 'checkbox'){
                 if(varIsLookupDataOnTheSide){
@@ -344,7 +346,8 @@ class DataManager{
           };
           Uri uriUrl =              Uri.parse('${urlPath}ask_pictures.php');          
           http.Response response =  await http.post(uriUrl, body: json.encode(queryParameters), headers: headers);
-          dataQuickCall[check(2)] = await jsonDecode(await jsonDecode(response.body)[0]['']);
+          dynamic varDynamic = await jsonDecode(response.body)[0][''];
+          dataQuickCall[check(2)] = await jsonDecode(varDynamic.toString());
           if(kDebugMode){
             String varString = dataQuickCall[2].toString();
             print(varString);
@@ -472,7 +475,7 @@ class DataManager{
           data[check(input['number'])] =  await jsonDecode(response.body);
           if(kDebugMode){
             String varString = data[input['number']].toString();
-            print(varString);
+            dev.log(varString);
           }
           break;
 
@@ -684,8 +687,7 @@ class DataManager{
           break;
 
         case QuickCall.askPhotos:
-          DataFormState.buttonListPictures =  List<ButtonState>.empty(growable: true);
-          for(int i = 0; i < dataQuickCall[2].length; i++) {DataFormState.buttonListPictures.add(ButtonState.default0);}
+          DataFormState.numberOfPictures[DataFormState.currentProgress] = dataQuickCall[2].length;
           break;
 
         case QuickCall.askIncompleteDays:

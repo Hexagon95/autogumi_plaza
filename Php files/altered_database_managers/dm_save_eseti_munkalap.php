@@ -1,7 +1,7 @@
 <?php
 class DatabaseManager{
     // ---------- <Variables [1]> ----- ---------- ---------- ---------- ---------- ---------- ---------- ----------    
-    private $pdoServer =   "localhost";
+    private $pdoServer =   "MOSAICAPP";
     private $pdoUser =     "app";
     private $pdoPassword = "Dh!Flmn2J6uJ";
     private $data;

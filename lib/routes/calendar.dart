@@ -1,6 +1,7 @@
 // ignore_for_file: depend_on_referenced_packages, use_build_context_synchronously, deprecated_member_use
 
 import 'package:table_calendar/table_calendar.dart';
+import 'package:badges/badges.dart' as badges;
 import 'package:restart_app/restart_app.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -41,6 +42,7 @@ class CalendarState extends State<Calendar> {
   CalendarFormat _calendarFormat =  CalendarFormat.month;
   DateTime _focusedDay =            DateTime.now();
   ButtonState buttonAddWork =       ButtonState.default0;
+  ButtonState buttonListInquries =  ButtonState.default0;
   bool isListStockInfoOpen =        false;
   DateTime? _selectedDay;
 
@@ -52,7 +54,7 @@ class CalendarState extends State<Calendar> {
         title:            Text('$title  >  ${(isListStockInfoOpen)? 'Készlet infó' : 'Feladatok'}'),
         backgroundColor:  Global.getColorOfButton(ButtonState.default0),
       ),
-      floatingActionButton:         _drawButtonAddWork,
+      floatingActionButton:         Column(mainAxisSize: MainAxisSize.min, children: [_drawButtonInquiries, _drawButtonAddWork]),
       floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
       body: Stack(children: [
         Column(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [_calendar, Expanded(child: _listOfTasks)]),
@@ -85,31 +87,34 @@ class CalendarState extends State<Calendar> {
       child: Scrollbar(child: ListView.builder(
         itemCount:    itemsInList.length,
         itemBuilder:  (BuildContext context, int index) {
-          return Container(decoration: const BoxDecoration(border: Border(bottom: BorderSide(color: Colors.grey))), child: ListTile(
-            title: Stack(children: [
-              Padding(
-                padding:  const EdgeInsets.fromLTRB(100, 0, 0, 0),
-                child:    Icon(_getIconOfCase(index), color: Global.getColorOfButton(ButtonState.disabled), size: 90),
-              ),
-              Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-                _drawButtonDelete(index),
-                Expanded(child: SingleChildScrollView(scrollDirection: Axis.horizontal, child: Row(children: [
-                  const Text("rendszam: \npartner: \njelleg: \nidőpont: ", style: TextStyle(fontStyle: FontStyle.italic, fontSize: 15)),
-                  Text(itemsInList[index], style: const TextStyle(fontSize: 15)),
-                  Visibility(visible: (selectedIndexList != null && index == selectedIndexList), child: const Padding(
-                    padding:  EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-                    child:    SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.lightBlueAccent))
+          return Stack(children: [
+            Container(decoration: const BoxDecoration(border: Border(bottom: BorderSide(color: Colors.grey))), child: ListTile(
+              title: Stack(children: [
+                Padding(
+                  padding:  const EdgeInsets.fromLTRB(100, 0, 0, 0),
+                  child:    Icon(_getIconOfCase(index), color: Global.getColorOfButton(ButtonState.disabled), size: 90),
+                ),
+                Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+                  _drawButtonDelete(index),
+                  Expanded(child: SingleChildScrollView(scrollDirection: Axis.horizontal, child: Row(children: [
+                    const Text("rendszam: \npartner: \njelleg: \nidőpont: ", style: TextStyle(fontStyle: FontStyle.italic, fontSize: 15)),
+                    Text(itemsInList[index], style: const TextStyle(fontSize: 15)),
+                    Visibility(visible: (selectedIndexList != null && index == selectedIndexList), child: const Padding(
+                      padding:  EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+                      child:    SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.lightBlueAccent))
+                    ))
+                  ]))),
+                  Visibility(visible: closedInList[index], child: const Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+                    child: Icon(Icons.done, color: Color.fromRGBO(0, 100, 0, 1), size: 40)
                   ))
-                ]))),
-                Visibility(visible: closedInList[index], child: const Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-                  child: Icon(Icons.done, color: Color.fromRGBO(0, 100, 0, 1), size: 40)
-                ))
-              ])
-            ]),
-            tileColor:  (selectedIndexList == index)? const Color.fromARGB(255, 200, 255, 200) : (closedInList[index])? const Color.fromRGBO(230, 255, 230, 1) : null,
-            onTap:      () => (selectedIndexList == null)? setState(() {selectedIndexList = index; _functionPress(index);}) : null
-          ));
+                ]),
+              ]),
+              tileColor:  (selectedIndexList == index)? const Color.fromARGB(255, 200, 255, 200) : (closedInList[index])? const Color.fromRGBO(230, 255, 230, 1) : null,
+              onTap:      () => (selectedIndexList == null)? setState(() {selectedIndexList = index; _functionPress(index);}) : null
+            )),
+            SizedBox(height: 90, child: Align(alignment: Alignment.bottomCenter, child: _drawButtonIgenyles(index)))
+          ]);
         }
       ))
     ),
@@ -142,10 +147,31 @@ class CalendarState extends State<Calendar> {
   : Container()
   ;
 
-  Widget get _drawButtonAddWork => SizedBox(
+  Widget get _drawButtonInquiries => Padding(padding: const EdgeInsets.all(5), child: SizedBox(
+    height: 60,
+    width:  60,
+    child:  badges.Badge(
+      badgeContent: Text('0', style: TextStyle(color: Global.getColorOfIcon(ButtonState.disabled), fontWeight: FontWeight.bold, fontSize: 20)),
+      position:     badges.BadgePosition.bottomStart(),
+      badgeStyle:   badges.BadgeStyle(badgeColor: Global.getColorOfButton(ButtonState.disabled)),
+      child:        FloatingActionButton(
+        heroTag:          "btn1",
+        onPressed:        () => (buttonListInquries == ButtonState.default0)? _buttonListInquriesPressed : null,
+        backgroundColor:  Global.getColorOfButton(buttonListInquries),
+        foregroundColor:  Global.getColorOfIcon(buttonListInquries),
+        isExtended:       true,
+        child:            Padding(padding: const EdgeInsets.all(10), child: 
+          (buttonListInquries == ButtonState.loading)? _progressIndicator(Global.getColorOfIcon(buttonListInquries)) : const Text('📄', style: TextStyle(fontSize: 26))
+        )
+      )
+    )
+  ));
+
+  Widget get _drawButtonAddWork => Padding(padding: const EdgeInsets.all(5), child: SizedBox(
     height: 60,
     width:  60,
     child:  FloatingActionButton(
+      heroTag:          "btn2",
       onPressed:        () => (buttonAddWork == ButtonState.default0)? _buttonAddWorkPressed : null,
       backgroundColor:  Global.getColorOfButton(buttonAddWork),
       foregroundColor:  Global.getColorOfIcon(buttonAddWork),
@@ -154,7 +180,19 @@ class CalendarState extends State<Calendar> {
         (buttonAddWork == ButtonState.loading)? _progressIndicator(Global.getColorOfIcon(buttonAddWork)) : const Icon(Icons.post_add, size: 40)
       )
     )
-  );
+  ));
+
+  Widget _drawButtonIgenyles(int index){
+    return (closedInList[index])
+    ? SizedBox(height: 40, width: 130, child: TextButton(
+      style:      ButtonStyle(backgroundColor: MaterialStateProperty.all(Global.getColorOfButton(ButtonState.default0))),
+      onPressed:  () => _buttonIgenylesPressed(index),
+      child:      Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+        Text('📄 Igénylés', style: TextStyle(fontSize: 18, color: Global.getColorOfIcon(ButtonState.default0)))
+      ])
+    ))
+    : Container();
+  }
 
   // ---------- < Methods [1] > ---------- ---------- ---------- ---------- ---------- ---------- ----------
   IconData _getIconOfCase(int index) {switch(jelleg[index]){
@@ -179,6 +217,9 @@ class CalendarState extends State<Calendar> {
   }
 
   Future _functionPress(int index) async{
+    errorMessage =            '';
+    errorMessagePopUp =       '';
+    errorMessagePopUpTitle =  '';
     await DataManager(quickCall: QuickCall.verzio).beginQuickCall;
     if(LogInState.updateNeeded) Restart.restartApp();
     Global.routeNext =        NextRoute.tabForm;
@@ -217,10 +258,30 @@ class CalendarState extends State<Calendar> {
     setState(() => buttonDelete[index] = ButtonState.default0);
   }
 
+  Future get _buttonListInquriesPressed async{
+    setState(() => buttonListInquries = ButtonState.loading);
+    String? varString = await Global.textButtonListDialog(context,
+      listItems:  const[],
+      title:      'Bejövő 📄 Igénylések'
+    );
+    switch(varString){
+      case null:
+        break;
+
+      default:
+        Global.routeNext = NextRoute.abroncsIgenyles;
+        await DataManager(input: {'datum': _focusedDay}).beginProcess;
+        await DataManager(quickCall: QuickCall.giveDatas).beginQuickCall;
+        Navigator.pushNamed(context, '/dataForm');
+        break;
+    }
+    setState(() => buttonListInquries = ButtonState.default0);
+  }
+
   Future get _buttonAddWorkPressed async{
     setState(() => buttonAddWork = ButtonState.loading);
     String? varString = await Global.textButtonListDialog(context,
-      listItems:  const['Eseti Munkalap', 'Szezonális Munkalap', 'Abroncs Igénylés', '🔍 Rendszám keresése', '🗓 Ugrás a mai napra'],
+      listItems:  const['Eseti Munkalap', 'Szezonális Munkalap', '📄 Igénylés', '🔍 Rendszám keresése', '🗓 Ugrás a mai napra'],
       title:      'Új Bizonylat Felvitele'
     );
     buttonAddWork = ButtonState.default0;
@@ -239,7 +300,7 @@ class CalendarState extends State<Calendar> {
         Navigator.pushNamed(context, '/dataForm');
         break;
 
-      case 'Abroncs Igénylés':
+      case '📄 Igénylés':
         Global.routeNext = NextRoute.abroncsIgenyles;
         await DataManager(input: {'datum': _focusedDay}).beginProcess;
         await DataManager(quickCall: QuickCall.giveDatas).beginQuickCall;
@@ -281,6 +342,14 @@ class CalendarState extends State<Calendar> {
       default: break;
     }}
     setState((){});
+  }
+
+  Future _buttonIgenylesPressed(int index) async{
+    itemsInList;
+    Global.routeNext = NextRoute.abroncsIgenyles;
+    await DataManager(input: {'datum': _focusedDay}).beginProcess;
+    await DataManager(quickCall: QuickCall.giveDatas).beginQuickCall;
+    Navigator.pushNamed(context, '/dataForm');
   }
 
   List<Event> _getEventsForDay(DateTime day){

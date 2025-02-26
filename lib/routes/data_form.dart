@@ -62,6 +62,7 @@ class DataFormState extends State<DataForm> {//-- ---------- ---------- --------
   ButtonState buttonSave =                      ButtonState.disabled;
   ButtonState buttonSaveProgress =              ButtonState.default0;
   bool enableInteraction =                      true;
+  int numberOfRequiredPictures =                0;
   BoxDecoration customBoxDecoration =           BoxDecoration(            
     border:       Border.all(color: const Color.fromARGB(130, 184, 184, 184), width: 1),
     color:        Colors.white,
@@ -137,8 +138,7 @@ class DataFormState extends State<DataForm> {//-- ---------- ---------- --------
       && rawData[index]['mandatory'].toString() == '1'
       && (rawData[index]['value'] == null || rawData[index]['value'].isEmpty)
     );
-
-    _setButtonContinue;
+    
     List<Widget> varListWidget = List<Widget>.empty(growable: true);
     for(int sor = 1; sor <= maxSor(); sor++) {
       List<Widget> row = List<Widget>.empty(growable: true);
@@ -151,6 +151,7 @@ class DataFormState extends State<DataForm> {//-- ---------- ---------- --------
       }}
       varListWidget.add(SizedBox(width: MediaQuery.of(context).size.width, child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: row)));
     }
+    _setButtonContinue;
     return Expanded(child: SingleChildScrollView(child: Column(
       mainAxisAlignment:  MainAxisAlignment.center,
       crossAxisAlignment: CrossAxisAlignment.center,
@@ -353,8 +354,7 @@ class DataFormState extends State<DataForm> {//-- ---------- ---------- --------
 
   Widget get _drawButtonListPictures{
     List<Widget> listButtons = List<Widget>.empty(growable: true);
-
-    refreshImages;
+    
     for(int i = 0; i < buttonListPictures.length; i++) {listButtons.add(TextButton(
       onPressed:  () async => (buttonListPictures[i] == ButtonState.default0)? _buttonListPicturesPressed(i) : null,
       style:      ButtonStyle(backgroundColor: MaterialStateProperty.all(Colors.transparent)),
@@ -697,6 +697,7 @@ class DataFormState extends State<DataForm> {//-- ---------- ---------- --------
   }
 
   Future get _buttonContinuePressed async{
+    numberOfRequiredPictures = 0;
     if(isExtraForm){
       setState(() => buttonContinue = ButtonState.loading);
       rawDataExtraCopy = List.from(rawDataExtra);
@@ -744,6 +745,8 @@ class DataFormState extends State<DataForm> {//-- ---------- ---------- --------
       FocusScope.of(context).unfocus();
       setState((){});
     }
+    refreshImages;
+    setState((){});
   }
 
   Future get _buttonSavePressed async {switch(Global.currentRoute){
@@ -792,6 +795,8 @@ class DataFormState extends State<DataForm> {//-- ---------- ---------- --------
     await DataManager(quickCall: QuickCall.askPhotos).beginQuickCall;
     Global.routeNext =  NextRoute.signature;
     buttonContinue =    ButtonState.default0;
+    refreshImages;
+    setState((){});
     if(DataManager.dataQuickCall[0]['osszesites'] != null) SignatureFormState.rawData = DataManager.dataQuickCall[0]['osszesites'];
     await Navigator.pushNamed(context, '/signature');
   }
@@ -827,6 +832,8 @@ class DataFormState extends State<DataForm> {//-- ---------- ---------- --------
     buttonCamera =                  ButtonState.default0;
     PhotoPreviewState.isSignature = false;
     await Navigator.pushNamed(context, '/photo/take');
+    refreshImages;
+    setState((){});
   }
 
   Future get _buttonBackPressed async {if(await _handlePop()) {Navigator.pop(context);}}
@@ -966,6 +973,7 @@ class DataFormState extends State<DataForm> {//-- ---------- ---------- --------
           Global.routeBack;
           CalendarState.selectedIndexList = null;
           isClosed =                        false;
+          numberOfRequiredPictures = 0;
           Navigator.popUntil(context, ModalRoute.withName('/calendar'));
           await Navigator.pushReplacementNamed(context, '/calendar');
           return false;
@@ -984,6 +992,7 @@ class DataFormState extends State<DataForm> {//-- ---------- ---------- --------
         await DataManager(quickCall: QuickCall.askPhotos).beginQuickCall;
         listOfLookupDatas = DataManager.dataQuickCall[1][currentProgress];
         _resetController(rawData);
+        numberOfRequiredPictures = 0;
         setState((){});
         return false;
     }
@@ -999,6 +1008,7 @@ class DataFormState extends State<DataForm> {//-- ---------- ---------- --------
     ).beginQuickCall;
     buttonSave = DataManager.setButtonSave;
     _setButtonContinue;
+    refreshImages;
     setState((){});
     enableInteraction = true;
     listOfLookupDatas; rawData; DataManager.dataQuickCall;
@@ -1027,16 +1037,16 @@ class DataFormState extends State<DataForm> {//-- ---------- ---------- --------
         'newValue':     (rawData[indexOfExtraForm]['kod'] != null)? rawData[indexOfExtraForm]['kod'].toString() : rawData[indexOfExtraForm]['value'].toString()
       }
     ).beginQuickCall;
-    _setButtonContinue;
     dynamic newItem = Global.getNewItem(listOfLookupDatasCopy[rawData[indexOfExtraForm]['id']], listOfLookupDatas[rawData[indexOfExtraForm]['id']]);
     if(newItem != null) await _handleSelectChange(rawData, newItem['id'], indexOfExtraForm);
     listOfLookupDatasCopy;
     listOfLookupDatas; rawData;
+    _setButtonContinue;
     setState((){});
   }
 
-  void get refreshImages{
-    dynamic getNumberOfPicturesItem() {for(dynamic item in rawData) {if(item['id'] == 'id_number_of_pictures_1') return item;} return null;}
+  void get refreshImages async{
+    dynamic getNumberOfPicturesItem() {for(dynamic item in rawData) {if(['id_number_of_pictures_1', 'id_number_of_pictures_2', 'id_number_of_pictures_3', 'id_number_of_pictures_4', 'id_number_of_pictures_5', 'id_number_of_pictures_6'].contains(item['id'])) return item;} return null;}
     void resetButtonListPictures()    {for(int i = 0; i < numberOfPictures[currentProgress]; i++) {buttonListPictures.add(ButtonState.default0);}}
 
     buttonListPictures =            List<ButtonState>.empty(growable: true);
@@ -1045,17 +1055,33 @@ class DataFormState extends State<DataForm> {//-- ---------- ---------- --------
       if(numberOfPictures[currentProgress] < int.parse(numberOfPicturesItem['value'].toString())){
         for(int i = 0; i < int.parse(numberOfPicturesItem['value'].toString()); i++) {buttonListPictures.add(ButtonState.disabled);}
         for(int i = 0; i < numberOfPictures[currentProgress]; i++) {buttonListPictures[i] = ButtonState.default0;}
+        int varInt = 0; for(ButtonState item in buttonListPictures) {if(item == ButtonState.disabled) varInt++;}
+        if(varInt != numberOfRequiredPictures){
+          numberOfRequiredPictures = varInt;
+          String? varStringQ = await Global.showPhotoDialog(context,
+            title:    '📸 Kötelező Fényképek',
+            content:  'A továbblépéshez ennyi képet kell elkészítened: $varInt'
+          );
+          switch(varStringQ){
+
+            case 'photo':
+              await _buttonCameraPressed;
+              break;
+
+            default:break;
+          }
+        }
       }
-      else {resetButtonListPictures();}
+      else {numberOfPicturesItem = 0; resetButtonListPictures();}
     }
-    else {resetButtonListPictures();}
+    else {numberOfPicturesItem = 0; resetButtonListPictures();}
     buttonListPictures;
   }
 
   // ---------- < Methods [3] > ------ ---------- ---------- ---------- ---------- ---------- ---------- ---------- ----------
   bool get _isAllMandatoryFilled{
     try{
-      if(buttonListPictures.contains(ButtonState.disabled)) return false;
+      if(currentProgress > 0 && buttonListPictures.contains(ButtonState.disabled)) return false;
       for(dynamic item in (isExtraForm)? rawDataExtra : rawData) {if(
         (item['value'] == null || item['value'].isEmpty) && item['mandatory'].toString() == '1'
       ) return false;}

@@ -27,7 +27,7 @@ class DataManager{
   static List<dynamic> comboboxQueriesAdditional =  List<dynamic>.empty();
   static bool isServerAvailable =                   true;
   static String customer =                          'mosaic';
-  static String thisVersion =                       '1.22';
+  static String thisVersion =                       '1.24';
   static String actualVersion =                     thisVersion;
   static String get sqlUrlLink =>                   'https://app.mosaic.hu/sql/ExternalInputChangeSQL.php?ceg=mezandmol&SQL=';
   static const String nameOfApp =                   'MezandMol Szervíz';
@@ -168,11 +168,15 @@ class DataManager{
             if(dataQuickCall[0]['osszesites'] != null) for(dynamic item in dataQuickCall[0]['osszesites']) {if(item['id'] == entry) return 0;}
             throw Exception('No such Item with id: $entry');
           }
+          Future<dynamic> getItemUpdateItems() async{
+            try {return await json.decode(input['rawDataInput'][input['index']]['update_items'].toString());}
+            catch(e) {return input['rawDataInput'][input['index']]['update_items'];}
+          }
 
           try {input['rawDataInput'][input['index']]['kod'] = Global.where(DataFormState.listOfLookupDatas[input['rawDataInput'][input['index']]['id']],'megnevezes',input['newValue'])['id'];}
           catch(e) {/*input['rawDataInput'][input['index']]['kod'] = null;*/}
           
-          dynamic updateItemsItem = await json.decode(input['rawDataInput'][input['index']]['update_items'].toString());
+          dynamic updateItemsItem = await getItemUpdateItems();
           if(updateItemsItem == null) return;
           for(dynamic item in updateItemsItem) {
             try{

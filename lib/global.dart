@@ -109,8 +109,8 @@ class Global{
     );
 
     AlertDialog infoRegistry = AlertDialog(
-      title:    Text(title,   style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
-      content:  Text(content, style: const TextStyle(fontSize: 12)),
+      title:    Text(title,   style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+      content:  Text(content, style: const TextStyle(fontSize: 16)),
       actions:  [okButton]
     ); 
 
@@ -132,10 +132,35 @@ class Global{
     );
 
     AlertDialog infoRegistry = AlertDialog(
-      title:    Text(title, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
-      content:  Text(content, style: const TextStyle(fontSize: 12)),
+      title:    Text(title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+      content:  Text(content, style: const TextStyle(fontSize: 16)),
       actions:  [leftButton, rightButton]
     );
+
+    return await showDialog(
+      context: context,
+      builder: (BuildContext context) => infoRegistry,
+      barrierDismissible: false
+    );
+  }
+
+  static Future<String?> showPhotoDialog(BuildContext context, {String title = 'Üzenet', required String content}) async{
+    
+    Widget cameraButton = TextButton(
+      child: const Icon(Icons.camera_alt),
+      onPressed: () => Navigator.pop(context, 'photo')
+    );
+
+    Widget okButton = TextButton(
+      child: const Text('Ok'),
+      onPressed: () => Navigator.pop(context, null)
+    );
+
+    AlertDialog infoRegistry = AlertDialog(
+      title:    Text(title,   style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+      content:  Text(content, style: const TextStyle(fontSize: 16)),
+      actions:  [cameraButton, okButton]
+    ); 
 
     return await showDialog(
       context: context,

@@ -27,7 +27,7 @@ class DataManager{
   static List<dynamic> comboboxQueriesAdditional =  List<dynamic>.empty();
   static bool isServerAvailable =                   true;
   static String customer =                          'mosaic';
-  static String thisVersion =                       '1.24';
+  static String thisVersion =                       '1.25';
   static String actualVersion =                     thisVersion;
   static String get sqlUrlLink =>                   'https://app.mosaic.hu/sql/ExternalInputChangeSQL.php?ceg=mezandmol&SQL=';
   static const String nameOfApp =                   'MezandMol Szervíz';

@@ -237,6 +237,8 @@ class CalendarState extends State<Calendar> {
     }
     DataFormState.workType = jelleg[index];
     DataFormState.isClosed = closedInList[index];
+    selectedIndexList = null;
+    setState((){});
     await Navigator.pushNamed(context, '/dataForm');
     setState((){});
   }
@@ -255,7 +257,8 @@ class CalendarState extends State<Calendar> {
       if(DataManager.dataQuickCall[3].isNotEmpty) {await Global.showAlertDialog(context, title: 'Hiba!', content: DataManager.dataQuickCall[3].toString());}
       else {await DataManager().beginProcess;}
     }
-    setState(() => buttonDelete[index] = ButtonState.default0);
+    buttonDelete[index] = ButtonState.default0;
+    setState((){});
   }
 
   Future get _buttonListInquriesPressed async{
@@ -272,7 +275,8 @@ class CalendarState extends State<Calendar> {
         Global.routeNext = NextRoute.abroncsIgenyles;
         await DataManager(input: {'datum': _focusedDay}).beginProcess;
         await DataManager(quickCall: QuickCall.giveDatas).beginQuickCall;
-        Navigator.pushNamed(context, '/dataForm');
+        await Navigator.pushNamed(context, '/dataForm');
+        setState((){});
         break;
     }
     setState(() => buttonListInquries = ButtonState.default0);
@@ -290,21 +294,24 @@ class CalendarState extends State<Calendar> {
         Global.routeNext = NextRoute.esetiMunkalapFelvitele;
         await DataManager(input: {'datum': _focusedDay}).beginProcess;
         await DataManager(quickCall: QuickCall.giveDatas).beginQuickCall;
-        Navigator.pushNamed(context, '/dataForm');
+        await Navigator.pushNamed(context, '/dataForm');
+        setState((){});
         break;
 
       case 'Szezonális Munkalap':
         Global.routeNext = NextRoute.szezonalisMunkalapFelvitele;
         await DataManager(input: {'datum': _focusedDay}).beginProcess;
         await DataManager(quickCall: QuickCall.giveDatas).beginQuickCall;
-        Navigator.pushNamed(context, '/dataForm');
+        await Navigator.pushNamed(context, '/dataForm');
+        setState((){});
         break;
 
       case '📄 Igénylés':
         Global.routeNext = NextRoute.abroncsIgenyles;
         await DataManager(input: {'datum': _focusedDay}).beginProcess;
         await DataManager(quickCall: QuickCall.giveDatas).beginQuickCall;
-        Navigator.pushNamed(context, '/dataForm');
+        await Navigator.pushNamed(context, '/dataForm');
+        setState((){});
         break;
 
       case '🔍 Rendszám keresése':
@@ -349,7 +356,8 @@ class CalendarState extends State<Calendar> {
     Global.routeNext = NextRoute.abroncsIgenyles;
     await DataManager(input: {'datum': _focusedDay}).beginProcess;
     await DataManager(quickCall: QuickCall.giveDatas).beginQuickCall;
-    Navigator.pushNamed(context, '/dataForm');
+    await Navigator.pushNamed(context, '/dataForm');
+    setState((){});
   }
 
   List<Event> _getEventsForDay(DateTime day){

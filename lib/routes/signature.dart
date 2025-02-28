@@ -55,7 +55,11 @@ class SignatureFormState extends State<SignatureForm> {
       editingController.text = '';
     }
     return WillPopScope(onWillPop: _handlePop, child: Scaffold(
-      appBar:           AppBar(backgroundColor: Global.getColorOfButton(ButtonState.default0), title: const Center(child: Text('Összesítés és Lezárás'))),
+      appBar:           AppBar(
+        backgroundColor:  Global.getColorOfButton(ButtonState.default0),
+        foregroundColor:  Global.getColorOfIcon(ButtonState.default0),
+        title:            const Center(child: Text('Összesítés és Lezárás', style: TextStyle(fontSize: 26)))
+      ),
       backgroundColor:  Colors.white,
       body:             OrientationBuilder(builder: (context, orientation) {
         return Column(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: <Widget>[ //ListView(children: <Widget>[
@@ -196,7 +200,7 @@ class SignatureFormState extends State<SignatureForm> {
       onPressed:  () async => (DataFormState.buttonListPictures[i] == ButtonState.default0)? _buttonListPicturesPressed(i) : null,
       style:      ButtonStyle(backgroundColor: MaterialStateProperty.all(Colors.transparent)),
       child:      Padding(padding: const EdgeInsets.all(5), child: Row(children:[
-        (DataFormState.buttonListPictures[i] == ButtonState.loading)? _progressIndicator(Global.getColorOfIcon(DataFormState.buttonListPictures[i])) : Container(),
+        (DataFormState.buttonListPictures[i] == ButtonState.loading)? _progressIndicator(Global.getColorOfIcon(DataFormState.buttonListPictures[i])) : Container(), 
         Icon(Icons.image_outlined, color: Global.getColorOfIcon(DataFormState.buttonListPictures[i]), size: 30)
       ]))
     ));}
@@ -254,13 +258,15 @@ class SignatureFormState extends State<SignatureForm> {
       }
     }
   }
-
+  
   Future get _buttonCameraPressed async{
     setState(() => buttonCamera = ButtonState.loading);
     Global.routeNext =              NextRoute.photoTake;
     buttonCamera =                  ButtonState.default0;
     PhotoPreviewState.isSignature = true;
     await Navigator.pushNamed(context, '/photo/take');
+    refreshImages;
+    setState((){});
   }
 
   Future _buttonListPicturesPressed(int i) async{
@@ -274,6 +280,8 @@ class SignatureFormState extends State<SignatureForm> {
     DataFormState.buttonContinue =  ButtonState.default0;
     PhotoPreviewState.isSignature = false;
     await DataManager(quickCall: QuickCall.askPhotos).beginQuickCall;
+    refreshImages;
+    setState((){});
     Navigator.popUntil(context, ModalRoute.withName('/dataForm'));
     await Navigator.pushReplacementNamed(context, '/dataForm');
   } return false;}
@@ -282,5 +290,11 @@ class SignatureFormState extends State<SignatureForm> {
     rawData =           List<dynamic>.empty();
     editingController = TextEditingController();
     signatureBase64 =   '';
+  }
+
+  // ---------- < Methods [2] > ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ----------
+  void get refreshImages async{
+    DataFormState.buttonListPictures = List<ButtonState>.empty(growable: true);
+    for(int i = 0; i < DataFormState.numberOfPictures[DataFormState.currentProgress]; i++) {DataFormState.buttonListPictures.add(ButtonState.default0);}
   }
 }

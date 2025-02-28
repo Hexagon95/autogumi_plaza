@@ -993,6 +993,7 @@ class DataFormState extends State<DataForm> {//-- ---------- ---------- --------
         listOfLookupDatas = DataManager.dataQuickCall[1][currentProgress];
         _resetController(rawData);
         numberOfRequiredPictures = 0;
+        refreshImages;
         setState((){});
         return false;
     }

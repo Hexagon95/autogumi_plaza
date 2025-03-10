@@ -21,6 +21,7 @@ class Task{
             $this->sqlCommand->select_tabletAbroncsIgenylesReszletezo(),
             [
                 'eszkoz_id' =>      $this->request['eszkoz_id'],
+                'munkalap_id' =>    $this->request['munkalap_id'],
                 'datum' =>          $this->request['datum'],
                 'foglalas_id' =>    $this->request['foglalas_id']
             ],

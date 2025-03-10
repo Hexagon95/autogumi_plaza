@@ -18,7 +18,18 @@ import 'routes/log_in.dart';
 
 class DataManager{
   // ---------- < Variables [Static] > - ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ----------
-  static bool test =                                false; // <--- Set test/live here!!!!!!!
+  static String thisVersion =                       '1.25g';
+
+  static bool isIgenylesDisabled =                  false;  // true will disable all buttons of "📄 Igénylés".
+  static int verzioTest =                           0;      // anything other than 0 will draw "[Teszt #]" at the LogIn screen.
+
+  static bool test =                                false;   // <--- Set the root of the Php files here: true = test, false = live Php file directory. This is the same with the directory of the photos!
+  static String urlPath =                           test? 'https://developer.mosaic.hu/android/szerviz_mezandmol/' : 'https://app.mosaic.hu/android/szerviz_mezandmol/';
+  static String rootPath =                          test? 'https://developer.mosaic.hu/' : 'https://app.mosaic.hu/';
+  static String get sqlUrlLink =>                   'https://app.mosaic.hu/sql/ExternalInputChangeSQL.php?ceg=mezandmol&SQL=';
+  //static const String urlPath =                     'https://app.mosaic.hu/android/szerviz_mezandmol/';       // Live Php file directory
+  //static const String urlPath =                     'https://developer.mosaic.hu/android/szerviz_mezandmol/'; // Test Php file directory
+
   static List<dynamic> data =                       List<dynamic>.empty(growable: true);
   static List<dynamic> dataQuickCall =              List<dynamic>.empty(growable: true);
   static List<dynamic> materials =                  List<dynamic>.empty(growable: true);
@@ -26,15 +37,9 @@ class DataManager{
   static List<dynamic> comboboxQueriesDefault =     List<dynamic>.empty();
   static List<dynamic> comboboxQueriesAdditional =  List<dynamic>.empty();
   static bool isServerAvailable =                   true;
-  static String customer =                          'mosaic';
-  static String thisVersion =                       '1.25b';
   static String actualVersion =                     thisVersion;
-  static String get sqlUrlLink =>                   'https://app.mosaic.hu/sql/ExternalInputChangeSQL.php?ceg=mezandmol&SQL=';
+  static String customer =                          'mosaic';
   static const String nameOfApp =                   'MezandMol Szervíz';
-  //static const String urlPath =                     'https://app.mosaic.hu/android/szerviz_mezandmol/';    // Live
-  //static const String urlPath =                     'https://developer.mosaic.hu/android/szerviz_mezandmol/';  // Test
-  static String urlPath =                           test? 'https://developer.mosaic.hu/android/szerviz_mezandmol/' : 'https://app.mosaic.hu/android/szerviz_mezandmol/';
-  static String rootPath =                          test? 'https://developer.mosaic.hu/' : 'https://app.mosaic.hu/';
   static String get serverErrorText =>              (isServerAvailable)? '' : errorMessage;
   static String errorMessage =                      '';
   static String? foglalasId;
@@ -99,9 +104,9 @@ class DataManager{
                 'customer':     customer,
                 'eszkoz_id':    identity.toString(),
                 'datum':        CalendarState.selectedDate,
-                'foglalas_id':  data[2][CalendarState.selectedIndexList!]['id'].toString()
+                'foglalas_id':  data[2][DataFormState.selectedIndexInCalendar!]['id'].toString()
               };
-              Uri uriUrl =              Uri.parse('${urlPath}abroncs_igenyles.php');          
+              Uri uriUrl =              Uri.parse('${urlPath}abroncs_igenyles.php');
               http.Response response =  await http.post(uriUrl, body: json.encode(queryParameters), headers: headers);
               dataQuickCall[check(0)] = await jsonDecode(await jsonDecode(response.body));
               break;
@@ -111,7 +116,7 @@ class DataManager{
                 'customer':     customer,
                 'eszkoz_id':    identity.toString(),
                 'datum':        CalendarState.selectedDate,
-                'foglalas_id':  data[2][CalendarState.selectedIndexList!]['id'].toString()
+                'foglalas_id':  data[2][DataFormState.selectedIndexInCalendar!]['id'].toString()
               };
               Uri uriUrl =              Uri.parse('${urlPath}worksheetFormEseti.php');          
               http.Response response =  await http.post(uriUrl, body: json.encode(queryParameters), headers: headers);
@@ -123,7 +128,7 @@ class DataManager{
                 'customer':     customer,
                 'eszkoz_id':    identity.toString(),
                 'datum':        CalendarState.selectedDate,
-                'foglalas_id':  data[2][CalendarState.selectedIndexList!]['id'].toString()
+                'foglalas_id':  data[2][DataFormState.selectedIndexInCalendar!]['id'].toString()
               };
               Uri uriUrl =              Uri.parse('${urlPath}worksheetForm.php');          
               http.Response response =  await http.post(uriUrl, body: json.encode(queryParameters), headers: headers);
@@ -341,7 +346,7 @@ class DataManager{
         case QuickCall.askPhotos:
           var queryParameters = {
             'customer':     customer,
-            'foglalas_id':  data[2][CalendarState.selectedIndexList!]['id'].toString(),
+            'foglalas_id':  data[2][DataFormState.selectedIndexInCalendar!]['id'].toString(),
             'jelleg':       (DataFormState.workType == 'Igénylés')? 'Eseti' : DataFormState.workType,
             'pozicio':      PhotoPreviewState.isSignature
               ? 'Signature'
@@ -415,6 +420,7 @@ class DataManager{
           var queryParameters = {
             'customer':   customer,
             'parameter':  (input['lezart'] != 1 && input['quickSave'] == null)? jsonEncode(DataFormState.rawData) : jsonEncode(dataQuickCall[0]),
+            'user_id':    data[0][1]['dolgozo_kod'],
             'lezart':     input['lezart']
           };
           Uri uriUrl = Uri.parse('${urlPath}save_abroncs_igenyles.php');
@@ -499,7 +505,7 @@ class DataManager{
           break;
 
         case NextRoute.tabForm:
-          foglalasId =          data[2][CalendarState.selectedIndexList!]['id'].toString();
+          foglalasId =          data[2][DataFormState.selectedIndexInCalendar!]['id'].toString();
           if(['Eseti', 'Igénylés'].contains(input['jelleg'])) break;
           var queryParameters = {
             'customer':     customer,
@@ -591,6 +597,7 @@ class DataManager{
           var queryParameters = {
             'customer':     customer,
             'eszkoz_id':    identity.toString(),
+            'munkalap_id':  input['munkalap_id']?.toString() ?? '0',
             'datum':        input['datum'].toString().split(' ')[0],
             'foglalas_id':  0
           };
@@ -723,16 +730,18 @@ class DataManager{
         break;
 
       case NextRoute.calendar:
-        CalendarState.errorMessage =  data[2][0]['error'];
-        CalendarState.buttonDelete =  List<ButtonState>.empty(growable: true);
-        CalendarState.itemsInList =   List<String>.empty(growable: true);
-        CalendarState.jelleg =        List<String>.empty(growable: true);
-        CalendarState.closedInList =  List<bool>.empty(growable: true);
+        CalendarState.errorMessage =    data[2][0]['error'];
+        CalendarState.buttonDelete =    List<ButtonState>.empty(growable: true);
+        CalendarState.buttonIgenyles =  List<ButtonState>.empty(growable: true);
+        CalendarState.itemsInList =     List<String>.empty(growable: true);
+        CalendarState.jelleg =          List<String>.empty(growable: true);
+        CalendarState.closedInList =    List<bool>.empty(growable: true);
         if(data[2][0]['error'].isEmpty){
           List<dynamic> varData = jsonDecode(data[2][0]['json']);
           data[2] = varData;
           for (var item in varData) {
             CalendarState.buttonDelete.add(ButtonState.default0);
+            CalendarState.buttonIgenyles.add(ButtonState.default0);
             CalendarState.itemsInList.add("${item['rendszam']}\n${item['partner']}\n${item['jelleg']}\n${item['idopont']}");
             CalendarState.jelleg.add(item['jelleg']);
             CalendarState.closedInList.add((item['lezart'].toString() == '1'));

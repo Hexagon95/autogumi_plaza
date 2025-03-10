@@ -1,5 +1,6 @@
 // ignore_for_file: prefer_final_fields
 
+import 'package:autogumi_plaza/data_manager.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -226,16 +227,18 @@ class Global{
   static Future<String?> textButtonListDialog(BuildContext context, {String title = '', required List<String> listItems}) async{
     // --------- < Widgets [1] > -------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- //
     Widget cancel =   TextButton(child: const Text('Mégsem'), onPressed: () => Navigator.pop(context, null));
+    ButtonState getButtonStateFromItem(String input) => (['📄 Igénylés'].contains(input))? DataManager.isIgenylesDisabled? ButtonState.disabled : ButtonState.default0 : ButtonState.default0;
+
     Widget drawButton(String input) => Padding(
       padding:  const EdgeInsets.symmetric(vertical: 10),
       child:    SizedBox(height: 40, width: 220, child: TextButton(          
         style:      ButtonStyle(
-          side:            WidgetStateProperty.all(BorderSide(color: Global.getColorOfIcon(ButtonState.default0))),
-          backgroundColor: WidgetStateProperty.all(Global.getColorOfButton(ButtonState.default0))
+          side:            WidgetStateProperty.all(BorderSide(color: Global.getColorOfIcon(getButtonStateFromItem(input)))),
+          backgroundColor: WidgetStateProperty.all(Global.getColorOfButton(getButtonStateFromItem(input)))
         ),
         onPressed:  () => Navigator.pop(context, input),
         child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-          Text(input, style: TextStyle(fontSize: 18, color: Global.getColorOfIcon(ButtonState.default0)))
+          Text(input, style: TextStyle(fontSize: 18, color: Global.getColorOfIcon(getButtonStateFromItem(input))))
         ])
       ))
     );

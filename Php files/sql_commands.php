@@ -8,7 +8,7 @@ class SqlCommand{
     // ---------- <SQL Scripts> ------- ---------- ---------- ---------- ---------- ---------- ---------- ----------
     public function select_tabletMunkalapSzezonalisReszletezo() {return "SELECT * FROM [local].[Tablet_Munkalap_szezonalis_reszletezo] (:eszkoz_id, :datum, :foglalas_id)";}
     public function select_tabletMunkalapEsetiReszletezo()      {return "SELECT * FROM [local].[Tablet_Munkalap_eseti_reszletezo] (:eszkoz_id, :datum, :foglalas_id)";}
-    public function select_tabletAbroncsIgenylesReszletezo()    {return "SELECT * FROM [local].[Tablet_Abroncs_igenyles_reszletezo] (:eszkoz_id, :datum, :foglalas_id)";}
+    public function select_tabletAbroncsIgenylesReszletezo()    {return "SELECT * FROM [local].[Tablet_Abroncs_igenyles_reszletezo] (:eszkoz_id, :munkalap_id, :datum, :foglalas_id)";}
     public function select_tabletNaptarMunkalapok()             {return "SELECT * FROM [local].[Tablet_Naptar_munkalapok] (:eszkoz_id, :datum_tol, :datum_ig)";}
     public function select_tabletNaptarRendszamKereso()         {return "SELECT * FROM [local].[Tablet_Naptar_Rendszam_kereso] (:eszkoz_id, :plate_number)";}
     public function select_tabletLista()                        {return "SELECT * FROM [dbo].[tablet_lista] WHERE [eszkoz_id] = :eszkoz_id";}
@@ -22,7 +22,7 @@ class SqlCommand{
     public function exec_bizonylatKepFelvitele()                {return "EXEC [dbo].[BizonylatDokumentumFelvitele] :parameter";}
     public function exec_tabletEsetiFelvitele()                 {return "EXEC [dbo].[Tablet_EsetiFelvitele] :parameter, :user_id, :lezart, :output";}
     public function exec_tabletSzezonalisFelvitele()            {return "EXEC [dbo].[Tablet_SzezonalisFelvitele] :parameter, :user_id, :lezart, :output";}
-    public function exec_tabletAbroncsigenylesFelvitele()       {return "EXEC [dbo].[Tablet_AbroncsigenylesFelvitele] :parameter, :lezart, :output";}
+    public function exec_tabletAbroncsigenylesFelvitele()       {return "EXEC [dbo].[Tablet_AbroncsigenylesFelvitele] :parameter, :user_id, :lezart, :output";}
     public function exec_tabletMunkalapMeghiusulas()            {return "EXEC [local].[Tablet_MunkalapMeghiusulas] :foglalas_id, :indoklas, :output";}
     public function exec_tabletMunkalapEsetiMeghiusulas()       {return "EXEC [local].[Tablet_MunkalapEsetiMeghiusulas] :foglalas_id, :indoklas, :output";}
     public function exec_tabletMunkalapSzezonalisFelvitele()    {return "EXEC [local].[Tablet_MunkalapSzezonalisFelvitele] :foglalas_id, :output";}

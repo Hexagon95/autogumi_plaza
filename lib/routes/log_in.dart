@@ -62,8 +62,7 @@ class LogInState extends State<LogIn>{
 
   // ---------- < Widget Build [2] > ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ----------
   Widget get _drawVerzio => Column(children: [
-    //Text('v1.20a (TEST 2)', style: TextStyle(color: Colors.white, fontSize: 30, fontWeight: FontWeight.bold)), //${DataManager.thisVersion}
-    Text('v${DataManager.thisVersion}', style: const TextStyle(color: Colors.white, fontSize: 30, fontWeight: FontWeight.bold)),
+    Text('v${DataManager.thisVersion}${(DataManager.verzioTest == 0)? '' : '   [Teszt: ${DataManager.verzioTest.toString()}]'}', style: const TextStyle(color: Colors.white, fontSize: 30, fontWeight: FontWeight.bold)),
   ]);
 
   Widget get _drawButtonLogIn =>  Padding(

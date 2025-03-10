@@ -1,6 +1,7 @@
 // ignore_for_file: use_build_context_synchronously, deprecated_member_use
 import 'package:autogumi_plaza/routes/probe_measuring.dart';
 import 'package:autogumi_plaza/routes/signature.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_datetime_picker_plus/flutter_datetime_picker_plus.dart' as picker;
 import 'package:autogumi_plaza/routes/photo_preview.dart';
 import 'package:dropdown_search/dropdown_search.dart';
@@ -11,6 +12,7 @@ import '../global.dart';
 import 'package:masked_text/masked_text.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 
 class DataForm extends StatefulWidget {//-------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- <DataForm>
   const DataForm({super.key});
@@ -42,6 +44,7 @@ class DataFormState extends State<DataForm> {//-- ---------- ---------- --------
   static bool isExtraForm =                           false;
   static bool isScreenLocked =                        false;
   static int? amount;
+  static int? selectedIndexInCalendar;
   static int get currentProgress{
     if(progress.isNotEmpty) for(int i = 0; i < progress.length; i++) {if(!progress[i]) return i;}
     return 0;
@@ -73,6 +76,7 @@ class DataFormState extends State<DataForm> {//-- ---------- ---------- --------
     color:        const Color.fromARGB(255, 255, 230, 230),
     borderRadius: const BorderRadius.all(Radius.circular(8))
   );
+
   bool get changeDetected{
     if(currentProgress < 2) return false;
     for(int i = 0; i < DataManager.dataQuickCall[0]['poziciok'][currentProgress - 1]['adatok'].length; i++){
@@ -358,7 +362,7 @@ class DataFormState extends State<DataForm> {//-- ---------- ---------- --------
     for(int i = 0; i < buttonListPictures.length; i++) {listButtons.add(TextButton(
       onPressed:  () async => (buttonListPictures[i] == ButtonState.default0)? _buttonListPicturesPressed(i) : null,
       style:      ButtonStyle(backgroundColor: MaterialStateProperty.all(Colors.transparent)),
-      child:      Padding(padding: const EdgeInsets.all(5), child: Row(children:[
+      child:      Padding(padding: const EdgeInsets.all(5), child: Row(children:[ 
         (buttonListPictures[i] == ButtonState.loading)? _progressIndicator(Global.getColorOfIcon(buttonListPictures[i])) : Container(),
         Icon(Icons.image_outlined, color: Global.getColorOfIcon(buttonListPictures[i]), size: 30)
       ]))
@@ -511,7 +515,7 @@ class DataFormState extends State<DataForm> {//-- ---------- ---------- --------
               border:             InputBorder.none, 
             ),
             style:        TextStyle(color: (editable && !isClosed)? const Color.fromARGB(255, 51, 51, 51) : const Color.fromARGB(255, 153, 153, 153)),
-            keyboardType: TextInputType.number,
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
           )),
           SizedBox(height: 55, width: getWidth(index), child: Row(
             mainAxisAlignment:  MainAxisAlignment.end,
@@ -522,8 +526,21 @@ class DataFormState extends State<DataForm> {//-- ---------- ---------- --------
         default: return SizedBox(height: 55, width: getWidth(index), child: TextFormField(
           enabled:            (editable && !isClosed),          
           controller:         controller[index],
-          onEditingComplete:  () => setState(() {_checkDouble(thisData, controller[index].text, input, index); _handleSelectChange(thisData, controller[index].text, index); focusNode[index].unfocus();}),
-          onTapOutside:       (PointerDownEvent varPointerDownEvent) => setState(() {_checkDouble(thisData, controller[index].text, input, index); _handleSelectChange(thisData, controller[index].text, index); focusNode[index].unfocus();}),
+          onEditingComplete:  () => setState((){
+            _formatInput(controller[index], int.parse(thisData[index]['decimal_places']?.toString() ?? '0'));
+            _checkDouble(thisData, controller[index].text, input, index);
+            _handleSelectChange(thisData, controller[index].text, index);
+            focusNode[index].unfocus();
+          }),
+          onTapOutside:       (PointerDownEvent varPointerDownEvent) => setState((){
+            _formatInput(controller[index], int.parse(thisData[index]['decimal_places']?.toString() ?? '0'));
+            _checkDouble(thisData, controller[index].text, input, index);
+            _handleSelectChange(thisData, controller[index].text, index);
+            focusNode[index].unfocus();
+          }),
+          inputFormatters: [
+            FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*')), // Allow numbers and decimals
+          ],
           focusNode:          focusNode[index],
           decoration:         InputDecoration(
             contentPadding:     const EdgeInsets.all(10),
@@ -531,7 +548,7 @@ class DataFormState extends State<DataForm> {//-- ---------- ---------- --------
             border:             InputBorder.none,
           ),
           style:        TextStyle(color: (editable && !isClosed)? const Color.fromARGB(255, 51, 51, 51) : const Color.fromARGB(255, 153, 153, 153)),
-          keyboardType: TextInputType.number,
+          keyboardType: const TextInputType.numberWithOptions(decimal: true),
         ));
       }
 
@@ -935,6 +952,24 @@ class DataFormState extends State<DataForm> {//-- ---------- ---------- --------
     buttonSave = DataManager.setButtonSave;
     FocusManager.instance.primaryFocus?.unfocus();
     setState((){});
+  }
+
+  void _formatInput(TextEditingController controller, int decimalPlaces){
+    String text = controller.text.replaceAll(',', ''); // Remove thousands separators
+    if (text.isNotEmpty) {
+      double? value = double.tryParse(text);
+      if (value != null) {
+        // Create a dynamic formatter based on decimal places
+        String decimalPattern = '0' * decimalPlaces;
+        NumberFormat formatter = NumberFormat("0.$decimalPattern");
+
+        // Update the controller text
+        controller.value = TextEditingValue(
+          text: formatter.format(value), // Format without thousand separators
+          selection: TextSelection.collapsed(offset: formatter.format(value).length),
+        );
+      }
+    }
   }
 
   Future _checkDouble(dynamic thisData, String? value, dynamic input, int index) async{

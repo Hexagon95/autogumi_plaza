@@ -25,16 +25,17 @@ class CalendarState extends State<Calendar> {
   // ---------- < Constructor > ---------- ---------- ---------- ---------- ---------- ---------- ----------
 
   // ---------- < Variables [Static] > --- ---------- ---------- ---------- ---------- ---------- ----------
-  static List<ButtonState> buttonDelete = List<ButtonState>.empty(growable: true);
-  static List<String> itemsInList =       List<String>.empty(growable: true);
-  static List<String> jelleg =            List<String>.empty(growable: true);
-  static List<bool>   closedInList =      List<bool>.empty(growable: true);
-  static String selectedDate =            DateFormat('yyyy.MM.dd').format(DateTime.now()).toString();
-  static String title =                   '';
-  static String errorMessage =            '';
-  static String errorMessagePopUp =       '';
-  static String errorMessagePopUpTitle =  '';
-  static List<dynamic> incompleteDays =  [];
+  static List<ButtonState> buttonDelete =   List<ButtonState>.empty(growable: true);
+  static List<ButtonState> buttonIgenyles = List<ButtonState>.empty(growable: true);
+  static List<String> itemsInList =         List<String>.empty(growable: true);
+  static List<String> jelleg =              List<String>.empty(growable: true);
+  static List<bool>   closedInList =        List<bool>.empty(growable: true);
+  static String selectedDate =              DateFormat('yyyy.MM.dd').format(DateTime.now()).toString();
+  static String title =                     '';
+  static String errorMessage =              '';
+  static String errorMessagePopUp =         '';
+  static String errorMessagePopUpTitle =    '';
+  static List<dynamic> incompleteDays =     [];
   static dynamic plateNumberResponse;
   static int? selectedIndexList;
 
@@ -183,12 +184,15 @@ class CalendarState extends State<Calendar> {
   ));
 
   Widget _drawButtonIgenyles(int index){
-    return (closedInList[index])
-    ? SizedBox(height: 40, width: 130, child: TextButton(
-      style:      ButtonStyle(backgroundColor: MaterialStateProperty.all(Global.getColorOfButton(ButtonState.default0))),
-      onPressed:  () => _buttonIgenylesPressed(index),
-      child:      Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-        Text('📄 Igénylés', style: TextStyle(fontSize: 18, color: Global.getColorOfIcon(ButtonState.default0)))
+    if(DataManager.isIgenylesDisabled) buttonIgenyles[index] = ButtonState.disabled;
+    return (DataManager.data[2][index]['igenyles'].toString() == '1')
+    //return (closedInList[index] && ['Eseti'].contains(jelleg[index]))
+    ? SizedBox(height: 40, child: TextButton(
+      style:      ButtonStyle(backgroundColor: MaterialStateProperty.all(Global.getColorOfButton(buttonIgenyles[index]))),
+      onPressed:  () => (buttonIgenyles[index] == ButtonState.default0) ? _buttonIgenylesPressed(index) : null,
+      child:      Row(mainAxisSize: MainAxisSize.min, mainAxisAlignment: MainAxisAlignment.center, children: [
+        Visibility(visible: (buttonIgenyles[index] == ButtonState.loading), child: _progressIndicator(Global.getColorOfIcon(buttonIgenyles[index]))),
+        Text('📄 Igénylés', style: TextStyle(fontSize: 18, color: Global.getColorOfIcon(buttonIgenyles[index])))
       ])
     ))
     : Container();
@@ -217,9 +221,10 @@ class CalendarState extends State<Calendar> {
   }
 
   Future _functionPress(int index) async{
-    errorMessage =            '';
-    errorMessagePopUp =       '';
-    errorMessagePopUpTitle =  '';
+    errorMessage =                          '';
+    errorMessagePopUp =                     '';
+    errorMessagePopUpTitle =                '';
+    DataFormState.selectedIndexInCalendar = selectedIndexList;
     await DataManager(quickCall: QuickCall.verzio).beginQuickCall;
     if(LogInState.updateNeeded) Restart.restartApp();
     Global.routeNext =        NextRoute.tabForm;
@@ -237,9 +242,10 @@ class CalendarState extends State<Calendar> {
     }
     DataFormState.workType = jelleg[index];
     DataFormState.isClosed = closedInList[index];
-    selectedIndexList = null;
+    selectedIndexList =      null;
     setState((){});
     await Navigator.pushNamed(context, '/dataForm');
+    
     setState((){});
   }
 
@@ -307,6 +313,7 @@ class CalendarState extends State<Calendar> {
         break;
 
       case '📄 Igénylés':
+        if(DataManager.isIgenylesDisabled) break;
         Global.routeNext = NextRoute.abroncsIgenyles;
         await DataManager(input: {'datum': _focusedDay}).beginProcess;
         await DataManager(quickCall: QuickCall.giveDatas).beginQuickCall;
@@ -352,10 +359,14 @@ class CalendarState extends State<Calendar> {
   }
 
   Future _buttonIgenylesPressed(int index) async{
-    itemsInList;
+    setState(() => buttonIgenyles[index] = ButtonState.loading);
     Global.routeNext = NextRoute.abroncsIgenyles;
-    await DataManager(input: {'datum': _focusedDay}).beginProcess;
+    await DataManager(input: {
+      'datum':        _focusedDay,
+      'munkalap_id':  DataManager.data[2][index]['id'].toString()
+    }).beginProcess;
     await DataManager(quickCall: QuickCall.giveDatas).beginQuickCall;
+    buttonIgenyles[index] = ButtonState.default0;
     await Navigator.pushNamed(context, '/dataForm');
     setState((){});
   }

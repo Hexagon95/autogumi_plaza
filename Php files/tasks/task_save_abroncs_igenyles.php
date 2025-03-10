@@ -22,6 +22,7 @@ class Task{
             $this->sqlCommand->exec_tabletAbroncsigenylesFelvitele(),
             [
                 'parameter' =>  $this->request['parameter'],
+                'user_id' =>    $this->request['user_id'],
                 'lezart' =>     $this->request['lezart']
             ],
             $this->request['customer']

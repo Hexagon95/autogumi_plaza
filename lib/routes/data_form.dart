@@ -1,18 +1,19 @@
 // ignore_for_file: use_build_context_synchronously, deprecated_member_use
 import 'package:autogumi_plaza/routes/probe_measuring.dart';
-import 'package:autogumi_plaza/routes/signature.dart';
-import 'package:flutter/services.dart';
-import 'package:flutter_datetime_picker_plus/flutter_datetime_picker_plus.dart' as picker;
 import 'package:autogumi_plaza/routes/photo_preview.dart';
-import 'package:dropdown_search/dropdown_search.dart';
+import 'package:autogumi_plaza/routes/signature.dart';
 import 'package:autogumi_plaza/routes/calendar.dart';
 import 'package:autogumi_plaza/data_manager.dart';
-import 'package:flutter/foundation.dart';
 import '../global.dart';
+import 'package:flutter_datetime_picker_plus/flutter_datetime_picker_plus.dart' as picker;
+import 'package:dropdown_search/dropdown_search.dart';
 import 'package:masked_text/masked_text.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'dart:convert';
 
 class DataForm extends StatefulWidget {//-------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- <DataForm>
   const DataForm({super.key});
@@ -891,7 +892,7 @@ class DataFormState extends State<DataForm> {//-- ---------- ---------- --------
     dataQuickCall1Copy =      List.from(DataManager.dataQuickCall[1]);
     listOfLookupDatasCopy =   Map.from(listOfLookupDatas);
     isExtraForm =             true;
-    rawDataExtra =            await DataManager().getJsonFromSql(input: rawData[index]['buttons'][0]['sql_input']);
+    rawDataExtra =            await DataManager().getJsonFromSql(input: await json.decode(rawData[index]['buttons'].toString())[0]['sql_input']);
     _resetController(rawDataExtra);
     await DataManager(quickCall: QuickCall.giveDatas, input: {'rawDataInput': rawDataExtra}).beginQuickCall;
     indexOfExtraForm = index;

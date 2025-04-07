@@ -18,7 +18,7 @@ import 'routes/log_in.dart';
 
 class DataManager{
   // ---------- < Variables [Static] > - ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ----------
-  static String thisVersion =                       '1.25g';
+  static String thisVersion =                       '1.25h';
 
   static bool isIgenylesDisabled =                  false;  // true will disable all buttons of "📄 Igénylés".
   static int verzioTest =                           0;      // anything other than 0 will draw "[Teszt #]" at the LogIn screen.

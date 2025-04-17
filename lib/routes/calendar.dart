@@ -261,10 +261,13 @@ class CalendarState extends State<Calendar> {
     if(varString != null){
       await DataManager(quickCall: QuickCall.cancelWork, input: {'index': index, 'indoklas': varString, 'jelleg': jelleg[index]}).beginQuickCall;
       if(DataManager.dataQuickCall[3].isNotEmpty) {await Global.showAlertDialog(context, title: 'Hiba!', content: DataManager.dataQuickCall[3].toString());}
-      else {await DataManager().beginProcess;}
+      else {
+        await DataManager().beginProcess;
+        setState((){});
+        //await Navigator.pushReplacement(context,MaterialPageRoute(builder: (context) => const Calendar()));
+      }
     }
-    buttonDelete[index] = ButtonState.default0;
-    setState((){});
+    else {buttonDelete[index] = ButtonState.default0; setState((){});}
   }
 
   Future get _buttonListInquriesPressed async{

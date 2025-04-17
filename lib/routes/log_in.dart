@@ -23,6 +23,7 @@ class LogInState extends State<LogIn>{
   bool isMenuItemNotPressed = true;
   OtaEvent? currentEvent;
   late double _width;
+  
 
   // ---------- < Widget Build [1] > ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ----------
   @override

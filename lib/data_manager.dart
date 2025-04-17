@@ -18,7 +18,7 @@ import 'routes/log_in.dart';
 
 class DataManager{
   // ---------- < Variables [Static] > - ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ----------
-  static String thisVersion =                       '1.25h';
+  static String thisVersion =                       '1.25j';
 
   static bool isIgenylesDisabled =                  false;  // true will disable all buttons of "📄 Igénylés".
   static int verzioTest =                           0;      // anything other than 0 will draw "[Teszt #]" at the LogIn screen.
@@ -159,7 +159,7 @@ class DataManager{
           int getIndexFromId({required String id}) {for(int i = 0; i < input['rawDataInput'].length; i++) {if(input['rawDataInput'][i]['id'] == id) return i;} throw Exception('No such id in rawData: $id');}
           bool isLookupDataOnTheSide(String inputId) {for(dynamic item in input['rawDataInput']) {if(item['id'] == inputId) return true;} return false;}
           dynamic getItemFromId({required String id}){
-            if(input['isExtraForm']) {for(dynamic item in DataFormState.rawDataExtra) {if(item['id'] == id) return item;}}
+            if(input['isExtraForm'] != null && input['isExtraForm']) {for(dynamic item in DataFormState.rawDataExtra) {if(item['id'] == id) return item;}}
             else{
               for(dynamic item in dataQuickCall[0]['foglalas']) {if(item['id'] == id) return item;}
               for(dynamic itemList in dataQuickCall[0]['poziciok']) {for(dynamic item in itemList['adatok']) {{if(item['id'] == id) return item;}}}
@@ -373,6 +373,7 @@ class DataManager{
           Uri uriUrl =              Uri.parse('${urlPath}cancel_work.php');          
           http.Response response =  await http.post(uriUrl, body: json.encode(queryParameters), headers: headers);
           dataQuickCall[check(3)] = await jsonDecode(await jsonDecode(response.body));
+          if(kDebugMode)print(dataQuickCall[3].toString());
           break;
 
         case QuickCall.tabletBelep:

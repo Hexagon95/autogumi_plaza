@@ -485,7 +485,7 @@ class DataFormState extends State<DataForm> {//-- ---------- ---------- --------
           : Container(),
           (input['buttons'] != null)? SizedBox(height: 55, width: getWidth(index) - 60, child: Row(
             mainAxisAlignment:  MainAxisAlignment.end,
-            children:           [IconButton(onPressed: () => _selectAddPressed(index: index), icon: const Icon(Icons.add, size: 30))]
+            children:           [Padding(padding: const EdgeInsets.fromLTRB(0, 0, 30, 0), child: IconButton(onPressed: () => _selectAddPressed(index: index), icon: const Icon(Icons.add, size: 30)))]
           )) : Container(),
         ])
         : SizedBox(height: 55, width: getWidth(index), child: TextFormField(
@@ -518,9 +518,9 @@ class DataFormState extends State<DataForm> {//-- ---------- ---------- --------
             style:        TextStyle(color: (editable && !isClosed)? const Color.fromARGB(255, 51, 51, 51) : const Color.fromARGB(255, 153, 153, 153)),
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
           )),
-          SizedBox(height: 55, width: getWidth(index), child: Row(
+          SizedBox(height: 55, width: getWidth(index), child: const Row(
             mainAxisAlignment:  MainAxisAlignment.end,
-            children:           [IconButton(onPressed: () => _measureProfilmelyseg(index: index), icon: const Icon(Icons.line_weight_sharp, size: 30))]
+            children:           [IconButton(onPressed: null /*() => _measureProfilmelyseg(index: index)*/, icon: Icon(Icons.line_weight_sharp, size: 30))]
           ))
         ]);
 
@@ -719,7 +719,7 @@ class DataFormState extends State<DataForm> {//-- ---------- ---------- --------
     if(isExtraForm){
       setState(() => buttonContinue = ButtonState.loading);
       rawDataExtraCopy = List.from(rawDataExtra);
-      await DataManager().executeSql(input: rawData[indexOfExtraForm]['buttons'][0]['sql_output'], parameter: rawDataExtra);
+      await DataManager().executeSql(input: await jsonDecode(rawData[indexOfExtraForm]['buttons'].toString())[0]['sql_output'], parameter: rawDataExtra);
       buttonContinue = ButtonState.disabled;
       await _extraFormFinish;
     }

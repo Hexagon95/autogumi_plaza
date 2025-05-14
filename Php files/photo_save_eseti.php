@@ -43,11 +43,11 @@ $BizonylatDokumentumParams = array(
 
 //file_put_contents($logPath, print_r($BizonylatDokumentumParams, true).chr(10), FILE_APPEND);
 
-if (!is_dir("../../".$KepFileKonyvtar)) {
-    mkdir("../../".$KepFileKonyvtar, 0777, true);
+if (!is_dir("../../../appdoc/".$KepFileKonyvtar)) {
+    mkdir("../../../appdoc/".$KepFileKonyvtar, 0777, true);
 }
 
-file_put_contents("../../".$KepFileKonyvtar."/".$KepFileName.".jpg", $KepFile);
+file_put_contents("../../../appdoc/".$KepFileKonyvtar."/".$KepFileName.".jpg", $KepFile);
 
 $taskPhotoSave = new Task($BizonylatDokumentumParams, $RequestData['customer']);
 echo json_encode($taskPhotoSave->getResult());

@@ -18,14 +18,14 @@ import 'routes/log_in.dart';
 
 class DataManager{
   // ---------- < Variables [Static] > - ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ----------
-  static String thisVersion =                       '1.25j';
+  static String thisVersion =                       '1.25k';
 
   static bool isIgenylesDisabled =                  false;  // true will disable all buttons of "📄 Igénylés".
   static int verzioTest =                           0;      // anything other than 0 will draw "[Teszt #]" at the LogIn screen.
 
   static bool test =                                false;   // <--- Set the root of the Php files here: true = test, false = live Php file directory. This is the same with the directory of the photos!
   static String urlPath =                           test? 'https://developer.mosaic.hu/android/szerviz_mezandmol/' : 'https://app.mosaic.hu/android/szerviz_mezandmol/';
-  static String rootPath =                          test? 'https://developer.mosaic.hu/' : 'https://app.mosaic.hu/';
+  static String rootPath =                          test? 'https://developer.mosaic.hu/' : 'https://appdoc.mosaic.hu/';
   static String get sqlUrlLink =>                   'https://app.mosaic.hu/sql/ExternalInputChangeSQL.php?ceg=mezandmol&SQL=';
   //static const String urlPath =                     'https://app.mosaic.hu/android/szerviz_mezandmol/';       // Live Php file directory
   //static const String urlPath =                     'https://developer.mosaic.hu/android/szerviz_mezandmol/'; // Test Php file directory

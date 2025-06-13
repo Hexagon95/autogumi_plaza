@@ -13,6 +13,7 @@ class SqlCommand{
     public function select_tabletNaptarRendszamKereso()         {return "SELECT * FROM [local].[Tablet_Naptar_Rendszam_kereso] (:eszkoz_id, :plate_number)";}
     public function select_tabletLista()                        {return "SELECT * FROM [dbo].[tablet_lista] WHERE [eszkoz_id] = :eszkoz_id";}
     public function select_tabletNapiMunkalapok()               {return "SELECT * FROM [dbo].[TabletNapiMunkalapok] (:eszkoz_id, :datum)";}
+    public function select_askEsetiMunkalapMeghiusulasOkai()    {return "SELECT * FROM [dbo].[Eseti_munkalap_meghiusulas_okai] ()";}
     public function exec_bizonylatID_SQL()                      {return "SELECT id FROM [dbo].[Bizonylat] WHERE parent_id=:id";}
     public function select_verzioAutogumiPlaza()                {return "SELECT [verzio_autogumi_plaza] FROM [dbo].[Parameters]";}
     public function select_MunkalapSzezonalisPozicioKepek()     {return "SELECT [dbo].[Munkalap_szezonalis_pozicio_kepek] (:foglalas_id, :pozicio)";}

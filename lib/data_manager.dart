@@ -18,7 +18,9 @@ import 'routes/log_in.dart';
 
 class DataManager{
   // ---------- < Variables [Static] > - ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ----------
-  static String thisVersion =                       '1.25k';
+  static String thisVersion =                       '1.26a';
+  
+  static String openAiPassword =                    'qifqik-sedpuf-rejKu6';
 
   static bool isIgenylesDisabled =                  false;  // true will disable all buttons of "📄 Igénylés".
   static int verzioTest =                           0;      // anything other than 0 will draw "[Teszt #]" at the LogIn screen.
@@ -456,6 +458,16 @@ class DataManager{
           dataQuickCall[check(6)] =     json.decode(json.decode(response.body));
           break;
 
+        case QuickCall.askEsetiMunkalapMeghiusulasOkai:
+          var queryParameters = {
+            'customer':     customer,
+          };
+          Uri uriUrl = Uri.parse('${urlPath}ask_eseti_munkalap_meghiusulas_okai.php');
+          http.Response response =      await http.post(uriUrl, body: json.encode(queryParameters), headers: headers);
+          if(kDebugMode) dev.log(response.body.toString());
+          dataQuickCall[check(7)] =    json.decode(json.decode(response.body));
+          break;
+
         default:break;
       }
     }
@@ -708,6 +720,10 @@ class DataManager{
 
         case QuickCall.askPlateNumber:
           CalendarState.plateNumberResponse = dataQuickCall[6][0];
+          break;
+
+        case QuickCall.askEsetiMunkalapMeghiusulasOkai:
+          CalendarState.reasonOfDelete = (dataQuickCall[7] as List).cast<String>();
           break;
 
         default:break;

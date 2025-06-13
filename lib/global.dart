@@ -8,7 +8,7 @@ import 'package:flutter/services.dart';
 // ---------- - < Enums > ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ----------
 enum NextRoute    {logIn,   calendar,       tabForm,        photoPreview, photoTake,  photoCheck, signature,  esetiMunkalapFelvitele, default0, abroncsIgenyles, szezonalisMunkalapFelvitele, probeMeasuring}
 enum ButtonState  {hidden,  loading,        disabled,       error,        default0}
-enum QuickCall    {tabForm, giveDatas,      chainGiveDatas, verzio,       askPhotos,  default0, cancelWork, tabletBelep, saveEsetiMunkalapFelvitele, saveAbroncsIgenyles, chainGiveDatasFormOpen, saveSzezonalisMunkalapFelvitele, askIncompleteDays, askPlateNumber}
+enum QuickCall    {tabForm, giveDatas,      chainGiveDatas, verzio,       askPhotos,  default0, cancelWork, tabletBelep, saveEsetiMunkalapFelvitele, saveAbroncsIgenyles, chainGiveDatasFormOpen, saveSzezonalisMunkalapFelvitele, askIncompleteDays, askPlateNumber, askEsetiMunkalapMeghiusulasOkai}
 enum Probe        {bluetoothCheck, deviceSearch, measureCommand, default0}
 
 class Global{
@@ -221,6 +221,98 @@ class Global{
       context:            context,
       builder:            (BuildContext context) => infoRegistry,
       barrierDismissible: false
+    );
+  }
+
+  static Future<String?> dropdownInputDialog(
+    BuildContext context, {
+    String title = '',
+    String content = '',
+    required List<String> options,
+  }) async {
+    String? selectedValue;
+    String? customInput;
+    bool isOtherSelected = false;
+
+    // -- Custom Decoration copied from textInputDialog --
+    BoxDecoration customBoxDecoration = BoxDecoration(
+      border: Border.all(color: const Color.fromARGB(130, 184, 184, 184), width: 1),
+      color: Colors.white,
+      borderRadius: const BorderRadius.all(Radius.circular(8)),
+    );
+
+    return showDialog<String>(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setState) => AlertDialog(
+            title: Text(title, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  decoration: customBoxDecoration,
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  child: DropdownButtonFormField<String>(
+                    value: selectedValue,
+                    isExpanded: true,
+                    items: options
+                        .map((option) => DropdownMenuItem(
+                              value: option,
+                              child: Text(option),
+                            ))
+                        .toList(),
+                    onChanged: (value) {
+                      setState(() {
+                        selectedValue = value;
+                        isOtherSelected = value == options.last;
+                      });
+                    },
+                    decoration: InputDecoration(
+                      labelText: content,
+                      contentPadding: const EdgeInsets.all(10),
+                      border: InputBorder.none,
+                    ),
+                  ),
+                ),
+                if (isOtherSelected) ...[
+                  const SizedBox(height: 12),
+                  Container(
+                    decoration: customBoxDecoration,
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    child: TextField(
+                      onChanged: (value) => customInput = value,
+                      decoration: const InputDecoration(
+                        labelText: 'Add meg az egyéb opciót:',
+                        contentPadding: EdgeInsets.all(10),
+                        border: InputBorder.none,
+                      ),
+                      style: const TextStyle(color: Color.fromARGB(255, 51, 51, 51)),
+                    ),
+                  ),
+                ],
+              ],
+            ),
+            actions: [
+              TextButton(
+                child: const Text('Mégsem'),
+                onPressed: () => Navigator.pop(context, null),
+              ),
+              TextButton(
+                child: const Text('OK'),
+                onPressed: () {
+                  if (isOtherSelected) {
+                    Navigator.pop(context, customInput?.trim());
+                  } else {
+                    Navigator.pop(context, selectedValue);
+                  }
+                },
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 

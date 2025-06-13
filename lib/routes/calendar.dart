@@ -36,6 +36,15 @@ class CalendarState extends State<Calendar> {
   static String errorMessagePopUp =         '';
   static String errorMessagePopUpTitle =    '';
   static List<dynamic> incompleteDays =     [];
+  static List<String> reasonOfDelete =      [
+    "Az Ügyfél nem jött el a szerelés időpontjára.",
+    "Sérülten tárolt abroncs miatt meghiúsult szerelés.",
+    "Nincs itt a gumiabroncs.",
+    "Rossz/sérült abroncs érkezett.",
+    "Más rendszámú autóval érkezett az Ügyfél.",
+    "Kerékő hiányzik",
+    "Egyéb..."
+  ];
   static dynamic plateNumberResponse;
   static int? selectedIndexList;
 
@@ -257,7 +266,8 @@ class CalendarState extends State<Calendar> {
 
   Future _buttonDeletePressed(int index) async{
     setState(() => buttonDelete[index] = ButtonState.loading);
-    String? varString = await Global.textInputDialog(context, title: 'Munka Meghíusult', content: 'Indok:');
+    await DataManager(quickCall: QuickCall.askEsetiMunkalapMeghiusulasOkai).beginQuickCall;
+    String? varString = await Global.dropdownInputDialog(context, options: reasonOfDelete, title: 'Munka Meghíusult', content: 'Indok:'); //textInputDialog(context, title: 'Munka Meghíusult', content: 'Indok:');
     if(varString != null){
       await DataManager(quickCall: QuickCall.cancelWork, input: {'index': index, 'indoklas': varString, 'jelleg': jelleg[index]}).beginQuickCall;
       if(DataManager.dataQuickCall[3].isNotEmpty) {await Global.showAlertDialog(context, title: 'Hiba!', content: DataManager.dataQuickCall[3].toString());}

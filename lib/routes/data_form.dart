@@ -377,6 +377,7 @@ class DataFormState extends State<DataForm> {//-- ---------- ---------- --------
 
   // ---------- < Methods [1] > ------ ---------- ---------- ---------- ---------- ---------- ---------- ---------- ----------
   Future _quickSave() async{
+    if(!enableInteraction) return;
     if(quickSaveLock) return;
     quickSaveLock = true;
     setState(() => buttonSaveProgress = ButtonState.loading);
@@ -715,6 +716,7 @@ class DataFormState extends State<DataForm> {//-- ---------- ---------- --------
   }
 
   Future get _buttonContinuePressed async{
+    if(!enableInteraction) return;
     numberOfRequiredPictures = 0;
     if(isExtraForm){
       setState(() => buttonContinue = ButtonState.loading);
@@ -767,7 +769,7 @@ class DataFormState extends State<DataForm> {//-- ---------- ---------- --------
     setState((){});
   }
 
-  Future get _buttonSavePressed async {switch(Global.currentRoute){
+  Future get _buttonSavePressed async {if(!enableInteraction) {return;} switch(Global.currentRoute){
     case NextRoute.abroncsIgenyles:
     case NextRoute.esetiMunkalapFelvitele:
     case NextRoute.szezonalisMunkalapFelvitele:
@@ -805,6 +807,7 @@ class DataFormState extends State<DataForm> {//-- ---------- ---------- --------
   }}
 
   Future get _buttonSignaturePressed async{
+    if(!enableInteraction) return;
     setState(() => buttonContinue = ButtonState.loading);
     DataManager.dataQuickCall[0]['poziciok'][currentProgress - 1]['adatok'] = rawData;
     DataManager.dataQuickCall[1][currentProgress] =                           listOfLookupDatas;
@@ -819,7 +822,8 @@ class DataFormState extends State<DataForm> {//-- ---------- ---------- --------
     await Navigator.pushNamed(context, '/signature');
   }
 
-  Future get _buttonCopyPressed async{ 
+  Future get _buttonCopyPressed async{
+    if(!enableInteraction) return;
     setState(() => buttonCopy = ButtonState.loading);
     if(await Global.yesNoDialog(
       context,
@@ -837,6 +841,7 @@ class DataFormState extends State<DataForm> {//-- ---------- ---------- --------
   }
 
   Future get _buttonExtraCopyPressed async{
+    if(!enableInteraction) return;
     setState(() => buttonCopy = ButtonState.loading);
     rawDataExtra =  List.from(rawDataExtraCopy);
     buttonCopy =    ButtonState.default0;
@@ -845,6 +850,7 @@ class DataFormState extends State<DataForm> {//-- ---------- ---------- --------
   }
 
   Future get _buttonCameraPressed async{
+    if(!enableInteraction) return;
     setState(() => buttonCamera = ButtonState.loading);
     Global.routeNext =              NextRoute.photoTake;
     buttonCamera =                  ButtonState.default0;
@@ -854,14 +860,18 @@ class DataFormState extends State<DataForm> {//-- ---------- ---------- --------
     setState((){});
   }
 
-  Future get _buttonBackPressed async {if(await _handlePop()) {Navigator.pop(context);}}
+  Future get _buttonBackPressed async{
+    if(!enableInteraction) return;
+    if(await _handlePop()) {Navigator.pop(context);}
+  }
 
-  Future get _buttonCancelPressed async {if(isClosed || await Global.yesNoDialog(context,
+  Future get _buttonCancelPressed async {if(!enableInteraction) {return;} if(isClosed || await Global.yesNoDialog(context,
     title:    'Adatlap elhagyása',
     content:  'Elveti módosításait és visszatér a Naptárhoz?'
   )) {Global.routeBack; CalendarState.selectedIndexList = null; currentProgress = 0; isClosed = false; Navigator.pop(context);}}
 
   Future get _buttonCancelExtraPressed async{
+    if(!enableInteraction) return;
     controller =                    List.from(controllerCopy);
     rawData =                       List.from(rawDataCopy);
     DataManager.dataQuickCall[1] =  List.from(dataQuickCall1Copy);
@@ -873,6 +883,7 @@ class DataFormState extends State<DataForm> {//-- ---------- ---------- --------
   }
 
   Future _buttonListPicturesPressed(int i) async{
+    if(!enableInteraction) return;
     setState(() => buttonListPictures[i] = ButtonState.loading);
     Global.routeNext =                NextRoute.photoCheck;
     PhotoPreviewState.selectedIndex = i; 
@@ -887,6 +898,7 @@ class DataFormState extends State<DataForm> {//-- ---------- ---------- --------
   }}
 
   Future _selectAddPressed({required int index}) async{
+    if(!enableInteraction) return;
     controllerCopy =          List.from(controller);
     rawDataCopy =             List.from(rawData);
     dataQuickCall1Copy =      List.from(DataManager.dataQuickCall[1]);
@@ -901,6 +913,7 @@ class DataFormState extends State<DataForm> {//-- ---------- ---------- --------
   }
 
   Future _measureProfilmelyseg({required int index}) async{
+    if(!enableInteraction) return;
     if(await Global.yesNoDialog(context,
       title: 'Profilmélység Mérése Szondával',
       content: 'Kívánja az abroncs profilmélységét szondával mérni?'
@@ -1036,19 +1049,22 @@ class DataFormState extends State<DataForm> {//-- ---------- ---------- --------
   }
 
   Future _handleSelectChange(List<dynamic> thisData, String? newValue, int index, {bool isCheckBox = false}) async{ if(enableInteraction){
-    thisData[index]['value'] = newValue;
-    if(listOfLookupDatas[thisData[index]['id']] != null) {for(dynamic item in listOfLookupDatas[thisData[index]['id']]) {item['selected'] = '0';}}
-    setState((){});
-    await DataManager(
-      quickCall:  QuickCall.chainGiveDatas,
-      input:      {'rawDataInput': thisData, 'index': index, 'isCheckBox': isCheckBox, 'newValue': newValue, 'isExtraForm': isExtraForm}
-    ).beginQuickCall;
-    buttonSave = DataManager.setButtonSave;
-    _setButtonContinue;
-    refreshImages;
-    setState((){});
-    enableInteraction = true;
-    listOfLookupDatas; rawData; DataManager.dataQuickCall;
+    try{
+      enableInteraction =         false;
+      thisData[index]['value'] =  newValue;
+      if(listOfLookupDatas[thisData[index]['id']] != null) {for(dynamic item in listOfLookupDatas[thisData[index]['id']]) {item['selected'] = '0';}}
+      setState((){});
+      await DataManager(
+        quickCall:  QuickCall.chainGiveDatas,
+        input:      {'rawDataInput': thisData, 'index': index, 'isCheckBox': isCheckBox, 'newValue': newValue, 'isExtraForm': isExtraForm}
+      ).beginQuickCall;
+      buttonSave = DataManager.setButtonSave;
+      _setButtonContinue;
+      refreshImages;
+      setState((){});
+    }
+    catch(e) {if(kDebugMode) print(e);}
+    finally {enableInteraction = true;}
   }}
 
   void _resetController(List<dynamic> thisData) {

@@ -18,7 +18,7 @@ import 'routes/log_in.dart';
 
 class DataManager{
   // ---------- < Variables [Static] > - ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ----------
-  static String thisVersion =                       '1.26a';
+  static String thisVersion =                       '1.26b';
   
   static String openAiPassword =                    'qifqik-sedpuf-rejKu6';
 

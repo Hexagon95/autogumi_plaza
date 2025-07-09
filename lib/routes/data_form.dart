@@ -782,7 +782,7 @@ class DataFormState extends State<DataForm> {//-- ---------- ---------- --------
         }}(),
         input: {'lezart': 0}
       ).beginQuickCall;
-      if(
+      /*if(
         DataManager.dataQuickCall[5] != null    &&
         (DataManager.dataQuickCall[5].isNotEmpty || DataManager.dataQuickCall[5].toString() != "[]") &&
         DataManager.dataQuickCall[5][0]['name'] != null &&
@@ -795,6 +795,31 @@ class DataFormState extends State<DataForm> {//-- ---------- ---------- --------
         setState((){buttonContinue = ButtonState.default0;});
       }
       else {
+        buttonContinue = ButtonState.disabled;
+        Global.routeBack;
+        await DataManager().beginProcess;
+        Navigator.popUntil(context, ModalRoute.withName('/calendar'));
+        await Navigator.pushReplacementNamed(context, '/calendar');
+      }*/
+      final raw = DataManager.dataQuickCall[5];
+      Map<String, dynamic>? contentMap;
+
+      if (raw is List && raw.isNotEmpty && raw[0] is Map) {
+        contentMap = Map<String, dynamic>.from(raw[0]);
+      } else if (raw is Map) {
+        contentMap = Map<String, dynamic>.from(raw);
+      }
+
+      if (contentMap != null && contentMap['name'] != null && contentMap['message'] != null) {
+        await Global.showAlertDialog(
+          context,
+          title: contentMap['name'],
+          content: contentMap['message'],
+        );
+        setState(() {
+          buttonContinue = ButtonState.default0;
+        });
+      } else {
         buttonContinue = ButtonState.disabled;
         Global.routeBack;
         await DataManager().beginProcess;

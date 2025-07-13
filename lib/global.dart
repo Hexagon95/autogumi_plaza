@@ -76,11 +76,19 @@ class Global{
   static int getIntBoolFromString(String value) {switch(value){
     case '':
     case ' ':
+    case 'f':
+    case 'F':
     case 'FALSE':
     case 'False':
     case 'false':
     case '0':     return 0;
-    default:      return 1;
+    case 't':
+    case 'T':
+    case 'true':
+    case 'True':
+    case 'TRUE':
+    case '1':     return 1;
+    default:      try{return int.parse(value);} catch(_){return 0;}
   }}
 
   static String? getStringOrNullFromString(String value){
@@ -110,7 +118,17 @@ class Global{
     );
 
     AlertDialog infoRegistry = AlertDialog(
-      title:    Text(title,   style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+      title: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+          IconButton(
+            icon: Icon(Icons.close, color: getColorOfButton(ButtonState.default0)),
+            splashRadius: 20,
+            onPressed: () => Navigator.of(context).pop(),
+          ),
+        ],
+      ),
       content:  Text(content, style: const TextStyle(fontSize: 16)),
       actions:  [okButton]
     ); 
@@ -118,6 +136,94 @@ class Global{
     return await showDialog(
       context: context,
       builder: (BuildContext context) => infoRegistry,
+      barrierDismissible: false
+    );
+  }
+
+  static Future<dynamic> logInDialog(BuildContext context, {String? userNameInput}) async{
+    // --------- < Variables > ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- //
+    String userName =                     (userNameInput != null)? userNameInput : '';
+    String userPassword =                 '';
+    bool isTextObscure =                  true;
+    ButtonState buttonForgottenPassword = ButtonState.default0;
+    BoxDecoration customBoxDecoration =       BoxDecoration(            
+      border:       Border.all(color: const Color.fromARGB(130, 184, 184, 184), width: 1),
+      color:        Colors.white,
+      borderRadius: const BorderRadius.all(Radius.circular(8))
+    );
+
+    // --------- < Widgets [1] > -------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- //
+    Widget okButton = TextButton(child: const Text('Ok'),     onPressed: () => Navigator.pop(context, {'userName': userName, 'userPassword': userPassword, 'buttonState': buttonForgottenPassword}));
+    Widget cancel =   TextButton(child: const Text('Mégsem'), onPressed: () => Navigator.pop(context, null));
+
+    // --------- < Methods [1] > -------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- //
+    
+    // --------- < Display [2] > -------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- //
+    Widget drawContent() => StatefulBuilder(builder: (context, setState) => SingleChildScrollView(child: Column(children: (buttonForgottenPassword != ButtonState.loading)
+    ?[
+      Container(height: 55, decoration: customBoxDecoration, child: TextFormField(
+        initialValue: userName,
+        onChanged:    (value) => userName = value,
+        decoration:   const InputDecoration(
+          contentPadding: EdgeInsets.all(10),
+          labelText:      'Felhasználónév',
+          border:         InputBorder.none,
+        ),
+        style:        const TextStyle(color: Color.fromARGB(255, 51, 51, 51)),
+      )),
+      const SizedBox(height: 4),
+      Container(height: 65, decoration: customBoxDecoration, child: TextFormField(
+        onChanged:    (value) => userPassword = value,
+        obscureText:  isTextObscure,
+        decoration:   InputDecoration(
+          contentPadding: const EdgeInsets.all(10),
+          labelText:      'Jelszó',
+          border:         InputBorder.none,
+          suffix:         TextButton(
+            onPressed:  () => setState(() => isTextObscure = !isTextObscure),
+            child:      Icon(
+              Icons.remove_red_eye,
+              size:   26,
+              color:  (isTextObscure)? Global.getColorOfButton(ButtonState.default0) : Global.getColorOfButton(ButtonState.disabled),
+            )
+          )
+        ),
+        style:        const TextStyle(color: Color.fromARGB(255, 51, 51, 51)),
+      )),
+      Row(mainAxisAlignment: MainAxisAlignment.start, children: [
+        TextButton(
+          onPressed:  () => setState(() => buttonForgottenPassword = ButtonState.loading),
+          child:      const Text('Elfelejtett jelszó', style: TextStyle(decoration: TextDecoration.underline)),
+        )
+      ])
+    ]
+    : [
+      const Text('Elfelejtette jelszavát?', style: TextStyle(fontWeight: FontWeight.bold)),
+      const Text('Kérjük adja meg regisztrált felhasználói nevét'),
+      Container(height: 55, decoration: customBoxDecoration, child: TextFormField(
+        initialValue: userName,
+        onChanged:    (value) => userName = value,
+        decoration:   const InputDecoration(
+          contentPadding: EdgeInsets.all(10),
+          labelText:      'Felhasználónév',
+          border:         InputBorder.none,
+        ),
+        style:        const TextStyle(color: Color.fromARGB(255, 51, 51, 51)),
+      )),
+      const SizedBox(height: 4),
+    ])));
+
+    // --------- < Display [1] > -------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- //
+    AlertDialog infoRegistry = AlertDialog(
+      title:    const Text('Bejelentkezés', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
+      content:  drawContent(),
+      actions:  [okButton, cancel]
+    );
+
+    // --------- < Return > ---- -------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- //
+    return await showDialog(
+      context:            context,
+      builder:            (BuildContext context) => infoRegistry,
       barrierDismissible: false
     );
   }
@@ -158,7 +264,17 @@ class Global{
     );
 
     AlertDialog infoRegistry = AlertDialog(
-      title:    Text(title,   style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+      title: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+          IconButton(
+            icon: Icon(Icons.close, color: getColorOfButton(ButtonState.default0)),
+            splashRadius: 20,
+            onPressed: () => Navigator.of(context).pop(),
+          ),
+        ],
+      ),
       content:  Text(content, style: const TextStyle(fontSize: 16)),
       actions:  [cameraButton, okButton]
     ); 

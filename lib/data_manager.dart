@@ -18,7 +18,7 @@ import 'routes/log_in.dart';
 
 class DataManager{
   // ---------- < Variables [Static] > - ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ----------
-  static String thisVersion =                       '1.26b';
+  static String thisVersion =                       '1.26c';
   
   static String openAiPassword =                    'qifqik-sedpuf-rejKu6';
 
@@ -158,6 +158,22 @@ class DataManager{
           break;
 
         case QuickCall.chainGiveDatas:
+          // ───── 0️⃣  Detect bulk-mode ───────────────────────────────────
+            if (input['index'] == null) {
+              for (int i = 0; i < input['rawDataInput'].length; i++) {
+                await DataManager(
+                  quickCall:  QuickCall.chainGiveDatas,
+                  input: {
+                    ...input,                   // keep the other flags
+                    'index'     : i,            // now act as single-item mode
+                    'newValue'  : input['rawDataInput'][i]['value'],
+                  },
+                ).beginQuickCall;
+              }
+              break;                            // ← finished bulk pre-fill
+            }
+            
+          // ───── 1️⃣  *existing* single-item logic below ────────────────
           int getIndexFromId({required String id}) {for(int i = 0; i < input['rawDataInput'].length; i++) {if(input['rawDataInput'][i]['id'] == id) return i;} throw Exception('No such id in rawData: $id');}
           bool isLookupDataOnTheSide(String inputId) {for(dynamic item in input['rawDataInput']) {if(item['id'] == inputId) return true;} return false;}
           dynamic getItemFromId({required String id}){
@@ -829,7 +845,7 @@ class DataManager{
       return result;
     }}
     catch(e) {
-      if(kDebugMode) print(e);
+      if(kDebugMode) dev.log(e.toString());
       return [];
     }
   }

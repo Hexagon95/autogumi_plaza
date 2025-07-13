@@ -376,6 +376,12 @@ class DataFormState extends State<DataForm> {//-- ---------- ---------- --------
   : Container();
 
   // ---------- < Methods [1] > ------ ---------- ---------- ---------- ---------- ---------- ---------- ---------- ----------
+  @override
+  void initState(){
+    super.initState();
+    _initOpenForm();
+  }
+
   Future _quickSave() async{
     if(!enableInteraction) return;
     if(quickSaveLock) return;
@@ -699,7 +705,8 @@ class DataFormState extends State<DataForm> {//-- ---------- ---------- --------
             thisData[index]['value'] =  controller[index].text;
             buttonSave =                DataManager.setButtonSave;
           }),
-          onEditingComplete:() async {if(thisData[index]['update_items'].isNotEmpty){
+          onEditingComplete:() async {if(thisData[index]['update_items'].
+          isNotEmpty){
             await DataManager(
               quickCall:  QuickCall.chainGiveDatas,
               input:      {'rawDataInput': thisData, 'index': index, 'isCheckBox': false, 'newValue': thisData[index]['value'], 'isExtraForm': isExtraForm}
@@ -937,6 +944,7 @@ class DataFormState extends State<DataForm> {//-- ---------- ---------- --------
     setState((){});
   }
 
+  // ignore: unused_element
   Future _measureProfilmelyseg({required int index}) async{
     if(!enableInteraction) return;
     if(await Global.yesNoDialog(context,
@@ -956,6 +964,16 @@ class DataFormState extends State<DataForm> {//-- ---------- ---------- --------
 
   // ---------- < Methods [2] > ------ ---------- ---------- ---------- ---------- ---------- ---------- ---------- ----------
   void get _setButtonContinue => buttonContinue = (_isAllMandatoryFilled)? ButtonState.default0 : ButtonState.disabled;
+
+  Future<void> _initOpenForm() async{
+    if(DataManager.dataQuickCall[0]['formopen']?.isNotEmpty ?? false){
+      await DataManager(
+        quickCall:  QuickCall.chainGiveDatas,
+        input:      {'rawDataInput': [{'id': 'formopener', 'update_items': DataManager.dataQuickCall[0]['formopen']}], 'isCheckBox': false, 'isExtraForm': false}
+      ).beginQuickCall;
+      setState((){});
+    }
+  }
 
   Future maskEditingComplete(List<dynamic> thisData, dynamic input, int index) async{
     switch(thisData[index]['name']){

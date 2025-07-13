@@ -14,8 +14,10 @@ class LogIn extends StatefulWidget {
 
 class LogInState extends State<LogIn>{
   // ---------- < Variables [Static] > -------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ----------
-  static String errorMessage =  '';
-  static bool updateNeeded = false;
+  static dynamic logInNamePassword; 
+  static String errorMessage =              '';
+  static String forgottenPasswordMessage =  '';
+  static bool updateNeeded =                false;
 
   // ---------- < Variables > ------ ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ----------
   ButtonState buttonLogIn =   ButtonState.default0;
@@ -108,6 +110,9 @@ class LogInState extends State<LogIn>{
     DataManager.quickData = List<dynamic>.empty(growable: true);
     errorMessage =           '';
     setState(() => buttonLogIn = ButtonState.loading);
+    switch(await Global.logInDialog(context, userNameInput: (logInNamePassword != null && logInNamePassword.isNotEmpty)? logInNamePassword[0]['nev'].toString() : null)){
+      
+    }
     await DataManager(quickCall: QuickCall.verzio).beginQuickCall;
     if(DataManager.isServerAvailable){
       if(!updateNeeded){

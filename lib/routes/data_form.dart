@@ -382,6 +382,12 @@ class DataFormState extends State<DataForm> {//-- ---------- ---------- --------
     _initOpenForm();
   }
 
+  @override
+  void dispose(){
+    Global.lookupCache.clear();
+    super.dispose();
+  }
+
   Future _quickSave() async{
     if(!enableInteraction) return;
     if(quickSaveLock) return;

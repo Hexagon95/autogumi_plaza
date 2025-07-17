@@ -9,6 +9,7 @@ import 'routes/data_form.dart';
 import 'routes/photo_take.dart';
 import 'routes/photo_preview.dart';
 import 'routes/signature.dart';
+import 'routes/panel.dart';
 
 void main() async{
   WidgetsFlutterBinding.ensureInitialized();
@@ -25,6 +26,7 @@ void main() async{
         '/photo/take':      (context) => TakePictureScreen(camera: cameras.first,),
         '/photo/preview':   (context) => const PhotoPreview(),
         '/signature':       (context) => const SignatureForm(),
+        '/panel':           (context) => const Panel()
       },
     )
   );

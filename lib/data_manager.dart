@@ -18,7 +18,7 @@ import 'routes/log_in.dart';
 
 class DataManager{
   // ---------- < Variables [Static] > - ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ----------
-  static String thisVersion =                       '1.26c';
+  static String thisVersion =                       '1.27';
   
   static String openAiPassword =                    'qifqik-sedpuf-rejKu6';
 
@@ -44,6 +44,7 @@ class DataManager{
   static const String nameOfApp =                   'MezandMol Szervíz';
   static String get serverErrorText =>              (isServerAvailable)? '' : errorMessage;
   static String errorMessage =                      '';
+  static int userId =                               0;
   static String? foglalasId;
   static Identity? identity;
  
@@ -98,6 +99,47 @@ class DataManager{
           LogInState.updateNeeded = (thisVersion != actualVersion);
           break;
 
+        case QuickCall.logIn:
+          var queryParameters = {
+            'customer':   customer,
+            'eszkoz_id':  identity.toString()
+          };
+          if(kDebugMode)print(queryParameters);
+          Uri uriUrl =              Uri.parse('${urlPath}login.php');
+          http.Response response =  await http.post(uriUrl, body: json.encode(queryParameters), headers: headers);
+          dataQuickCall[check(34)] =         await jsonDecode(response.body);
+          if(kDebugMode){
+            dev.log(dataQuickCall[34].toString());
+          }
+          break;
+
+        case QuickCall.logInNamePassword:
+          var queryParameters = {
+            'customer':       customer,
+            'eszkoz_id':      identity.toString(),
+            'user_name':      input['user_name'],
+            'user_password':  input['user_password'],
+          };
+          if(kDebugMode)print(queryParameters);
+          Uri uriUrl =                Uri.parse('${urlPath}login_name_password.php');
+          http.Response response =    await http.post(uriUrl, body: json.encode(queryParameters), headers: headers);
+          dataQuickCall[check(31)] =  (response.body != 'null')? await jsonDecode(response.body) : [];
+          if(kDebugMode){
+            String varString = dataQuickCall[31].toString();
+            print(varString);
+          }
+          break;
+
+        case QuickCall.forgottenPassword:
+          Uri uriUrl =                Uri.parse(Uri.encodeFull('https://app.mosaic.hu/sql/ForgottenPasswordSQL.php?name=${input['user_name']}'));
+          http.Response response =    await http.post(uriUrl);
+          dataQuickCall[check(32)] =  (response.body != 'null')? [await jsonDecode(response.body)] : [];
+          if(kDebugMode){
+            String varString = dataQuickCall[32].toString();
+            print(varString);
+          }
+          break;
+
         case QuickCall.tabForm:
           switch(input['jelleg']){
 
@@ -144,7 +186,12 @@ class DataManager{
             Map<String, dynamic> listOfLookupDatas = <String, dynamic>{};
             for(dynamic item in rawData){
               if(!['select','search'].contains(item['input_field'])) continue;
-              listOfLookupDatas[item['id']] = await _getLookupData(thisData: input['rawDataInput'], input: item['lookup_data'], isPhp: (item['php'].toString() == '1'));
+              listOfLookupDatas[item['id']] = await _getCachedLookupData(
+                thisData:     input['rawDataInput'],
+                input:        item['lookup_data'],
+                isPhp:        (item['php'].toString() == '1'),
+                cacheEnabled: (item['cache'] == null && item['cache'].toString() == '1')
+              );
             }
             return listOfLookupDatas;
           }
@@ -223,7 +270,12 @@ class DataManager{
                         }}
                       }
                       if(sqlCommandLookupData.length > 4){
-                        dynamic varDynamic = await _getLookupData(thisData: input['rawDataInput'], input: sqlCommandLookupData.sublist(3).join(' '), isPhp: (item['php'].toString() == '1'));
+                        dynamic varDynamic = await _getCachedLookupData(
+                          thisData:     input['rawDataInput'],
+                          input:        sqlCommandLookupData.sublist(3).join(' '),
+                          isPhp:        (item['php'].toString() == '1'),
+                          cacheEnabled: (item['cache'] == null && item['cache'].toString() == '1')
+                        );
                         if(varIsLookupDataOnTheSide)  {input['rawDataInput'][getIndexFromId(id: item['id'])][fieldName] = Global.getIntBoolFromString(varDynamic[0][''].toString());}
                         else                          {varGetItemFromId[fieldName] =                                      Global.getIntBoolFromString(varDynamic[0][''].toString());}
                       }
@@ -235,7 +287,12 @@ class DataManager{
                       else                          {varGetItemFromId[fieldName] =                                      (listOfStringInput.contains(fieldName))? Global.getStringOrNullFromString(sqlCommandLookupData[3]) : Global.getIntBoolFromString(sqlCommandLookupData[3]);}
                     }
                     if(sqlCommandLookupData.length > 4){
-                      dynamic varDynamic = await _getLookupData(thisData: input['rawDataInput'], input: sqlCommandLookupData.sublist(3).join(' '), isPhp: (item['php'].toString() == '1'));
+                      dynamic varDynamic = await _getCachedLookupData(
+                        thisData:     input['rawDataInput'],
+                        input:        sqlCommandLookupData.sublist(3).join(' '),
+                        isPhp:        (item['php'].toString() == '1'),
+                        cacheEnabled: (item['cache'] == null && item['cache'].toString() == '1')
+                      );
                       if(varIsLookupDataOnTheSide)  {input['rawDataInput'][getIndexFromId(id: item['id'])][fieldName] = (listOfStringInput.contains(fieldName))? Global.getStringOrNullFromString(varDynamic[0][''].toString()) : Global.getIntBoolFromString(varDynamic[0][''].toString());}
                       else                          {varGetItemFromId[fieldName] =                                      (listOfStringInput.contains(fieldName))? Global.getStringOrNullFromString(varDynamic[0][''].toString()) : Global.getIntBoolFromString(varDynamic[0][''].toString());}
                     }
@@ -251,11 +308,12 @@ class DataManager{
                 case 'off': if(input['newValue'] == '1') continue; break;
                 default:                                 continue;
               }}
-              DataFormState.listOfLookupDatas[item['id']] = await _getLookupData(thisData: input['rawDataInput'], input: item['lookup_data'], isPhp: (item['php'].toString() == '1'));
-              //if(varIsLookupDataOnTheSide) {input['rawDataInput'][getIndexFromId(id: item['id'])]['value'] = null;}
-              //else {varGetItemFromId['value'] = null;}
-
-
+              DataFormState.listOfLookupDatas[item['id']] = await _getCachedLookupData(
+                thisData:     input['rawDataInput'],
+                input:        item['lookup_data'],
+                isPhp:        (item['php'].toString() == '1'),
+                cacheEnabled: (item['cache'] == null && item['cache'].toString() == '1')
+              );
               if(varGetItemFromId['input_field'] == 'checkbox'){
                 if(varIsLookupDataOnTheSide){
                   input['rawDataInput'][getIndexFromId(id: item['id'])]['value'] = DataFormState.listOfLookupDatas[item['id']][0]['id'].toString();
@@ -709,6 +767,17 @@ class DataManager{
           LogInState.errorMessage = isServerAvailable ? '' : 'Nincs internet kapcsolat!';
           break;
 
+        case QuickCall.logInNamePassword:
+          LogInState.logInNamePassword = dataQuickCall[31];
+          userId =          (dataQuickCall[31].isNotEmpty)? int.parse(dataQuickCall[31][0]['id'].toString()) : -1;
+          break;
+
+        case QuickCall.forgottenPassword:
+          LogInState.forgottenPasswordMessage = '';
+          if(dataQuickCall[32][0]['errors'].isEmpty) {for(dynamic item in dataQuickCall[32][0]['message']) {LogInState.forgottenPasswordMessage += '${item['text']}\n';}}
+          else {for(dynamic item in dataQuickCall[32][0]['errors']) {LogInState.forgottenPasswordMessage += '${item['text']}\n';}}
+          break;
+
         case QuickCall.tabForm:
           DataFormState.rawData =   dataQuickCall[0]['foglalas'];
           // ----- Title progressBar Reset ----- //
@@ -810,6 +879,53 @@ class DataManager{
   }  
 
   // ---------- < Methods [2] > ------ ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ----------
+  Future<List<dynamic>> _getCachedLookupData({required List<dynamic> thisData, required String input, required bool isPhp, required bool cacheEnabled}) async{
+    final key = '${isPhp ? 'php:' : ''}$input';    
+    if (cacheEnabled && Global.lookupCache.containsKey(key)) {
+      return Global.lookupCache[key];
+    }    
+    final result = await _getLookupData(thisData: thisData, input: input, isPhp: isPhp);
+    if(cacheEnabled) Global.lookupCache[key] = result;
+    return result;
+  }
+
+  Future<dynamic> _getLookupDataFromRawData({required String input, required bool isPhp}) async{
+    String sequence1(dynamic item, String sqlCommand){
+      String pattern = '[${item['id'].toString()}]';
+      sqlCommand =      sqlCommand.replaceAll(pattern, '\'${(item['kod'] == null)? item['value'].toString() : item['kod'].toString()}\'');
+      pattern =         '[jellemzo_${item['jellemzo_id'].toString()}]';
+      sqlCommand =      sqlCommand.replaceAll(pattern, '\'${(item['kod'] == null)? item['value'].toString() : item['kod'].toString()}\'');
+      return sqlCommand;
+    }
+    String sqlCommand = (foglalasId != null)? input.replaceAll("[id]", foglalasId!) : input;
+    for(dynamic item in dataQuickCall[0]['foglalas']) {sqlCommand = sequence1(item, sqlCommand);}
+    for(dynamic array in dataQuickCall[0]['poziciok']) {for(dynamic item in array['adatok']) {sqlCommand = sequence1(item, sqlCommand);}}
+        
+    try {if(isPhp){
+      Uri uriUrl =              Uri.parse(Uri.encodeFull('$sqlUrlLink$sqlCommand').replaceAll('+', '%2b'));
+      //uriUrl =                  Uri.parse(Uri.encodeFull('$sqlUrlLink$sqlCommand').replaceAll('&', '%26'));
+      http.Response response =  await http.post(uriUrl);
+      dynamic result =          await jsonDecode(response.body);
+      return result;
+    }
+    else{
+      if(sqlCommand.isEmpty) return [];
+      var queryParameters = { 
+        'customer': customer,
+        'sql':      sqlCommand
+      };
+      Uri uriUrl =              Uri.parse('${urlPath}select_sql.php');          
+      http.Response response =  await http.post(uriUrl, body: json.encode(queryParameters), headers: headers);
+      dynamic result =          await jsonDecode(response.body)[0]['result'];
+      return result;
+    }}
+    catch(e) {
+      if(kDebugMode) print(e);
+      return [];
+    }
+  }
+
+  // ---------- < Methods [3] > ------ ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ----------
   Future<dynamic> _getLookupData({required List<dynamic> thisData, required String input, required bool isPhp}) async{
     String sequence1(dynamic item, String sqlCommand){
       String pattern = '[${item['id'].toString()}]';
@@ -846,41 +962,6 @@ class DataManager{
     }}
     catch(e) {
       if(kDebugMode) dev.log(e.toString());
-      return [];
-    }
-  }
-  Future<dynamic> _getLookupDataFromRawData({required String input, required bool isPhp}) async{
-    String sequence1(dynamic item, String sqlCommand){
-      String pattern = '[${item['id'].toString()}]';
-      sqlCommand =      sqlCommand.replaceAll(pattern, '\'${(item['kod'] == null)? item['value'].toString() : item['kod'].toString()}\'');
-      pattern =         '[jellemzo_${item['jellemzo_id'].toString()}]';
-      sqlCommand =      sqlCommand.replaceAll(pattern, '\'${(item['kod'] == null)? item['value'].toString() : item['kod'].toString()}\'');
-      return sqlCommand;
-    }
-    String sqlCommand = (foglalasId != null)? input.replaceAll("[id]", foglalasId!) : input;
-    for(dynamic item in dataQuickCall[0]['foglalas']) {sqlCommand = sequence1(item, sqlCommand);}
-    for(dynamic array in dataQuickCall[0]['poziciok']) {for(dynamic item in array['adatok']) {sqlCommand = sequence1(item, sqlCommand);}}
-        
-    try {if(isPhp){
-      Uri uriUrl =              Uri.parse(Uri.encodeFull('$sqlUrlLink$sqlCommand').replaceAll('+', '%2b'));
-      //uriUrl =                  Uri.parse(Uri.encodeFull('$sqlUrlLink$sqlCommand').replaceAll('&', '%26'));
-      http.Response response =  await http.post(uriUrl);
-      dynamic result =          await jsonDecode(response.body);
-      return result;
-    }
-    else{
-      if(sqlCommand.isEmpty) return [];
-      var queryParameters = { 
-        'customer': customer,
-        'sql':      sqlCommand
-      };
-      Uri uriUrl =              Uri.parse('${urlPath}select_sql.php');          
-      http.Response response =  await http.post(uriUrl, body: json.encode(queryParameters), headers: headers);
-      dynamic result =          await jsonDecode(response.body)[0]['result'];
-      return result;
-    }}
-    catch(e) {
-      if(kDebugMode) print(e);
       return [];
     }
   }

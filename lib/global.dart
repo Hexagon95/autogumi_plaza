@@ -6,9 +6,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 // ---------- - < Enums > ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ----------
-enum NextRoute    {logIn,   calendar,       tabForm,        photoPreview, photoTake,  photoCheck, signature,  esetiMunkalapFelvitele, default0, abroncsIgenyles, szezonalisMunkalapFelvitele, probeMeasuring}
+enum NextRoute    {logIn,   calendar,       tabForm,        photoPreview, photoTake,  photoCheck, signature,  esetiMunkalapFelvitele, default0, abroncsIgenyles, szezonalisMunkalapFelvitele, probeMeasuring, panel}
 enum ButtonState  {hidden,  loading,        disabled,       error,        default0}
-enum QuickCall    {tabForm, giveDatas,      chainGiveDatas, verzio,       askPhotos,  default0, cancelWork, tabletBelep, saveEsetiMunkalapFelvitele, saveAbroncsIgenyles, chainGiveDatasFormOpen, saveSzezonalisMunkalapFelvitele, askIncompleteDays, askPlateNumber, askEsetiMunkalapMeghiusulasOkai}
+enum QuickCall    {tabForm, giveDatas,      chainGiveDatas, verzio,       askPhotos,  default0, cancelWork, tabletBelep, saveEsetiMunkalapFelvitele, saveAbroncsIgenyles, chainGiveDatasFormOpen, saveSzezonalisMunkalapFelvitele, askIncompleteDays, askPlateNumber, askEsetiMunkalapMeghiusulasOkai, logIn, forgottenPassword, logInNamePassword}
 enum Probe        {bluetoothCheck, deviceSearch, measureCommand, default0}
 
 class Global{
@@ -21,16 +21,17 @@ class Global{
     int check(int i) {while(routes.length > i){routes.removeLast();} while(routes.length <= i){routes.add(NextRoute.default0);} return i;}
     switch(value){
       case NextRoute.logIn:                       routes[check(0)] = value; break;
-      case NextRoute.calendar:                    routes[check(1)] = value; break;
-      case NextRoute.tabForm:                     routes[check(2)] = value; break;
-      case NextRoute.esetiMunkalapFelvitele:      routes[check(2)] = value; break;
-      case NextRoute.szezonalisMunkalapFelvitele: routes[check(2)] = value; break;
-      case NextRoute.abroncsIgenyles:             routes[check(2)] = value; break;
-      case NextRoute.photoTake:                   routes[check(3)] = value; break;
-      case NextRoute.photoPreview:                routes[check(3)] = value; break;
-      case NextRoute.photoCheck:                  routes[check(3)] = value; break;
-      case NextRoute.signature:                   routes[check(3)] = value; break;
-      case NextRoute.probeMeasuring:              routes[check(3)] = value; break;
+      case NextRoute.panel:                       routes[check(1)] = value; break;
+      case NextRoute.calendar:                    routes[check(2)] = value; break;
+      case NextRoute.tabForm:                     routes[check(3)] = value; break;
+      case NextRoute.esetiMunkalapFelvitele:      routes[check(3)] = value; break;
+      case NextRoute.szezonalisMunkalapFelvitele: routes[check(3)] = value; break;
+      case NextRoute.abroncsIgenyles:             routes[check(3)] = value; break;
+      case NextRoute.photoTake:                   routes[check(4)] = value; break;
+      case NextRoute.photoPreview:                routes[check(4)] = value; break;
+      case NextRoute.photoCheck:                  routes[check(4)] = value; break;
+      case NextRoute.signature:                   routes[check(4)] = value; break;
+      case NextRoute.probeMeasuring:              routes[check(4)] = value; break;
       default: throw Exception('Default route has been thrown!!!');
     }
     _printRoutes;
@@ -47,6 +48,8 @@ class Global{
     color:        getColorOfButton(input),
     borderRadius: const BorderRadius.all(Radius.circular(8))
   );
+
+  static Map<String, dynamic> lookupCache = {};  
 
   // ---------- < SQL Commands > ----- -------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ----------
   static const String sqlCreateTableIdentity = "CREATE TABLE identityTable(id INTEGER PRIMARY KEY, identity TEXT)";

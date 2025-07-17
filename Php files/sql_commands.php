@@ -18,6 +18,7 @@ class SqlCommand{
     public function select_verzioAutogumiPlaza()                {return "SELECT [verzio_autogumi_plaza] FROM [dbo].[Parameters]";}
     public function select_MunkalapSzezonalisPozicioKepek()     {return "SELECT [dbo].[Munkalap_szezonalis_pozicio_kepek] (:foglalas_id, :pozicio)";}
     public function select_MunkalapEsetiPozicioKepek()          {return "SELECT [dbo].[Munkalap_eseti_pozicio_kepek] (:foglalas_id, :pozicio)";}
+    public function exec_tabletFelhasznaloAdatok()              {return "EXEC [dbo].[Tablet_FelhasznaloAdatok] :eszkoz_id, :user_name, :user_password";}
     public function exec_tabletFelvitele()                      {return "EXEC [dbo].[TabletFelvitele] :eszkoz_id";}
     public function exec_bizonylatKepPozicioFelvitele()         {return "EXEC [dbo].[BizonylatKepPozicioFelvitele] :parameter";}
     public function exec_bizonylatKepFelvitele()                {return "EXEC [dbo].[BizonylatDokumentumFelvitele] :parameter";}

@@ -104,15 +104,92 @@ class LogInState extends State<LogIn>{
   ;
   
   // ---------- < Methods [1] > ---- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ----------
-  Future get _buttonLogInPressed async {
+  Future get _buttonLogInPressed async{
+    DataManager.customer =      'mosaic';
+    DataManager.data =          List<dynamic>.empty(growable: true);
+    DataManager.quickData =     List<dynamic>.empty(growable: true);
+    errorMessage =              '';
+    forgottenPasswordMessage =  '';
+    setState(() => buttonLogIn =  ButtonState.loading);
+    await DataManager(quickCall: QuickCall.verzio).beginQuickCall;
+    await DataManager(quickCall: QuickCall.logIn).beginQuickCall;
+    if(forgottenPasswordMessage.isNotEmpty){
+      await Global.showAlertDialog(context, title: 'Hiba!', content: forgottenPasswordMessage);
+      setState(() => buttonLogIn = ButtonState.default0);
+      return;
+    }
+    dynamic result = await Global.logInDialog(context, userNameInput: (logInNamePassword != null && logInNamePassword.isNotEmpty)? logInNamePassword[0]['nev'].toString() : null);
+    if(result == null){
+      setState(() => buttonLogIn =  ButtonState.default0);
+      return;
+    }
+    DataManager.customer =        'mosaic';
+    if(!updateNeeded){
+      if(result['buttonState'] == ButtonState.loading){
+        await DataManager(quickCall: QuickCall.forgottenPassword, input: {'user_name': result['userName']}).beginQuickCall;
+        await Global.showAlertDialog(context, title: 'Elfelejtett jelszó', content: forgottenPasswordMessage);
+        setState(() => buttonLogIn =  ButtonState.default0);
+        return;
+      }
+      await DataManager(
+        quickCall:  QuickCall.logInNamePassword,
+        input:      {'user_name': result['userName'], 'user_password': result['userPassword']}
+      ).beginQuickCall;
+      if(logInNamePassword == null || logInNamePassword.isEmpty) {
+        if(DataManager.isServerAvailable) {await Global.showAlertDialog(context, title: 'Ismeretlen felhasználónév!', content: 'A megadott felhasználónév: ${result['userName']}\nismeretlen!');}
+        setState(() => buttonLogIn =  ButtonState.default0);
+        return;
+      }
+      if(logInNamePassword[0]['jelszo_ok'].toString() == '0'){
+        await Global.showAlertDialog(context, title: 'Helytelen jelszó!', content: 'A megadott jelszó helytelen!');
+        setState(() => buttonLogIn =  ButtonState.default0);
+        return;
+      }
+      if(!updateNeeded){
+        await DataManager(quickCall: QuickCall.tabletBelep).beginQuickCall;
+        await DataManager(input: {'number': 0, 'login': 'customer'}).beginProcess;
+        if(errorMessage.isNotEmpty){
+          await Global.showAlertDialog(context, title: 'Hiba!', content: errorMessage);
+          setState(() => buttonLogIn = ButtonState.default0);
+          return;
+        }
+        await DataManager(input: {'number': 1, 'login': 'service'}).beginProcess;
+        if(errorMessage.isNotEmpty){
+          await Global.showAlertDialog(context, title: 'Hiba!', content: errorMessage);
+          setState(() => buttonLogIn = ButtonState.default0);
+          return;
+        }
+        //Global.routeNext = NextRoute.calendar;
+        Global.routeNext = NextRoute.panel;
+        //await DataManager().beginProcess;
+        buttonLogIn =             ButtonState.default0;
+        if(errorMessage.isEmpty){
+          //await DataManager(quickCall: QuickCall.askIncompleteDays).beginQuickCall;
+          //await Navigator.pushNamed(context, '/calendar');
+          await Navigator.pushNamed(context, '/panel');
+        }
+        else{
+          await Global.showAlertDialog(context, title: 'Hiba', content: errorMessage);
+          Global.routeBack;
+        }
+        setState((){});
+      }
+      else{
+        setState(() => buttonLogIn = ButtonState.disabled);
+        tryOtaUpdate();
+      }
+    }    
+  }
+  /*Future get _buttonLogInPressed async {
     DataManager.customer =  'mosaic';
     DataManager.data =      List<dynamic>.empty(growable: true);
     DataManager.quickData = List<dynamic>.empty(growable: true);
     errorMessage =           '';
     setState(() => buttonLogIn = ButtonState.loading);
-    switch(await Global.logInDialog(context, userNameInput: (logInNamePassword != null && logInNamePassword.isNotEmpty)? logInNamePassword[0]['nev'].toString() : null)){
-      
-    }
+    dynamic result = await Global.logInDialog(context, userNameInput: (logInNamePassword != null && logInNamePassword.isNotEmpty)? logInNamePassword[0]['nev'].toString() : null);
+    if(kDebugMode) dev.log(result.toString());
+    if(result == null) {setState(() => buttonLogIn = ButtonState.default0); return;}
+
     await DataManager(quickCall: QuickCall.verzio).beginQuickCall;
     if(DataManager.isServerAvailable){
       if(!updateNeeded){
@@ -150,7 +227,7 @@ class LogInState extends State<LogIn>{
     else{
       setState(() => buttonLogIn = ButtonState.default0);
     }
-  }
+  }*/
 
   // ---------- < Methods [2] > ---- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ----------
   Future<void> tryOtaUpdate() async {

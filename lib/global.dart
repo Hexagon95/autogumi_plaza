@@ -8,12 +8,13 @@ import 'package:flutter/services.dart';
 // ---------- - < Enums > ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ----------
 enum NextRoute    {logIn,   calendar,       tabForm,        photoPreview, photoTake,  photoCheck, signature,  esetiMunkalapFelvitele, default0, abroncsIgenyles, szezonalisMunkalapFelvitele, probeMeasuring, panel}
 enum ButtonState  {hidden,  loading,        disabled,       error,        default0}
-enum QuickCall    {tabForm, giveDatas,      chainGiveDatas, verzio,       askPhotos,  default0, cancelWork, tabletBelep, saveEsetiMunkalapFelvitele, saveAbroncsIgenyles, chainGiveDatasFormOpen, saveSzezonalisMunkalapFelvitele, askIncompleteDays, askPlateNumber, askEsetiMunkalapMeghiusulasOkai, logIn, forgottenPassword, logInNamePassword}
+enum QuickCall    {tabForm, giveDatas,      chainGiveDatas, verzio,       askPhotos,  default0, cancelWork, tabletBelep, saveEsetiMunkalapFelvitele, saveAbroncsIgenyles, chainGiveDatasFormOpen, saveSzezonalisMunkalapFelvitele, askIncompleteDays, askPlateNumber, askEsetiMunkalapMeghiusulasOkai, logIn, forgottenPassword, logInNamePassword, panel, callButtonPhp}
 enum Probe        {bluetoothCheck, deviceSearch, measureCommand, default0}
 
 class Global{
   // ---------- < Variables [Static] > -------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ----------
   static const List<Map<String, Object?>> defaultIdentity = [{'id': 0, 'userName': '', 'password': ''}];
+  static const List<String> trueString =                    ['1', 'true', 'True', 'TRUE', 'T', 't'];
   static List<NextRoute> routes =                           List<NextRoute>.empty(growable: true);
   static NextRoute get currentRoute =>                      routes.last;
   static void get routeBack                                 {routes.removeLast(); _printRoutes;}

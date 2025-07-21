@@ -5,73 +5,36 @@ import 'package:autogumi_plaza/global.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
-class Panel extends StatefulWidget {
+class Panel extends StatefulWidget {//------------ ---------- ---------- ---------- ---------- ---------- ---------- ---------- <Panel>
   const Panel({super.key});
 
   @override
-  State<Panel> createState() => _PanelState();
+  State<Panel> createState() => PanelState();
 }
 
-class _PanelState extends State<Panel> {
-  final List<Map<String, dynamic>> jsonData = [
-    {
-      "type": "1",
-      "icon": "truck",
-      "title": "Lakihegy Komisszió–Ipsum-Tech Service",
-      "value": "SZL2025/2591 2025.06.30",
-      "buttons": [
-        {
-          "name": "Átvettem",
-          "callback": "DashboardSzallitoLevelAtvettemButtonClick('47754')",
-          "color": "success",
-          "icon": "check"
-        },
-        {
-          "name": "Nyomtatás",
-          "callback": "printPage",
-          "color": "secondary",
-          "icon": "printer"
-        },
-        {
-          "name": "MPL",
-          "callback": "openMPL",
-          "color": "success",
-          "icon": "package"
-        }
-      ],
-      "link": "https://app.mosaic.hu/pdfgenerator/mercarius/szallitolevel.php?kategoria_id=3&id=47754&saveandopen=1"
-    },
-    // You can add more items here.
-  ];
+class PanelState extends State<Panel> {//-------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- <PanelState>
+  // ---------- < Wariables [Static] > ---------- ---------- ---------- ---------- ---------- ---------- ---------- ----------
+  static List<dynamic> data = [];
 
-  IconData getIcon(String iconName) {
-    switch (iconName) {
-      case 'truck':
-        return FontAwesomeIcons.truck;
-      case 'check':
-        return Icons.check;
-      case 'printer':
-        return Icons.print;
-      case 'package':
-        return FontAwesomeIcons.box;
-      default:
-        return Icons.help_outline;
-    }
-  }
+  // ---------- < Wariables [1] > ---- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ----------
+  IconData getIcon(String iconName) => switch(iconName){
+    'truck' =>    FontAwesomeIcons.truck,
+    'check' =>    Icons.check,
+    'printer' =>  Icons.print,
+    'package' =>  FontAwesomeIcons.box,
+    'x' =>        Icons.close,
+    'file' =>     FontAwesomeIcons.file,
+    _ =>          Icons.help_outline
+  };
 
-  Color getColor(String colorName) {
-    switch (colorName) {
-      case 'success':
-        return Colors.green;
-      case 'secondary':
-        return Colors.grey;
-      case 'danger':
-        return Colors.red;
-      default:
-        return Colors.blue;
-    }
-  }
+  Color getColor(String colorName) => switch(colorName){
+    'success' =>    Colors.green,
+    'secondary' =>  Colors.grey,
+    'danger' =>     Colors.red,
+    _ =>            Colors.blue
+  };
 
+  // ---------- < Widget [1] > ------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ----------
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -82,8 +45,8 @@ class _PanelState extends State<Panel> {
           crossAxisCount: 2,
           mainAxisSpacing: 12,
           crossAxisSpacing: 12,
-          childAspectRatio: 1.3,
-          children: jsonData.map((item) {
+          childAspectRatio: 2.2,
+          children: data.map((item) {
             return Card(
               elevation: 3,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -112,9 +75,7 @@ class _PanelState extends State<Panel> {
                             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
                             visualDensity: VisualDensity.compact,
                           ),
-                          onPressed: () {
-                            debugPrint("Pressed: ${btn['callback']}");
-                          },
+                          onPressed: () => buttonPressed(btn),
                           icon: Icon(getIcon(btn['icon']), size: 14),
                           label: Text(btn['name'], style: const TextStyle(fontSize: 12)),
                         );
@@ -139,4 +100,12 @@ class _PanelState extends State<Panel> {
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
     );
   }
+
+  // ---------- < Widget [2] > ------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ----------
+  // ---------- < Methods [1] > ------ ---------- ---------- ---------- ---------- ---------- ---------- ---------- ----------
+  Future<void> buttonPressed(dynamic item) async{ if(Global.trueString.contains(item['php'].toString())){
+    await DataManager(quickCall: QuickCall.callButtonPhp, input: {'callback': item['callback']}).beginQuickCall;
+    await DataManager(quickCall: QuickCall.panel).beginQuickCall;
+    setState((){});
+  }}
 }

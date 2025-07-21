@@ -166,6 +166,7 @@ class LogInState extends State<LogIn>{
         if(errorMessage.isEmpty){
           //await DataManager(quickCall: QuickCall.askIncompleteDays).beginQuickCall;
           //await Navigator.pushNamed(context, '/calendar');
+          await DataManager(quickCall: QuickCall.panel).beginQuickCall;
           await Navigator.pushNamed(context, '/panel');
         }
         else{

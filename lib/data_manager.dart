@@ -3,6 +3,7 @@
 import 'dart:developer' as dev;
 import 'dart:convert';
 import 'dart:math';
+import 'package:autogumi_plaza/routes/panel.dart';
 import 'package:autogumi_plaza/routes/photo_preview.dart';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
@@ -542,6 +543,23 @@ class DataManager{
           dataQuickCall[check(7)] =    json.decode(json.decode(response.body));
           break;
 
+        case QuickCall.panel:
+          var queryParameters = {
+            'customer': customer,
+            'user_id':  userId    
+          };
+          Uri uriUrl = Uri.parse('${urlPath}ask_panel.php');
+          http.Response response =    await http.post(uriUrl, body: json.encode(queryParameters), headers: headers);
+          if(kDebugMode) dev.log(response.body.toString());
+          dataQuickCall[check(8)] =   json.decode(json.decode(response.body));
+          break;
+
+        case QuickCall.callButtonPhp:
+          Uri uriUrl = Uri.parse(Uri.encodeFull(input['callback']).replaceAll('+', '%2b'));
+          http.Response response =  await http.get(uriUrl);
+          dataQuickCall[check(9)] = await jsonDecode(response.body);
+          break;
+
         default:break;
       }
     }
@@ -809,6 +827,10 @@ class DataManager{
 
         case QuickCall.askEsetiMunkalapMeghiusulasOkai:
           CalendarState.reasonOfDelete = (dataQuickCall[7] as List).cast<String>();
+          break;
+
+        case QuickCall.panel:
+          PanelState.data = dataQuickCall[8];
           break;
 
         default:break;

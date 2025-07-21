@@ -18,6 +18,7 @@ class SqlCommand{
     public function select_verzioAutogumiPlaza()                {return "SELECT [verzio_autogumi_plaza] FROM [dbo].[Parameters]";}
     public function select_MunkalapSzezonalisPozicioKepek()     {return "SELECT [dbo].[Munkalap_szezonalis_pozicio_kepek] (:foglalas_id, :pozicio)";}
     public function select_MunkalapEsetiPozicioKepek()          {return "SELECT [dbo].[Munkalap_eseti_pozicio_kepek] (:foglalas_id, :pozicio)";}
+    public function select_tabletDashboardPanels()              {return "SELECT [dbo].[Tablet_Dashboard_panels] (:user_id)";}
     public function exec_tabletFelhasznaloAdatok()              {return "EXEC [dbo].[Tablet_FelhasznaloAdatok] :eszkoz_id, :user_name, :user_password";}
     public function exec_tabletFelvitele()                      {return "EXEC [dbo].[TabletFelvitele] :eszkoz_id";}
     public function exec_bizonylatKepPozicioFelvitele()         {return "EXEC [dbo].[BizonylatKepPozicioFelvitele] :parameter";}
@@ -29,4 +30,5 @@ class SqlCommand{
     public function exec_tabletMunkalapEsetiMeghiusulas()       {return "EXEC [local].[Tablet_MunkalapEsetiMeghiusulas] :foglalas_id, :indoklas, :output";}
     public function exec_tabletMunkalapSzezonalisFelvitele()    {return "EXEC [local].[Tablet_MunkalapSzezonalisFelvitele] :foglalas_id, :output";}
     public function exec_tabletBelep()                          {return "EXEC [mosaic].[dbo].[TabletBelep] :eszkoz_id, :verzio";}
+    public function exec_bizonylatStatuszUpdate()               {return "EXEC [dbo].[BizonylatStatuszUpdate] :bizonylat_id, :statusz_id, :user_id";}
 }

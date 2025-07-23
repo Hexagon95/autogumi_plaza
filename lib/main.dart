@@ -1,19 +1,20 @@
-import 'package:autogumi_plaza/routes/probe_measuring.dart';
-import 'package:camera/camera.dart';
-import 'package:flutter/material.dart';
-import 'global.dart';
-import 'data_manager.dart';
-import 'routes/log_in.dart';
-import 'routes/calendar.dart';
-import 'routes/data_form.dart';
-import 'routes/photo_take.dart';
+import 'routes/probe_measuring.dart';
 import 'routes/photo_preview.dart';
+import 'routes/photo_take.dart';
+import 'routes/data_form.dart';
 import 'routes/signature.dart';
+import 'routes/calendar.dart';
+import 'routes/log_in.dart';
 import 'routes/panel.dart';
+import 'data_manager.dart';
+import 'global.dart';
+import 'package:flutter/material.dart';
+import 'package:camera/camera.dart';
 
 void main() async{
   WidgetsFlutterBinding.ensureInitialized();
   final cameras = await availableCameras();
+  await DataManager.identitySQLite;
   Global.routeNext = NextRoute.logIn;
   runApp(
     MaterialApp(      
@@ -30,5 +31,4 @@ void main() async{
       },
     )
   );
-  await DataManager.identitySQLite;
 }

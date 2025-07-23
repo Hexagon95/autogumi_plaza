@@ -1,25 +1,26 @@
 // ignore_for_file: depend_on_referenced_packages
 
-import 'dart:developer' as dev;
-import 'dart:convert';
-import 'dart:math';
-import 'package:autogumi_plaza/routes/panel.dart';
-import 'package:autogumi_plaza/routes/photo_preview.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart' as p;
 import 'package:intl/intl.dart';
-import 'global.dart';
-import 'utils.dart';
-import 'routes/signature.dart';
+import 'dart:developer' as dev;
+import 'dart:convert';
+import 'dart:math';
+import 'routes/photo_preview.dart';
+import 'routes/panel.dart';
 import 'routes/data_form.dart';
+import 'routes/signature.dart';
 import 'routes/calendar.dart';
 import 'routes/log_in.dart';
+import 'global.dart';
+import 'utils.dart';
 
 class DataManager{
   // ---------- < Variables [Static] > - ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ----------
-  static String thisVersion =                       '1.27';
+  static String thisVersion =                       '1.28';
   
   static String openAiPassword =                    'qifqik-sedpuf-rejKu6';
 
@@ -560,6 +561,11 @@ class DataManager{
           dataQuickCall[check(9)] = await jsonDecode(response.body);
           break;
 
+        case QuickCall.callButtonWebLink:
+          try {await openInBrowser(input['callback']);}
+          catch(e) {PanelState.errorMessageDialog = 'Nem sikerült végrehajtani az alábbi linket: ${input['name']}\n${input['callback']}'; debugPrint('WebLink hiba: ${input['callback']}');}
+          break;
+
         default:break;
       }
     }
@@ -901,6 +907,12 @@ class DataManager{
   }  
 
   // ---------- < Methods [2] > ------ ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ----------
+  Future openInBrowser(String url) async{
+    final Uri uri = Uri.parse(url.replaceAll(r'\/', '/'));
+    try {await launchUrl(uri, mode: LaunchMode.externalApplication);}
+    catch(e) {if(kDebugMode){dev.log(e.toString());} throw Exception();}
+  }
+
   Future<List<dynamic>> _getCachedLookupData({required List<dynamic> thisData, required String input, required bool isPhp, required bool cacheEnabled}) async{
     final key = '${isPhp ? 'php:' : ''}$input';    
     if (cacheEnabled && Global.lookupCache.containsKey(key)) {

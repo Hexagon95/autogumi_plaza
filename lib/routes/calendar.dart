@@ -74,6 +74,7 @@ class CalendarState extends State<Calendar> {
 
   // ---------- < Widgets [1] > ---------- ---------- ---------- ---------- ---------- ---------- ----------
   Widget get _calendar => Container(decoration: const BoxDecoration(border: Border(bottom: BorderSide(color: Colors.grey))), child: TableCalendar(
+    key:                  ValueKey(incompleteDays.hashCode),
     firstDay:             kFirstDay,
     lastDay:              kLastDay,
     focusedDay:           _focusedDay,
@@ -208,6 +209,17 @@ class CalendarState extends State<Calendar> {
   }
 
   // ---------- < Methods [1] > ---------- ---------- ---------- ---------- ---------- ---------- ----------
+  @override
+  void initState(){
+    super.initState();
+    selectedDate = DateFormat('yyyy.MM.dd').format(DateTime.now()).toString();
+    Future.delayed(Duration.zero, () async{
+      await DataManager().beginProcess;
+      await DataManager(quickCall: QuickCall.askIncompleteDays).beginQuickCall;
+      setState((){});
+    });
+  }
+
   IconData _getIconOfCase(int index) {switch(jelleg[index]){
     case 'Eseti':     return Icons.content_paste_search;
     case 'Igénylés':  return Icons.request_page_outlined;
@@ -254,7 +266,8 @@ class CalendarState extends State<Calendar> {
     selectedIndexList =      null;
     setState((){});
     await Navigator.pushNamed(context, '/dataForm');
-    
+    await DataManager().beginProcess;
+    await DataManager(quickCall: QuickCall.askIncompleteDays).beginQuickCall;
     setState((){});
   }
 
@@ -273,6 +286,7 @@ class CalendarState extends State<Calendar> {
       if(DataManager.dataQuickCall[3].isNotEmpty) {await Global.showAlertDialog(context, title: 'Hiba!', content: DataManager.dataQuickCall[3].toString());}
       else {
         await DataManager().beginProcess;
+        await DataManager(quickCall: QuickCall.askIncompleteDays).beginQuickCall;
         setState((){});
         //await Navigator.pushReplacement(context,MaterialPageRoute(builder: (context) => const Calendar()));
       }
@@ -295,6 +309,8 @@ class CalendarState extends State<Calendar> {
         await DataManager(input: {'datum': _focusedDay}).beginProcess;
         await DataManager(quickCall: QuickCall.giveDatas).beginQuickCall;
         await Navigator.pushNamed(context, '/dataForm');
+        await DataManager().beginProcess;
+        await DataManager(quickCall: QuickCall.askIncompleteDays).beginQuickCall;
         setState((){});
         break;
     }
@@ -314,6 +330,8 @@ class CalendarState extends State<Calendar> {
         await DataManager(input: {'datum': _focusedDay}).beginProcess;
         await DataManager(quickCall: QuickCall.giveDatas).beginQuickCall;
         await Navigator.pushNamed(context, '/dataForm');
+        await DataManager().beginProcess;
+        await DataManager(quickCall: QuickCall.askIncompleteDays).beginQuickCall;
         setState((){});
         break;
 
@@ -322,6 +340,8 @@ class CalendarState extends State<Calendar> {
         await DataManager(input: {'datum': _focusedDay}).beginProcess;
         await DataManager(quickCall: QuickCall.giveDatas).beginQuickCall;
         await Navigator.pushNamed(context, '/dataForm');
+        await DataManager().beginProcess;
+        await DataManager(quickCall: QuickCall.askIncompleteDays).beginQuickCall;
         setState((){});
         break;
 
@@ -331,6 +351,8 @@ class CalendarState extends State<Calendar> {
         await DataManager(input: {'datum': _focusedDay}).beginProcess;
         await DataManager(quickCall: QuickCall.giveDatas).beginQuickCall;
         await Navigator.pushNamed(context, '/dataForm');
+        await DataManager().beginProcess;
+        await DataManager(quickCall: QuickCall.askIncompleteDays).beginQuickCall;
         setState((){});
         break;
 
@@ -381,6 +403,8 @@ class CalendarState extends State<Calendar> {
     await DataManager(quickCall: QuickCall.giveDatas).beginQuickCall;
     buttonIgenyles[index] = ButtonState.default0;
     await Navigator.pushNamed(context, '/dataForm');
+    await DataManager().beginProcess;
+    await DataManager(quickCall: QuickCall.askIncompleteDays).beginQuickCall;
     setState((){});
   }
 

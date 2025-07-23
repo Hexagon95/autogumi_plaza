@@ -1,9 +1,9 @@
 // ignore_for_file: use_build_context_synchronously, deprecated_member_use
+import 'package:ota_update/ota_update.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:autogumi_plaza/global.dart';
 import 'package:autogumi_plaza/data_manager.dart';
-import 'package:ota_update/ota_update.dart';
+import 'package:autogumi_plaza/global.dart';
 
 class LogIn extends StatefulWidget {
   const LogIn({super.key});

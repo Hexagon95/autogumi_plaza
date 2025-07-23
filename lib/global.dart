@@ -8,7 +8,7 @@ import 'package:flutter/services.dart';
 // ---------- - < Enums > ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ----------
 enum NextRoute    {logIn,   calendar,       tabForm,        photoPreview, photoTake,  photoCheck, signature,  esetiMunkalapFelvitele, default0, abroncsIgenyles, szezonalisMunkalapFelvitele, probeMeasuring, panel}
 enum ButtonState  {hidden,  loading,        disabled,       error,        default0}
-enum QuickCall    {tabForm, giveDatas,      chainGiveDatas, verzio,       askPhotos,  default0, cancelWork, tabletBelep, saveEsetiMunkalapFelvitele, saveAbroncsIgenyles, chainGiveDatasFormOpen, saveSzezonalisMunkalapFelvitele, askIncompleteDays, askPlateNumber, askEsetiMunkalapMeghiusulasOkai, logIn, forgottenPassword, logInNamePassword, panel, callButtonPhp}
+enum QuickCall    {tabForm, giveDatas,      chainGiveDatas, verzio,       askPhotos,  default0, cancelWork, tabletBelep, saveEsetiMunkalapFelvitele, saveAbroncsIgenyles, chainGiveDatasFormOpen, saveSzezonalisMunkalapFelvitele, askIncompleteDays, askPlateNumber, askEsetiMunkalapMeghiusulasOkai, logIn, forgottenPassword, logInNamePassword, panel, callButtonPhp, callButtonWebLink}
 enum Probe        {bluetoothCheck, deviceSearch, measureCommand, default0}
 
 class Global{

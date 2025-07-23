@@ -835,9 +835,10 @@ class DataFormState extends State<DataForm> {//-- ---------- ---------- --------
       } else {
         buttonContinue = ButtonState.disabled;
         Global.routeBack;
-        await DataManager().beginProcess;
+        Navigator.pop(context);
+        /*await DataManager().beginProcess;
         Navigator.popUntil(context, ModalRoute.withName('/calendar'));
-        await Navigator.pushReplacementNamed(context, '/calendar');
+        await Navigator.pushReplacementNamed(context, '/calendar');*/
       }
       break;
 

@@ -145,41 +145,39 @@ class LogInState extends State<LogIn>{
         setState(() => buttonLogIn =  ButtonState.default0);
         return;
       }
-      if(!updateNeeded){
-        await DataManager(quickCall: QuickCall.tabletBelep).beginQuickCall;
-        await DataManager(input: {'number': 0, 'login': 'customer'}).beginProcess;
-        if(errorMessage.isNotEmpty){
-          await Global.showAlertDialog(context, title: 'Hiba!', content: errorMessage);
-          setState(() => buttonLogIn = ButtonState.default0);
-          return;
-        }
-        await DataManager(input: {'number': 1, 'login': 'service'}).beginProcess;
-        if(errorMessage.isNotEmpty){
-          await Global.showAlertDialog(context, title: 'Hiba!', content: errorMessage);
-          setState(() => buttonLogIn = ButtonState.default0);
-          return;
-        }
-        //Global.routeNext = NextRoute.calendar;
-        Global.routeNext = NextRoute.panel;
-        //await DataManager().beginProcess;
-        buttonLogIn =             ButtonState.default0;
-        if(errorMessage.isEmpty){
-          //await DataManager(quickCall: QuickCall.askIncompleteDays).beginQuickCall;
-          //await Navigator.pushNamed(context, '/calendar');
-          await DataManager(quickCall: QuickCall.panel).beginQuickCall;
-          await Navigator.pushNamed(context, '/panel');
-        }
-        else{
-          await Global.showAlertDialog(context, title: 'Hiba', content: errorMessage);
-          Global.routeBack;
-        }
-        setState((){});
+      await DataManager(quickCall: QuickCall.tabletBelep).beginQuickCall;
+      await DataManager(input: {'number': 0, 'login': 'customer'}).beginProcess;
+      if(errorMessage.isNotEmpty){
+        await Global.showAlertDialog(context, title: 'Hiba!', content: errorMessage);
+        setState(() => buttonLogIn = ButtonState.default0);
+        return;
+      }
+      await DataManager(input: {'number': 1, 'login': 'service'}).beginProcess;
+      if(errorMessage.isNotEmpty){
+        await Global.showAlertDialog(context, title: 'Hiba!', content: errorMessage);
+        setState(() => buttonLogIn = ButtonState.default0);
+        return;
+      }
+      //Global.routeNext = NextRoute.calendar;
+      Global.routeNext = NextRoute.panel;
+      //await DataManager().beginProcess;
+      buttonLogIn =             ButtonState.default0;
+      if(errorMessage.isEmpty){
+        //await DataManager(quickCall: QuickCall.askIncompleteDays).beginQuickCall;
+        //await Navigator.pushNamed(context, '/calendar');
+        await DataManager(quickCall: QuickCall.panel).beginQuickCall;
+        await Navigator.pushNamed(context, '/panel');
       }
       else{
-        setState(() => buttonLogIn = ButtonState.disabled);
-        tryOtaUpdate();
+        await Global.showAlertDialog(context, title: 'Hiba', content: errorMessage);
+        Global.routeBack;
       }
+      setState((){});
     }    
+    else{
+      setState(() => buttonLogIn = ButtonState.disabled);
+      await tryOtaUpdate();
+    }
   }
   /*Future get _buttonLogInPressed async {
     DataManager.customer =  'mosaic';

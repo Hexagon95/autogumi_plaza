@@ -21,14 +21,14 @@ class SqlCommand{
     public function select_tabletDashboardPanels()              {return "SELECT [dbo].[Tablet_Dashboard_panels] (:user_id)";}
     public function exec_tabletFelhasznaloAdatok()              {return "EXEC [dbo].[Tablet_FelhasznaloAdatok] :eszkoz_id, :user_name, :user_password";}
     public function exec_tabletFelvitele()                      {return "EXEC [dbo].[TabletFelvitele] :eszkoz_id";}
-    public function exec_bizonylatKepPozicioFelvitele()         {return "EXEC [dbo].[BizonylatKepPozicioFelvitele] :parameter";}
-    public function exec_bizonylatKepFelvitele()                {return "EXEC [dbo].[BizonylatDokumentumFelvitele] :parameter";}
+    public function exec_bizonylatKepPozicioFelvitele()         {return "EXEC [dbo].[BizonylatKepPozicioFelvitele] :parameter, :user_id";}
+    public function exec_bizonylatKepFelvitele()                {return "EXEC [dbo].[BizonylatDokumentumFelvitele] :parameter, :user_id";} //- Módosítva
     public function exec_tabletEsetiFelvitele()                 {return "EXEC [dbo].[Tablet_EsetiFelvitele] :parameter, :user_id, :lezart, :output";}
     public function exec_tabletSzezonalisFelvitele()            {return "EXEC [dbo].[Tablet_SzezonalisFelvitele] :parameter, :user_id, :lezart, :output";}
     public function exec_tabletAbroncsigenylesFelvitele()       {return "EXEC [dbo].[Tablet_AbroncsigenylesFelvitele] :parameter, :user_id, :lezart, :output";}
-    public function exec_tabletMunkalapMeghiusulas()            {return "EXEC [local].[Tablet_MunkalapMeghiusulas] :foglalas_id, :indoklas, :output";}
-    public function exec_tabletMunkalapEsetiMeghiusulas()       {return "EXEC [local].[Tablet_MunkalapEsetiMeghiusulas] :foglalas_id, :indoklas, :output";}
-    public function exec_tabletMunkalapSzezonalisFelvitele()    {return "EXEC [local].[Tablet_MunkalapSzezonalisFelvitele] :foglalas_id, :output";}
+    public function exec_tabletMunkalapMeghiusulas()            {return "EXEC [local].[Tablet_MunkalapMeghiusulas] :foglalas_id, :indoklas, :user_id, :output";}
+    public function exec_tabletMunkalapEsetiMeghiusulas()       {return "EXEC [local].[Tablet_MunkalapEsetiMeghiusulas] :foglalas_id, :indoklas, :user_id, :output";}
+    public function exec_tabletMunkalapSzezonalisFelvitele()    {return "EXEC [local].[Tablet_MunkalapSzezonalisFelvitele] :foglalas_id, :user_id, :output";}
     public function exec_tabletBelep()                          {return "EXEC [mosaic].[dbo].[TabletBelep] :eszkoz_id, :verzio";}
     public function exec_bizonylatStatuszUpdate()               {return "EXEC [dbo].[BizonylatStatuszUpdate] :bizonylat_id, :statusz_id, :user_id";}
 }

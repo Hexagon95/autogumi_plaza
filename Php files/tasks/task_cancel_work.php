@@ -24,7 +24,8 @@ class Task{
             ,
             [
                 'foglalas_id' => $this->request['foglalas_id'],
-                'indoklas' =>    $this->request['indoklas']
+                'indoklas' =>    $this->request['indoklas'],
+                'user_id' =>     $this->request['user_id']
             ],
             $this->request['customer']
         );

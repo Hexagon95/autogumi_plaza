@@ -30,6 +30,7 @@ class DatabaseManager{
             $sqlQuery = $this->conn->prepare($queryString);
             $sqlQuery->bindParam(':foglalas_id', $parameters['foglalas_id'], PDO::PARAM_INT);
             $sqlQuery->bindParam(':indoklas', $parameters['indoklas'], PDO::PARAM_STR);
+            $sqlQuery->bindParam(':user_id', $parameters['user_id'], PDO::PARAM_INT);
 			$sqlQuery->bindParam(':output', $this->data, PDO::PARAM_STR|PDO::PARAM_INPUT_OUTPUT, 4000);
             $sqlQuery->execute();
         }

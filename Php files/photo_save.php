@@ -44,7 +44,8 @@ $BizonylatDokumentumParams = array(
         "konyvtar" => $KepFileKonyvtar,
         "megnevezes" => $KepFileName.".jpg",
         "name" => "IMG_".$RequestDataParams['pozicio']."_".date("YmdHis")
-    )
+    ),
+    "user_id" => $RequestData['user_id']
 );
 
 

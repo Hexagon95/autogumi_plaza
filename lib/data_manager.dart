@@ -20,7 +20,7 @@ import 'utils.dart';
 
 class DataManager{
   // ---------- < Variables [Static] > - ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ----------
-  static String thisVersion =                       '1.28';
+  static String thisVersion =                       '1.28a';
   
   static String openAiPassword =                    'qifqik-sedpuf-rejKu6';
 
@@ -446,6 +446,7 @@ class DataManager{
             'customer':     customer,
             'foglalas_id':  data[2][input['index']]['id'].toString(),
             'indoklas':     input['indoklas'],
+            'user_id':      userId,
             'jelleg':       input['jelleg']
           };
           Uri uriUrl =              Uri.parse('${urlPath}cancel_work.php');          
@@ -469,7 +470,7 @@ class DataManager{
           var queryParameters = {
             'customer':   customer,
             'parameter':  (input['lezart'] != 1 && input['quickSave'] == null)? jsonEncode(DataFormState.rawData) : jsonEncode(dataQuickCall[0]),
-            'user_id':    data[0][1]['dolgozo_kod'],
+            'user_id':    userId, //data[0][1]['dolgozo_kod'],
             'lezart':     input['lezart']
           };
           Uri uriUrl = Uri.parse('${urlPath}save_eseti_munkalap.php');
@@ -485,7 +486,7 @@ class DataManager{
           var queryParameters = {
             'customer':   customer,
             'parameter':  jsonEncode(dataQuickCall[0]),
-            'user_id':    data[0][1]['dolgozo_kod'],
+            'user_id':    userId, //data[0][1]['dolgozo_kod'],
             'lezart':     input['lezart']
           };
           Uri uriUrl =              Uri.parse('${urlPath}finish_worksheet.php');
@@ -499,7 +500,7 @@ class DataManager{
           var queryParameters = {
             'customer':   customer,
             'parameter':  (input['lezart'] != 1 && input['quickSave'] == null)? jsonEncode(DataFormState.rawData) : jsonEncode(dataQuickCall[0]),
-            'user_id':    data[0][1]['dolgozo_kod'],
+            'user_id':    userId, //data[0][1]['dolgozo_kod'],
             'lezart':     input['lezart']
           };
           Uri uriUrl = Uri.parse('${urlPath}save_abroncs_igenyles.php');
@@ -620,7 +621,8 @@ class DataManager{
           if(['Eseti', 'Igénylés'].contains(input['jelleg'])) break;
           var queryParameters = {
             'customer':     customer,
-            'foglalas_id':  foglalasId
+            'foglalas_id':  foglalasId,
+            'user_id':      userId
           };
           Uri uriUrl =              Uri.parse('${urlPath}worksheet.php');
           http.Response response =  await http.post(uriUrl, body: json.encode(queryParameters), headers: headers);
@@ -646,7 +648,8 @@ class DataManager{
               ,
               'kep':      PhotoPreviewState.imageBase64,
               'comment':  PhotoPreviewState.editingController.text
-            })
+            }),
+            'user_id': userId
           };
           String phpFileName = switch(DataFormState.workType){
             'Igénylés' => 'photo_save_eseti.php',
@@ -667,7 +670,7 @@ class DataManager{
           var queryParameters = {
             'customer':   customer,
             'parameter':  jsonEncode(dataQuickCall[0]),
-            'user_id':    data[0][1]['dolgozo_kod'],
+            'user_id':    userId //data[0][1]['dolgozo_kod'],
           };
           if(kDebugMode)dev.log(queryParameters.toString());
           Uri uriUrl =              Uri.parse('${urlPath}finish_worksheet.php');

@@ -20,7 +20,10 @@ class Task{
         $this->sqlCommand =         new SqlCommand();
         $this->databaseManager =    new DatabaseManager(
             $this->sqlCommand->exec_tabletMunkalapSzezonalisFelvitele(),
-            ['foglalas_id' =>  $this->request['foglalas_id']],
+            [
+                'foglalas_id' =>    $this->request['foglalas_id'],
+                'user_id' =>        $this->request['user_id'] 
+            ],
             $this->request['customer']
         );
         $this->result = $this->databaseManager->getData();

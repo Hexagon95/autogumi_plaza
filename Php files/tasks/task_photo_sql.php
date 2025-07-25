@@ -19,12 +19,16 @@ class Task {
     }
 
     // ---------- <Methods [1]> ------- ---------- ---------- ---------- ---------- ---------- ---------- ----------
-     private function _inizialite() {
+    private function _inizialite() {
         $this->request = json_encode($this->BizonylatDokumentumParams, JSON_PRETTY_PRINT);
-        $this->sqlCommand =         new SqlCommand();
-        $this->databaseManager =    new DatabaseManager(
+        $this->sqlCommand = new SqlCommand();
+
+        $this->databaseManager = new DatabaseManager(
             $this->sqlCommand->exec_bizonylatKepFelvitele(),
-            ['parameter' => $this->request],
+            [
+                'parameter' => $this->request,   // JSON string
+                'user_id'   => $this->BizonylatDokumentumParams['user_id'] ?? 0
+            ],
             $this->Customer
         );
         $this->result = $this->databaseManager->getData();

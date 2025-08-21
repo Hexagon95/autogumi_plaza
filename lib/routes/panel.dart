@@ -41,7 +41,7 @@ class PanelState extends State<Panel> {//-------- ---------- ---------- --------
   @override
   Widget build(BuildContext context) {
     return WillPopScope(onWillPop: _handlePop, child: Scaffold(
-      appBar: AppBar(title: const Text("Delivery Overview")),
+      appBar: AppBar(title: const Text("Dashboard")),
       body:   _drawPanel,
       floatingActionButton: FloatingActionButton(
         onPressed:        (!isCalendarPressed)? _calendarButtonPressed : null,
@@ -93,10 +93,12 @@ class PanelState extends State<Panel> {//-------- ---------- ---------- --------
     await DataManager(quickCall: QuickCall.askIncompleteDays).beginQuickCall;
     isCalendarPressed = false;
     await Navigator.pushNamed(context, '/calendar');
+    await DataManager(quickCall: QuickCall.panel).beginQuickCall;
     setState((){});
   }
 
   Future<void> buttonPressed(dynamic item) async{
+    if((item['question']?.isNotEmpty ?? false) && !await Global.yesNoDialog(context, title: item['name'], content: item['question'])) return;
     if(Global.trueString.contains(item['php'].toString())) {await DataManager(quickCall: QuickCall.callButtonPhp, input: {'callback': item['callback']}).beginQuickCall;}
     else {await DataManager(quickCall: QuickCall.callButtonWebLink, input: {'callback': item['callback'], 'name': item['name']}).beginQuickCall;}
     if(errorMessageDialog?.isNotEmpty ?? false) {await Global.showAlertDialog(context, content: errorMessageDialog!, title: '⚠️ Hiba!');}

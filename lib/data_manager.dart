@@ -20,7 +20,7 @@ import 'utils.dart';
 
 class DataManager{
   // ---------- < Variables [Static] > - ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ----------
-  static String thisVersion =                       '1.28a';
+  static String thisVersion =                       '1.30';
   
   static String openAiPassword =                    'qifqik-sedpuf-rejKu6';
 
@@ -59,6 +59,75 @@ class DataManager{
   DataManager({this.quickCall, this.input});
 
   // ---------- < Methods [Static] > --- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ----------
+  // ── Local SQLite for SELECT-without-FROM ──────────────────────────────────────
+  static Database? _exprDb;
+
+  static Future<Database> _getExprDb() async {
+    // One in-memory DB; fast and isolated
+    _exprDb ??= await openDatabase(inMemoryDatabasePath);
+    // Optional: a tiny table if you ever want constants, but not required.
+    // await _exprDb!.execute('CREATE TABLE IF NOT EXISTS _dummy(id INTEGER PRIMARY KEY)');
+    return _exprDb!;
+  }
+
+  static final RegExp _reHasFrom = RegExp(r'\bFROM\b', caseSensitive: false);
+
+  static bool _isSelectNoFrom(String sql) {
+    final s = sql.trim();
+    if (!s.toUpperCase().startsWith('SELECT')) return false;
+    return !_reHasFrom.hasMatch(s);
+  }
+
+  static final Map<String, dynamic> _exprCache = {};
+  static String _cacheKeyLocal(String sql) => 'local::$sql';
+
+  // Helper: extract alias from a single-expression SELECT (no FROM)
+  static String? _extractAlias(String sql) {
+    final re = RegExp(
+      r'^\s*SELECT\s+(.+?)\s+AS\s+([A-Za-z_][A-Za-z0-9_]*)\s*;?\s*$',
+      caseSensitive: false,
+      dotAll: true,
+    );
+    final m = re.firstMatch(sql.trim());
+    if (m == null) return null;
+    return m.group(2);
+  }
+
+  static Future<dynamic> _runLocalSelect(String sql) async {
+    final key = _cacheKeyLocal(sql);
+    if (_exprCache.containsKey(key)) {
+      return List<Map<String, Object?>>.from(
+        (_exprCache[key] as List).map((e) => Map<String, Object?>.from(e)),
+      );
+    }
+
+    final db = await _getExprDb();
+    final rows = await db.rawQuery(sql);
+
+    final alias = _extractAlias(sql);
+
+    // Normalize single-column result:
+    final normalized = rows.map((row) {
+      if (row.length == 1) {
+        final rawKey = row.keys.first;
+        String val = row.values.first.toString();
+        // 1) explicit alias wins
+        if (alias != null) return {alias: val};
+        // 2) if sqlite already named it 'id', keep it
+        if (rawKey.toLowerCase() == 'id') return {'id': val};
+        // 3) otherwise use '' to match server shape
+        return {'': val};
+      }
+      // Multi-column: leave as-is
+      return row;
+    }).toList();
+
+    _exprCache[key] = normalized;
+    return List<Map<String, Object?>>.from(
+      normalized.map((e) => Map<String, Object?>.from(e)),
+    );
+  }
+
   static Future get identitySQLite async {
     final database = openDatabase(
       p.join(await getDatabasesPath(), 'unique_identity.db'),
@@ -192,7 +261,7 @@ class DataManager{
                 thisData:     input['rawDataInput'],
                 input:        item['lookup_data'],
                 isPhp:        (item['php'].toString() == '1'),
-                cacheEnabled: (item['cache'] == null && item['cache'].toString() == '1')
+                cacheEnabled: (item['cache'] != null && item['cache'].toString() == '1')
               );
             }
             return listOfLookupDatas;
@@ -276,7 +345,7 @@ class DataManager{
                           thisData:     input['rawDataInput'],
                           input:        sqlCommandLookupData.sublist(3).join(' '),
                           isPhp:        (item['php'].toString() == '1'),
-                          cacheEnabled: (item['cache'] == null && item['cache'].toString() == '1')
+                          cacheEnabled: (item['cache'] != null && item['cache'].toString() == '1')
                         );
                         if(varIsLookupDataOnTheSide)  {input['rawDataInput'][getIndexFromId(id: item['id'])][fieldName] = Global.getIntBoolFromString(varDynamic[0][''].toString());}
                         else                          {varGetItemFromId[fieldName] =                                      Global.getIntBoolFromString(varDynamic[0][''].toString());}
@@ -293,7 +362,7 @@ class DataManager{
                         thisData:     input['rawDataInput'],
                         input:        sqlCommandLookupData.sublist(3).join(' '),
                         isPhp:        (item['php'].toString() == '1'),
-                        cacheEnabled: (item['cache'] == null && item['cache'].toString() == '1')
+                        cacheEnabled: (item['cache'] != null && item['cache'].toString() == '1')
                       );
                       if(varIsLookupDataOnTheSide)  {input['rawDataInput'][getIndexFromId(id: item['id'])][fieldName] = (listOfStringInput.contains(fieldName))? Global.getStringOrNullFromString(varDynamic[0][''].toString()) : Global.getIntBoolFromString(varDynamic[0][''].toString());}
                       else                          {varGetItemFromId[fieldName] =                                      (listOfStringInput.contains(fieldName))? Global.getStringOrNullFromString(varDynamic[0][''].toString()) : Global.getIntBoolFromString(varDynamic[0][''].toString());}
@@ -314,7 +383,7 @@ class DataManager{
                 thisData:     input['rawDataInput'],
                 input:        item['lookup_data'],
                 isPhp:        (item['php'].toString() == '1'),
-                cacheEnabled: (item['cache'] == null && item['cache'].toString() == '1')
+                cacheEnabled: (item['cache'] != null && item['cache'].toString() == '1')
               );
               if(varGetItemFromId['input_field'] == 'checkbox'){
                 if(varIsLookupDataOnTheSide){
@@ -567,6 +636,19 @@ class DataManager{
           catch(e) {PanelState.errorMessageDialog = 'Nem sikerült végrehajtani az alábbi linket: ${input['name']}\n${input['callback']}'; debugPrint('WebLink hiba: ${input['callback']}');}
           break;
 
+        case QuickCall.redrawDataForm:
+          var queryParameters = {
+            'data':     DataFormState.rawData,
+            'tasks':    jsonDecode(input['rawDataInput'][input['index']]['update_items']),
+            'customer': customer
+          };
+          if(kDebugMode) dev.log(queryParameters.toString());
+          Uri uriUrl = Uri.parse('${urlPath}multiple_tasks_at_once.php');
+          http.Response response =      await http.post(uriUrl, body: json.encode(queryParameters), headers: headers);
+          if(kDebugMode) dev.log(response.body.toString());
+          dataQuickCall[check(10)] =    json.decode(response.body);
+          break;
+          
         default:break;
       }
     }
@@ -842,6 +924,13 @@ class DataManager{
           PanelState.data = dataQuickCall[8];
           break;
 
+        case QuickCall.redrawDataForm:
+          DataFormState.rawData = dataQuickCall[10]['data'];
+          if (kDebugMode) dev.log(dataQuickCall[10]['tasks'].toString());
+          DataFormState.listOfLookupDatas.addAll(Map<String, dynamic>.from(dataQuickCall[10]['lookupDatas']));
+          if (kDebugMode) dev.log(dataQuickCall[10]['errors'].toString());
+          break;
+
         default:break;
       }
     }
@@ -914,7 +1003,7 @@ class DataManager{
     final Uri uri = Uri.parse(url.replaceAll(r'\/', '/'));
     try {await launchUrl(uri, mode: LaunchMode.externalApplication);}
     catch(e) {if(kDebugMode){dev.log(e.toString());} throw Exception();}
-  }
+  }  
 
   Future<List<dynamic>> _getCachedLookupData({required List<dynamic> thisData, required String input, required bool isPhp, required bool cacheEnabled}) async{
     final key = '${isPhp ? 'php:' : ''}$input';    
@@ -985,22 +1074,51 @@ class DataManager{
       dynamic result =          await jsonDecode(response.body);
       return result;
     } 
-    else{
-      if(sqlCommand.isEmpty) return [];
-      var queryParameters = {
+    else {
+      if (sqlCommand.isEmpty) return [];
+      // Fast path: SELECT without FROM → evaluate locally via SQLite
+      if (_isSelectNoFrom(sqlCommand)) {
+        try {
+          if (kDebugMode) dev.log('(Local call)     SQL:  $sqlCommand');
+          dynamic rows =    await _runLocalSelect(_normalizeForSqlite(sqlCommand));
+          if (kDebugMode) dev.log('(Local call)  RESULT:  ${rows.toString()}');
+          return rows;
+        }
+        catch (e) {
+          if (kDebugMode) dev.log('(Local call)  FAILED:  $e');
+        }
+      }
+      // Fallback / normal path: go to server
+      if (kDebugMode)     dev.log('(Php call)       SQL:  $sqlCommand');
+      final queryParameters = {
         'customer': customer,
-        'sql':      sqlCommand
+        'sql':      sqlCommand,
       };
-      if(kDebugMode) dev.log(sqlCommand);
-      Uri uriUrl =              Uri.parse('${urlPath}select_sql.php');          
-      http.Response response =  await http.post(uriUrl, body: json.encode(queryParameters), headers: headers);
-      dynamic result =          await jsonDecode(response.body)[0]['result'];
+      final uriUrl = Uri.parse('${urlPath}select_sql.php');
+      final response = await http.post(
+        uriUrl,
+        body: json.encode(queryParameters),
+        headers: headers,
+      );
+      final result = jsonDecode(response.body)[0]['result'];
+      if (kDebugMode)     dev.log('(Php call)    RESULT:  ${result.toString()}');
       return result;
     }}
     catch(e) {
       if(kDebugMode) dev.log(e.toString());
       return [];
     }
+  }
+
+  // ---------- < Methods [4] > ------ ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ----------
+  String _normalizeForSqlite(String sql) {
+    // Unquote purely numeric literals:  '123'  ->  123
+    // Also handles decimals: '12.34' -> 12.34
+    // Does NOT touch 'true'/'false' or any non-numeric strings.
+    return sql.replaceAllMapped(
+      RegExp(r"'(\d+(?:\.\d+)?)'"),
+      (m) => m.group(1)!,
+    );
   }
 }
 

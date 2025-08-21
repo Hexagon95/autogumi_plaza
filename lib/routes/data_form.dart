@@ -140,7 +140,7 @@ class DataFormState extends State<DataForm> {//-- ---------- ---------- --------
     int maxSor() {int maxSor = 1; for(var item in rawData) {if(item['sor'] > maxSor) maxSor = item['sor'];} return maxSor;}
     bool isMandatory(int index) => (
       rawData[index]['mandatory'] != null
-      && rawData[index]['mandatory'].toString() == '1'
+      && Global.trueString.contains(rawData[index]['mandatory'].toString())
       && (rawData[index]['value'] == null || rawData[index]['value'].isEmpty)
     );
     
@@ -148,7 +148,7 @@ class DataFormState extends State<DataForm> {//-- ---------- ---------- --------
     for(int sor = 1; sor <= maxSor(); sor++) {
       List<Widget> row = List<Widget>.empty(growable: true);
       for(int i = 0; i < rawData.length; i++) {if(rawData[i]['sor'] == sor){
-        if(rawData[i]['visible'] != null && ['0', 'false'].contains(rawData[i]['visible'].toString())) continue;
+        if(rawData[i]['visible'] != null && Global.falseString.contains(rawData[i]['visible'].toString())) continue;
         row.add(Padding(
           padding:  const EdgeInsets.fromLTRB(5, 5, 5, 0),
           child:    Container(decoration: (isMandatory(i))? customMandatoryBoxDecoration : customBoxDecoration, child: Padding(padding: const EdgeInsets.all(5), child: _getWidget(rawData, rawData[i], i)))
@@ -168,7 +168,7 @@ class DataFormState extends State<DataForm> {//-- ---------- ---------- --------
     int maxSor() {int maxSor = 1; for(var item in rawDataExtra) {if(item['sor'] > maxSor) maxSor = item['sor'];} return maxSor;}
     bool isMandatory(int index) => (
       rawDataExtra[index]['mandatory'] != null
-      && rawDataExtra[index]['mandatory'].toString() == '1'
+      && Global.trueString.contains(rawDataExtra[index]['mandatory'].toString())
       && (rawDataExtra[index]['value'] == null || rawDataExtra[index]['value'].isEmpty)
     );
 
@@ -419,7 +419,7 @@ class DataFormState extends State<DataForm> {//-- ---------- ---------- --------
   }
 
   Widget _getWidget(List<dynamic> thisData, dynamic input, int index){
-    bool editable =           (input['editable'].toString() == '1');
+    bool editable =           (Global.trueString.contains(input['editable'].toString()));
     controller[index].text =  (thisData[index]['value'] == null)? '' : thisData[index]['value'].toString();
     double getWidth(int index) {int sorDB = 0; for(var item in thisData) {if(item['sor'] == thisData[index]['sor']) sorDB++;} return MediaQuery.of(context).size.width / sorDB - 22;}
     TextInputType? getKeyboard(String? keyboardType) {if(keyboardType == null) return null; switch(keyboardType){
@@ -1165,13 +1165,12 @@ class DataFormState extends State<DataForm> {//-- ---------- ---------- --------
             title:    '📸 Kötelező Fényképek',
             content:  'A továbblépéshez ennyi képet kell elkészítened: $varInt'
           );
-          switch(varStringQ){
-
-            case 'photo':
-              await _buttonCameraPressed;
-              break;
-
-            default:break;
+          if (varStringQ == 'photo') {
+            if (!mounted) return;
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              // ignore: discarded_futures
+              _buttonCameraPressed; // fire-and-forget is fine here if you don't need to await
+            });
           }
         }
       }
@@ -1186,7 +1185,7 @@ class DataFormState extends State<DataForm> {//-- ---------- ---------- --------
     try{
       if(currentProgress > 0 && buttonListPictures.contains(ButtonState.disabled)) return false;
       for(dynamic item in (isExtraForm)? rawDataExtra : rawData) {if(
-        (item['value'] == null || item['value'].isEmpty) && item['mandatory'].toString() == '1'
+        (item['value'] == null || item['value'].isEmpty) && Global.trueString.contains(item['mandatory'].toString())
       ) return false;}
       return true;
     }

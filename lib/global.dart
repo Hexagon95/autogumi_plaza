@@ -8,13 +8,14 @@ import 'package:flutter/services.dart';
 // ---------- - < Enums > ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ----------
 enum NextRoute    {logIn,   calendar,       tabForm,        photoPreview, photoTake,  photoCheck, signature,  esetiMunkalapFelvitele, default0, abroncsIgenyles, szezonalisMunkalapFelvitele, probeMeasuring, panel}
 enum ButtonState  {hidden,  loading,        disabled,       error,        default0}
-enum QuickCall    {tabForm, giveDatas,      chainGiveDatas, verzio,       askPhotos,  default0, cancelWork, tabletBelep, saveEsetiMunkalapFelvitele, saveAbroncsIgenyles, chainGiveDatasFormOpen, saveSzezonalisMunkalapFelvitele, askIncompleteDays, askPlateNumber, askEsetiMunkalapMeghiusulasOkai, logIn, forgottenPassword, logInNamePassword, panel, callButtonPhp, callButtonWebLink}
+enum QuickCall    {tabForm, giveDatas,      chainGiveDatas, verzio,       askPhotos,  default0, cancelWork, tabletBelep, saveEsetiMunkalapFelvitele, saveAbroncsIgenyles, chainGiveDatasFormOpen, saveSzezonalisMunkalapFelvitele, askIncompleteDays, askPlateNumber, askEsetiMunkalapMeghiusulasOkai, logIn, forgottenPassword, logInNamePassword, panel, callButtonPhp, callButtonWebLink, redrawDataForm}
 enum Probe        {bluetoothCheck, deviceSearch, measureCommand, default0}
 
 class Global{
   // ---------- < Variables [Static] > -------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ----------
   static const List<Map<String, Object?>> defaultIdentity = [{'id': 0, 'userName': '', 'password': ''}];
   static const List<String> trueString =                    ['1', 'true', 'True', 'TRUE', 'T', 't'];
+  static const List<String> falseString =                   ['0', 'fasle', 'False', 'FALSE', 'F', 'f'];
   static List<NextRoute> routes =                           List<NextRoute>.empty(growable: true);
   static NextRoute get currentRoute =>                      routes.last;
   static void get routeBack                                 {routes.removeLast(); _printRoutes;}
@@ -256,37 +257,35 @@ class Global{
   }
 
   static Future<String?> showPhotoDialog(BuildContext context, {String title = 'Üzenet', required String content}) async{
-    
-    Widget cameraButton = TextButton(
-      child: const Icon(Icons.camera_alt),
-      onPressed: () => Navigator.pop(context, 'photo')
-    );
-
-    Widget okButton = TextButton(
-      child: const Text('Ok'),
-      onPressed: () => Navigator.pop(context, null)
-    );
-
-    AlertDialog infoRegistry = AlertDialog(
-      title: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-          IconButton(
-            icon: Icon(Icons.close, color: getColorOfButton(ButtonState.default0)),
-            splashRadius: 20,
-            onPressed: () => Navigator.of(context).pop(),
-          ),
-        ],
-      ),
-      content:  Text(content, style: const TextStyle(fontSize: 16)),
-      actions:  [cameraButton, okButton]
-    ); 
-
-    return await showDialog(
+    return await showDialog<String>(
       context: context,
-      builder: (BuildContext context) => infoRegistry,
-      barrierDismissible: false
+      barrierDismissible: false,
+      builder: (dialogCtx) {
+        return AlertDialog(
+          title: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              IconButton(
+                icon: Icon(Icons.close, color: getColorOfButton(ButtonState.default0)),
+                splashRadius: 20,
+                onPressed: () => Navigator.of(dialogCtx).pop(), // use dialogCtx
+              ),
+            ],
+          ),
+          content: Text(content, style: const TextStyle(fontSize: 16)),
+          actions: [
+            TextButton(
+              child: const Icon(Icons.camera_alt),
+              onPressed: () => Navigator.of(dialogCtx).pop('photo'), // use dialogCtx
+            ),
+            TextButton(
+              child: const Text('Ok'),
+              onPressed: () => Navigator.of(dialogCtx).pop(), // use dialogCtx
+            ),
+          ],
+        );
+      },
     );
   }
 

@@ -20,7 +20,7 @@ import 'utils.dart';
 
 class DataManager{
   // ---------- < Variables [Static] > - ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ----------
-  static String thisVersion =                       '1.30';
+  static String thisVersion =                       '1.30a';
   
   static String openAiPassword =                    'qifqik-sedpuf-rejKu6';
 
@@ -405,14 +405,14 @@ class DataManager{
                 for(int i = 0; i < input['rawDataInput'].length; i++){
                   if(input['rawDataInput'][i]['id'] == entry){
                     if(['text', 'number'].contains(input['rawDataInput'][i]['input_field'])){
-                      input['rawDataInput'][i]['value'] = (DataFormState.listOfLookupDatas[entry][0]['id'] == null)
+                      input['rawDataInput'][i]['value'] = _isItEmpty(DataFormState.listOfLookupDatas[entry][0]['id'])
                         ? ''
                         : DataFormState.listOfLookupDatas[entry][0]['id'].toString()
                       ;
                       break;
                     }
                     if(['select','search'].contains(input['rawDataInput'][i]['input_field'])){
-                      if(DataFormState.listOfLookupDatas[entry].length == 0 || DataFormState.listOfLookupDatas[entry][0]['id'] == null) {DataFormState.listOfLookupDatas[entry] = List<dynamic>.empty();}
+                      if(DataFormState.listOfLookupDatas[entry].length == 0 || _isItEmpty(DataFormState.listOfLookupDatas[entry][0]['id'])) {DataFormState.listOfLookupDatas[entry] = List<dynamic>.empty();}
                       else {for(var item in DataFormState.listOfLookupDatas[entry]){
                         if(item['selected'] != null && item['selected'].toString() == '1') {input['rawDataInput'][i]['value'] = item['id']; break;}
                       }}
@@ -424,13 +424,13 @@ class DataManager{
               else{
                 dynamic varGetItemFromId = getItemFromId(id: entry);
                 if(['text', 'number'].contains(varGetItemFromId['input_field'])){
-                  varGetItemFromId['value'] = (DataFormState.listOfLookupDatas[entry][0]['id'] == null)
+                  varGetItemFromId['value'] = _isItEmpty(DataFormState.listOfLookupDatas[entry][0]['id'])
                     ? ''
                     : DataFormState.listOfLookupDatas[entry][0]['id'].toString()
                   ;
                 }
                 if(['select','search'].contains(varGetItemFromId['input_field'])){
-                  if(DataFormState.listOfLookupDatas[entry].length == 0 || DataFormState.listOfLookupDatas[entry][0]['id'] == null) {DataFormState.listOfLookupDatas[entry] = List<dynamic>.empty();}
+                  if(DataFormState.listOfLookupDatas[entry].length == 0 || _isItEmpty(DataFormState.listOfLookupDatas[entry][0]['id'])) {DataFormState.listOfLookupDatas[entry] = List<dynamic>.empty();}
                   else {for(var item in DataFormState.listOfLookupDatas[entry]){
                     if(item['selected'] != null && item['selected'].toString() == '1') {varGetItemFromId['value'] = item['id']; break;}
                   }}
@@ -454,14 +454,14 @@ class DataManager{
             dataQuickCall[1];
             if(rawDataInput[i]['id'].toString() == entry){
               if(['text'].contains(rawDataInput[i]['input_field'])){
-                rawDataInput[i]['value'] = (input['lookupDatas'][entry][0]['id'] == null)
+                rawDataInput[i]['value'] = _isItEmpty(DataFormState.listOfLookupDatas[entry][0]['id'])
                   ? ''
                   : input['lookupDatas'][entry][0]['id'].toString()
                 ;
                 break;
               }
               if(['select','search'].contains(rawDataInput[i]['input_field'])){
-                if(input['lookupDatas'][entry].length == 0 || input['lookupDatas'][entry][0]['id'] == null) {input['lookupDatas'][entry] = List<dynamic>.empty();}
+                if(input['lookupDatas'][entry].length == 0 || _isItEmpty(DataFormState.listOfLookupDatas[entry][0]['id'])) {input['lookupDatas'][entry] = List<dynamic>.empty();}
                 else {for(var item in input['lookupDatas'][entry]){
                   if(item['selected'] != null && item['selected'].toString() == '1') {rawDataInput[i]['value'] = item['id']; break;}
                 }}
@@ -1111,6 +1111,15 @@ class DataManager{
   }
 
   // ---------- < Methods [4] > ------ ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ----------
+  bool _isItEmpty(dynamic input) {
+    if (input == null) return true;
+    if (input is String) {
+      final s = input.trim().toLowerCase();
+      return s.isEmpty || s == 'null' || s == '0';
+    }
+    return false;
+  }
+
   String _normalizeForSqlite(String sql) {
     // Unquote purely numeric literals:  '123'  ->  123
     // Also handles decimals: '12.34' -> 12.34

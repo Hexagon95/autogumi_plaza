@@ -1163,7 +1163,7 @@ class DataFormState extends State<DataForm> {//-- ---------- ---------- --------
           numberOfRequiredPictures = varInt;
           String? varStringQ = await Global.showPhotoDialog(context,
             title:    '📸 Kötelező Fényképek',
-            content:  'A továbblépéshez ennyi képet kell elkészítened: $varInt'
+            content:  'A továbblépéshez $varInt képet kell készítened.'
           );
           if (varStringQ == 'photo') {
             if (!mounted) return;

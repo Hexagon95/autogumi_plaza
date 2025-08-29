@@ -110,7 +110,14 @@ class TakePictureScreenState extends State<TakePictureScreen> with WidgetsBindin
       PhotoPreviewState.imageBase64 = base64Encode(io.File(image.path).readAsBytesSync());      
       buttonTakePicture =             ButtonState.default0;      
       switch(Global.currentRoute){
-        case NextRoute.photoTake:   Global.routeNext = NextRoute.photoPreview;  await Navigator.pushNamed(context, '/photo/preview'); break;
+
+        case NextRoute.photoTake:
+          Global.routeNext = NextRoute.photoPreview;
+          await Navigator.pushNamed(context, '/photo/preview');
+          Global.routeBack;
+          Navigator.pop(context);
+          break;
+          
         default:throw Exception('Not Implemented');
       }
       setState((){});

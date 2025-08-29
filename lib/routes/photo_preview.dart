@@ -189,9 +189,8 @@ class PhotoPreviewState extends State<PhotoPreview>{
     }
     else{
       Global.routeBack;
-      Global.currentRoute;
-      Navigator.popUntil(context, ModalRoute.withName('/dataForm'));
-      await Navigator.pushReplacementNamed(context, '/dataForm');
+      Navigator.pop(context);
+      //await Navigator.pushReplacementNamed(context, '/dataForm');
     }
   }
 

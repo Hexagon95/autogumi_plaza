@@ -349,7 +349,7 @@ class DataFormState extends State<DataForm> {//-- ---------- ---------- --------
   }
 
   Widget get _drawButtonCamera => TextButton(
-    onPressed:  () async => (buttonCamera == ButtonState.default0)? _buttonCameraPressed : null,
+    onPressed:  () async => (buttonCamera == ButtonState.default0)? _buttonCameraPressed() : null,
     style:      ButtonStyle(backgroundColor: MaterialStateProperty.all(Colors.transparent)),
     child:      Padding(padding: const EdgeInsets.all(5), child: Row(children:[
       (buttonCamera == ButtonState.loading)? _progressIndicator(Global.getColorOfIcon(buttonCamera)) : Container(),
@@ -613,6 +613,124 @@ class DataFormState extends State<DataForm> {//-- ---------- ---------- --------
         : Container()
       ]);
 
+      /*case 'photo_tray':
+        final listButtons = <Widget>[];
+        for (int i = 0; i < buttonListPictures.length; i++) {
+          listButtons.add(
+            TextButton(
+              onPressed: (buttonListPictures[i] == ButtonState.default0)
+                  ? () => _buttonListPicturesPressed(i)
+                  : null,
+              style: ButtonStyle(
+                backgroundColor: MaterialStateProperty.all(Colors.transparent),
+                padding: MaterialStateProperty.all(const EdgeInsets.symmetric(horizontal: 6, vertical: 4)),
+                minimumSize: MaterialStateProperty.all(const Size(0, 0)),  // ✅ don't expand
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,           // ✅ compact
+                visualDensity: VisualDensity.compact,                      // ✅ compact
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min, // ✅ <— important
+                children: [
+                  if (buttonListPictures[i] == ButtonState.loading)
+                    _progressIndicator(Global.getColorOfIcon(buttonListPictures[i])),
+                  Icon(
+                    Icons.image_outlined,
+                    color: Global.getColorOfButton(buttonListPictures[i]),
+                    size: 30,
+                  ),
+                ],
+              ),
+            ),
+          );
+        }
+        return SizedBox(
+          width: getWidth(index),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(input['name']),
+              const SizedBox(height: 6),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: listButtons,
+              ),
+            ],
+          ),
+        );*/
+
+      case 'photo_tray': {
+        // how many slots this field should show
+        final int maxImgs = int.tryParse(input['max_number_of_images']?.toString() ?? '0') ?? 0;
+        // how many pictures are already attached to this field
+        int taken = 0;
+        try {
+          final pics = jsonDecode((input['pictures'] ?? '[]').toString());
+          if (pics is List) taken = pics.length;
+        } catch (_) { /* ignore bad json */ }
+        // small helper to make compact buttons that don't expand
+        ButtonStyle compactBtnStyle(Color? bg) => ButtonStyle(
+              backgroundColor: MaterialStateProperty.all(bg ?? Colors.transparent),
+              padding: MaterialStateProperty.all(const EdgeInsets.symmetric(horizontal: 6, vertical: 4)),
+              minimumSize: MaterialStateProperty.all(const Size(0, 0)),
+              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              visualDensity: VisualDensity.compact,
+            );
+        final List<Widget> rowButtons = [];
+        // 📸 camera button on the left
+        rowButtons.add(
+          TextButton(
+            onPressed: (editable && !isClosed) ? () async => _buttonCameraPressed() : null,
+            style: compactBtnStyle(Colors.transparent),
+            child: Icon(
+              Icons.camera_alt,
+              size: 26,
+              color: Global.getColorOfIcon(
+                (editable && !isClosed) ? ButtonState.default0 : ButtonState.disabled,
+              ),
+            ),
+          ),
+        );
+        // 🖼️ image slot buttons
+        for (int j = 0; j < maxImgs; j++) {
+          final bool enabled = j < taken; // enable only the already-filled slots
+          final state = enabled ? ButtonState.default0 : ButtonState.disabled;
+          rowButtons.add(
+            TextButton(
+              onPressed: enabled ? () => _buttonListPicturesPressed(j) : null,
+              style: compactBtnStyle(Colors.transparent),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (state == ButtonState.loading)
+                    _progressIndicator(Global.getColorOfIcon(state)),
+                  Icon(
+                    Icons.image_outlined,
+                    size: 30,
+                    color: Global.getColorOfButton(state),
+                  ),
+                ],
+              ),
+            ),
+          );
+        }
+        return SizedBox(
+          width: getWidth(index),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(input['name']),
+              const SizedBox(height: 6),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: rowButtons,
+              ),
+            ],
+          ),
+        );
+      }
+
       default: return (input['input_mask'] != null && input['input_mask'].toString().isNotEmpty)
         ? SizedBox(height: 55, width: getWidth(index), child: MaskedTextField(
           enabled:          (editable && !isClosed),
@@ -778,7 +896,7 @@ class DataFormState extends State<DataForm> {//-- ---------- ---------- --------
       FocusScope.of(context).unfocus();
       setState((){});
     }
-    refreshImages;
+    await refreshImages();
     setState((){});
   }
 
@@ -855,7 +973,7 @@ class DataFormState extends State<DataForm> {//-- ---------- ---------- --------
     await DataManager(quickCall: QuickCall.askPhotos).beginQuickCall;
     Global.routeNext =  NextRoute.signature;
     buttonContinue =    ButtonState.default0;
-    refreshImages;
+    await refreshImages();
     setState((){});
     if(DataManager.dataQuickCall[0]['osszesites'] != null) SignatureFormState.rawData = DataManager.dataQuickCall[0]['osszesites'];
     await Navigator.pushNamed(context, '/signature');
@@ -888,15 +1006,14 @@ class DataFormState extends State<DataForm> {//-- ---------- ---------- --------
     setState((){});
   }
 
-  Future get _buttonCameraPressed async{
-    if(!enableInteraction) return;
+  Future _buttonCameraPressed({bool forced = false}) async{
+    if(!forced && !enableInteraction) return;
     setState(() => buttonCamera = ButtonState.loading);
-    Global.routeNext =              NextRoute.photoTake;
-    buttonCamera =                  ButtonState.default0;
+    Global.routeNext =              NextRoute.photoTake;    
     PhotoPreviewState.isSignature = false;
     await Navigator.pushNamed(context, '/photo/take');
-    refreshImages;
-    setState((){});
+    await refreshImages();
+    setState(() => buttonCamera = ButtonState.default0);
   }
 
   Future get _buttonBackPressed async{
@@ -1092,7 +1209,7 @@ class DataFormState extends State<DataForm> {//-- ---------- ---------- --------
         listOfLookupDatas = DataManager.dataQuickCall[1][currentProgress];
         _resetController(rawData);
         numberOfRequiredPictures = 0;
-        refreshImages;
+        await refreshImages();
         setState((){});
         return false;
     }
@@ -1110,7 +1227,7 @@ class DataFormState extends State<DataForm> {//-- ---------- ---------- --------
       ).beginQuickCall;
       buttonSave = DataManager.setButtonSave;
       _setButtonContinue;
-      refreshImages;
+      await refreshImages();
       setState((){});
     }
     catch(e) {if(kDebugMode) print(e);}
@@ -1148,7 +1265,7 @@ class DataFormState extends State<DataForm> {//-- ---------- ---------- --------
     setState((){});
   }
 
-  void get refreshImages async{
+  Future refreshImages() async{
     dynamic getNumberOfPicturesItem() {for(dynamic item in rawData) {if(['id_number_of_pictures_1', 'id_number_of_pictures_2', 'id_number_of_pictures_3', 'id_number_of_pictures_4', 'id_number_of_pictures_5', 'id_number_of_pictures_6'].contains(item['id'])) return item;} return null;}
     void resetButtonListPictures()    {for(int i = 0; i < numberOfPictures[currentProgress]; i++) {buttonListPictures.add(ButtonState.default0);}}
 
@@ -1165,13 +1282,10 @@ class DataFormState extends State<DataForm> {//-- ---------- ---------- --------
             title:    '📸 Kötelező Fényképek',
             content:  'A továbblépéshez $varInt képet kell készítened.'
           );
-          if (varStringQ == 'photo') {
-            if (!mounted) return;
-            WidgetsBinding.instance.addPostFrameCallback((_) {
-              // ignore: discarded_futures
-              _buttonCameraPressed; // fire-and-forget is fine here if you don't need to await
-            });
-          }
+          switch(varStringQ){
+            case 'photo': await _buttonCameraPressed(forced: true); break;
+            default:                                                break;
+          }          
         }
       }
       else {numberOfPicturesItem = 0; resetButtonListPictures();}

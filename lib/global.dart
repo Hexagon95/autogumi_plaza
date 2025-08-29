@@ -269,7 +269,7 @@ class Global{
               IconButton(
                 icon: Icon(Icons.close, color: getColorOfButton(ButtonState.default0)),
                 splashRadius: 20,
-                onPressed: () => Navigator.of(dialogCtx).pop(), // use dialogCtx
+                onPressed: () => Navigator.pop(context, null), // use dialogCtx
               ),
             ],
           ),
@@ -277,11 +277,11 @@ class Global{
           actions: [
             TextButton(
               child: const Icon(Icons.camera_alt),
-              onPressed: () => Navigator.of(dialogCtx).pop('photo'), // use dialogCtx
+              onPressed: () => Navigator.pop(context, 'photo'), // use dialogCtx
             ),
             TextButton(
               child: const Text('Ok'),
-              onPressed: () => Navigator.of(dialogCtx).pop(), // use dialogCtx
+              onPressed: () => Navigator.pop(context, null), // use dialogCtx
             ),
           ],
         );

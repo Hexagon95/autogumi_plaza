@@ -1,0 +1,12 @@
+{
+    "tetel_id":1,
+    "id":"id_1086_1",
+    "name":"Gumiabroncs teljes oldalfala",
+    "input_field":"photo_tray",
+    "pictures": [],
+    "editable":1,
+    "visible":1,
+    "mandatory":1,
+    "sor":1,
+    "oszlop":1
+}

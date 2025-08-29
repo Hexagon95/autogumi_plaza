@@ -20,7 +20,7 @@ import 'utils.dart';
 
 class DataManager{
   // ---------- < Variables [Static] > - ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ----------
-  static String thisVersion =                       '1.30a';
+  static String thisVersion =                       '1.30b';
   
   static String openAiPassword =                    'qifqik-sedpuf-rejKu6';
 

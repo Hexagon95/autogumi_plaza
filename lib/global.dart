@@ -147,9 +147,9 @@ class Global{
 
   static Future<dynamic> logInDialog(BuildContext context, {String? userNameInput}) async{
     // --------- < Variables > ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- //
-    String userName =                     (userNameInput != null)? userNameInput : '';
-    String userPassword =                 '';
-    bool isTextObscure =                  true;
+    String userName =     (kDebugMode)? 'mosaic'  : (userNameInput != null)? userNameInput : '';
+    String userPassword = (kDebugMode)? 'mos.667' : '';
+    bool isTextObscure =  true;
     ButtonState buttonForgottenPassword = ButtonState.default0;
     BoxDecoration customBoxDecoration =       BoxDecoration(            
       border:       Border.all(color: const Color.fromARGB(130, 184, 184, 184), width: 1),

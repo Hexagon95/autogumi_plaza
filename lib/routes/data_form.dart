@@ -66,7 +66,6 @@ class DataFormState extends State<DataForm> {//-- ---------- ---------- --------
   ButtonState buttonSave =                      ButtonState.disabled;
   ButtonState buttonSaveProgress =              ButtonState.default0;
   bool enableInteraction =                      true;
-  int numberOfRequiredPictures =                0;
   BoxDecoration customBoxDecoration =           BoxDecoration(            
     border:       Border.all(color: const Color.fromARGB(130, 184, 184, 184), width: 1),
     color:        Colors.white,
@@ -138,11 +137,18 @@ class DataFormState extends State<DataForm> {//-- ---------- ---------- --------
   // ---------- < WidgetBuild [2] > -- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ----------
   Widget get _drawFormList{
     int maxSor() {int maxSor = 1; for(var item in rawData) {if(item['sor'] > maxSor) maxSor = item['sor'];} return maxSor;}
-    bool isMandatory(int index) => (
-      rawData[index]['mandatory'] != null
-      && Global.trueString.contains(rawData[index]['mandatory'].toString())
-      && (rawData[index]['value'] == null || rawData[index]['value'].isEmpty)
-    );
+    bool isMandatory(int index) => switch(rawData[index]['input_field']){
+      'photo_tray' => (
+        rawData[index]['mandatory'] != null
+        && Global.trueString.contains(rawData[index]['mandatory'].toString())
+        && (rawData[index]['pictures'] == null || rawData[index]['pictures'].isEmpty || rawData[index]['pictures'] == '[]')
+      ),
+      _ => (
+        rawData[index]['mandatory'] != null
+        && Global.trueString.contains(rawData[index]['mandatory'].toString())
+        && (rawData[index]['value'] == null || rawData[index]['value'].isEmpty)
+      )
+    };
     
     List<Widget> varListWidget = List<Widget>.empty(growable: true);
     for(int sor = 1; sor <= maxSor(); sor++) {
@@ -166,11 +172,18 @@ class DataFormState extends State<DataForm> {//-- ---------- ---------- --------
 
   Widget get _drawFormListExtra{
     int maxSor() {int maxSor = 1; for(var item in rawDataExtra) {if(item['sor'] > maxSor) maxSor = item['sor'];} return maxSor;}
-    bool isMandatory(int index) => (
-      rawDataExtra[index]['mandatory'] != null
-      && Global.trueString.contains(rawDataExtra[index]['mandatory'].toString())
-      && (rawDataExtra[index]['value'] == null || rawDataExtra[index]['value'].isEmpty)
-    );
+    bool isMandatory(int index) => switch(rawDataExtra[index]['input_field']){
+      'photo_tray' => (
+        rawDataExtra[index]['mandatory'] != null
+        && Global.trueString.contains(rawDataExtra[index]['mandatory'].toString())
+        && (rawDataExtra[index]['pictures'] == null || rawDataExtra[index]['pictures'].isEmpty || rawDataExtra[index]['pictures'] == '[]')
+      ),
+      _ => (
+        rawDataExtra[index]['mandatory'] != null
+        && Global.trueString.contains(rawDataExtra[index]['mandatory'].toString())
+        && (rawDataExtra[index]['value'] == null || rawDataExtra[index]['value'].isEmpty)
+      )
+    };
 
     List<Widget> varListWidget = List<Widget>.empty(growable: true);
     for(int sor = 1; sor <= maxSor(); sor++) {
@@ -227,9 +240,8 @@ class DataFormState extends State<DataForm> {//-- ---------- ---------- --------
       color:  Global.getColorOfButton(ButtonState.default0),
       child:  Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: switch (currentProgress) {
         0 => [_drawButtonBack, _drawButtonNext],
-        1 => [_drawButtonBack, _drawButtonCamera, _drawButtonListPictures, _drawButtonNext]
-        ,
-        _ => [Row(children: [_drawButtonBack, _drawButtonCopy]), _drawButtonCamera, _drawButtonListPictures, _drawButtonNext]
+        1 => [_drawButtonBack, _drawButtonNext],
+        _ => [Row(children: [_drawButtonBack, _drawButtonCopy]), _drawButtonNext]
         ,
       })
     );
@@ -325,7 +337,7 @@ class DataFormState extends State<DataForm> {//-- ---------- ---------- --------
     ]))
   );
 
-  Widget get _drawButtonCopy => (!['Szezonális', 'Eseti'].contains(workType))? TextButton(
+  Widget get _drawButtonCopy => (!['Szezonális', 'Eseti', 'Igénylés'].contains(workType))? TextButton(
     onPressed:  () async => (buttonCopy == ButtonState.default0)? _buttonCopyPressed : null,
     style:      ButtonStyle(backgroundColor: MaterialStateProperty.all(Colors.transparent)),
     child:      Padding(padding: const EdgeInsets.all(5), child: Row(children:[
@@ -348,16 +360,16 @@ class DataFormState extends State<DataForm> {//-- ---------- ---------- --------
     : Container();
   }
 
-  Widget get _drawButtonCamera => TextButton(
+  /*Widget get _drawButtonCamera => TextButton(
     onPressed:  () async => (buttonCamera == ButtonState.default0)? _buttonCameraPressed() : null,
     style:      ButtonStyle(backgroundColor: MaterialStateProperty.all(Colors.transparent)),
     child:      Padding(padding: const EdgeInsets.all(5), child: Row(children:[
       (buttonCamera == ButtonState.loading)? _progressIndicator(Global.getColorOfIcon(buttonCamera)) : Container(),
       Icon(Icons.camera_alt, color: Global.getColorOfIcon(buttonCamera), size: 30)
     ]))
-  );
+  );*/
 
-  Widget get _drawButtonListPictures{
+  /*Widget get _drawButtonListPictures{
     List<Widget> listButtons = List<Widget>.empty(growable: true);
     
     for(int i = 0; i < buttonListPictures.length; i++) {listButtons.add(TextButton(
@@ -369,7 +381,7 @@ class DataFormState extends State<DataForm> {//-- ---------- ---------- --------
       ]))
     ));}
     return Row(children: listButtons);
-  }
+  }*/
 
   Widget _drawProgressIndicator(ButtonState inputButton) => (inputButton == ButtonState.loading)
   ? Padding(padding: const EdgeInsets.fromLTRB(0, 0, 10, 0), child: SizedBox(width: 22, height: 22, child: CircularProgressIndicator(color: Global.getColorOfButton(inputButton))))
@@ -388,7 +400,51 @@ class DataFormState extends State<DataForm> {//-- ---------- ---------- --------
     super.dispose();
   }
 
-  Future _quickSave() async{
+  Future<void> _quickSave() async {
+    if (!enableInteraction || quickSaveLock) return;
+    quickSaveLock = true;
+    setState(() => buttonSaveProgress = ButtonState.loading);
+    try {
+      // 1) Persist current page's edits into the working payload
+      if (currentProgress == 0) {
+        DataManager.dataQuickCall[0]['foglalas'] = rawData;
+        DataManager.dataQuickCall[1][0] = listOfLookupDatas;
+      } else {
+        DataManager.dataQuickCall[0]['poziciok'][currentProgress - 1]['adatok'] = rawData;
+        DataManager.dataQuickCall[1][currentProgress] = listOfLookupDatas;
+      }
+      // 2) Quick save (not closing document)
+      switch (workType) {
+        case 'Eseti':
+          await DataManager(
+            quickCall: QuickCall.saveEsetiMunkalapFelvitele,
+            input: {'lezart': 0, 'quickSave': true},
+          ).beginQuickCall;
+          break;
+        case 'Szezonális':
+          await DataManager(
+            quickCall: QuickCall.saveSzezonalisMunkalapFelvitele,
+            input: {'lezart': 0, 'quickSave': true},
+          ).beginQuickCall;
+          break;
+        default:
+          // no-op for other types
+          break;
+      }
+    } catch (e) {
+      if (kDebugMode) print('quickSave error: $e');
+    } finally {
+      quickSaveLock = false;
+      if (mounted) {
+        setState(() => buttonSaveProgress = ButtonState.default0);
+      }
+    }
+    if (!mounted) return;
+    // 3) Return to calendar screen (don’t refresh here; Calendar will do it after pop)
+    Navigator.popUntil(context, ModalRoute.withName('/calendar'));
+  }
+
+  /*Future _quickSave() async{
     if(!enableInteraction) return;
     if(quickSaveLock) return;
     quickSaveLock = true;
@@ -410,13 +466,12 @@ class DataFormState extends State<DataForm> {//-- ---------- ---------- --------
       default: break;
     }
     CalendarState.selectedIndexList = null;
-    Global.routeBack;
+    Global.routeBack; Global.currentRoute;
     await DataManager().beginProcess;
     quickSaveLock = false;
     buttonSaveProgress = ButtonState.default0;
-    Navigator.popUntil(context, ModalRoute.withName('/calendar'));
-    await Navigator.pushReplacementNamed(context, '/calendar');
-  }
+    Navigator.pop(context);
+  }*/
 
   Widget _getWidget(List<dynamic> thisData, dynamic input, int index){
     bool editable =           (Global.trueString.contains(input['editable'].toString()));
@@ -474,6 +529,7 @@ class DataFormState extends State<DataForm> {//-- ---------- ---------- --------
         bool isInLookupData(String input, List<dynamic>? list) {if(list != null)for(var item in list) {if(item['id'].toString() == input) return true;} return false;}
         String getItem(dynamic varList, String id) {for(dynamic item in varList) {if(item['id'] == id) return item['megnevezes'];} return '';}
 
+        input;
         List<DropdownMenuItem<String>> items =  List<DropdownMenuItem<String>>.empty(growable: true);
         List<dynamic>? lookupData =             listOfLookupDatas[input['id']];
         if(lookupData != null) for(var item in lookupData) {items.add(DropdownMenuItem(value: item['id'].toString(), child: Text(item['megnevezes'], textAlign: TextAlign.start)));}
@@ -489,7 +545,7 @@ class DataFormState extends State<DataForm> {//-- ---------- ---------- --------
             isExpanded:       false,
             alignment:        AlignmentDirectional.centerStart,
             dropdownColor:    const Color.fromRGBO(230, 230, 230, 1),
-            menuMaxHeight:    MediaQuery.of(context).size.height / 3,
+            menuMaxHeight:    MediaQuery.of(context).size.height / 1.5,
             onChanged:        (String? newValue) async => await _handleSelectChange(thisData, newValue, index),
             items:            items
           )))),
@@ -660,50 +716,48 @@ class DataFormState extends State<DataForm> {//-- ---------- ---------- --------
         );*/
 
       case 'photo_tray': {
+        if(input['pictures'] is String) input['pictures'] = jsonDecode((input['pictures']?.isEmpty ?? '[]')? '[]' : input['pictures']);
         // how many slots this field should show
         final int maxImgs = int.tryParse(input['max_number_of_images']?.toString() ?? '0') ?? 0;
         // how many pictures are already attached to this field
         int taken = 0;
-        try {
-          final pics = jsonDecode((input['pictures'] ?? '[]').toString());
-          if (pics is List) taken = pics.length;
-        } catch (_) { /* ignore bad json */ }
+        try {taken = (((input['pictures'] != null)? (input['pictures'] is String)? jsonDecode(input['pictures']) : input['pictures'] : []) as List).length;}
+        catch (_) {/* Ignore bad json */}
         // small helper to make compact buttons that don't expand
         ButtonStyle compactBtnStyle(Color? bg) => ButtonStyle(
-              backgroundColor: MaterialStateProperty.all(bg ?? Colors.transparent),
-              padding: MaterialStateProperty.all(const EdgeInsets.symmetric(horizontal: 6, vertical: 4)),
-              minimumSize: MaterialStateProperty.all(const Size(0, 0)),
-              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-              visualDensity: VisualDensity.compact,
-            );
+            backgroundColor:  MaterialStateProperty.all(bg ?? Colors.transparent),
+            padding:          MaterialStateProperty.all(const EdgeInsets.symmetric(horizontal: 6, vertical: 4)),
+            minimumSize:      MaterialStateProperty.all(const Size(0, 0)),
+            tapTargetSize:    MaterialTapTargetSize.shrinkWrap,
+            visualDensity:    VisualDensity.compact,
+          );
         final List<Widget> rowButtons = [];
         // 📸 camera button on the left
         rowButtons.add(
           TextButton(
-            onPressed: (editable && !isClosed) ? () async => _buttonCameraPressed() : null,
-            style: compactBtnStyle(Colors.transparent),
-            child: Icon(
+            onPressed:  (editable && !isClosed && taken < maxImgs) ? () async => _buttonCameraPressed(data: thisData, index: index) : null,
+            style:      compactBtnStyle(Colors.transparent),
+            child:      Icon(
               Icons.camera_alt,
-              size: 26,
-              color: Global.getColorOfIcon(
-                (editable && !isClosed) ? ButtonState.default0 : ButtonState.disabled,
-              ),
+              size:   26,
+              color:  Global.getColorOfButton((editable && !isClosed && taken < maxImgs) ? ButtonState.default0 : ButtonState.disabled),
             ),
           ),
         );
         // 🖼️ image slot buttons
+        input;
         for (int j = 0; j < maxImgs; j++) {
           final bool enabled = j < taken; // enable only the already-filled slots
           final state = enabled ? ButtonState.default0 : ButtonState.disabled;
           rowButtons.add(
             TextButton(
-              onPressed: enabled ? () => _buttonListPicturesPressed(j) : null,
+              onPressed: enabled ? () => _buttonListPicturesPressed(input['pictures'][j]) : null,
               style: compactBtnStyle(Colors.transparent),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   if (state == ButtonState.loading)
-                    _progressIndicator(Global.getColorOfIcon(state)),
+                    _progressIndicator(Global.getColorOfButton(state)),
                   Icon(
                     Icons.image_outlined,
                     size: 30,
@@ -848,25 +902,20 @@ class DataFormState extends State<DataForm> {//-- ---------- ---------- --------
 
   Future get _buttonContinuePressed async{
     if(!enableInteraction) return;
-    numberOfRequiredPictures = 0;
     if(isExtraForm){
       setState(() => buttonContinue = ButtonState.loading);
       rawDataExtraCopy = List.from(rawDataExtra);
-      await DataManager().executeSql(input: await jsonDecode(rawData[indexOfExtraForm]['buttons'].toString())[0]['sql_output'], parameter: rawDataExtra);
+      //await DataManager().executeSql(input: await jsonDecode(rawData[indexOfExtraForm]['buttons'].toString())[0]['sql_output'], parameter: rawDataExtra);
+      await DataManager().executeSql(
+        input:      (rawData[indexOfExtraForm]['buttons'] is String
+            ? jsonDecode(rawData[indexOfExtraForm]['buttons'])
+            : rawData[indexOfExtraForm]['buttons'])[0]['sql_output'],
+        parameter:  rawDataExtra,
+      );
       buttonContinue = ButtonState.disabled;
       await _extraFormFinish;
     }
     else{
-      buttonCamera = ButtonState.default0;
-      if(numberOfPictures[currentProgress] > buttonListPictures.length){
-        await Global.showAlertDialog(context,
-          title:    'Hiányzó fényképek!',
-          content:  'Szükséges fényképek száma a folytatáshoz: ${numberOfPictures[currentProgress]}.'
-        );
-        FocusScope.of(context).unfocus();
-        setState((){});
-        return;
-      }
       switch(currentProgress){
         case 0:
           DataManager.dataQuickCall[0]['foglalas'] =  rawData;
@@ -896,7 +945,7 @@ class DataFormState extends State<DataForm> {//-- ---------- ---------- --------
       FocusScope.of(context).unfocus();
       setState((){});
     }
-    await refreshImages();
+    //await refreshImages();
     setState((){});
   }
 
@@ -973,7 +1022,7 @@ class DataFormState extends State<DataForm> {//-- ---------- ---------- --------
     await DataManager(quickCall: QuickCall.askPhotos).beginQuickCall;
     Global.routeNext =  NextRoute.signature;
     buttonContinue =    ButtonState.default0;
-    await refreshImages();
+    //await refreshImages();
     setState((){});
     if(DataManager.dataQuickCall[0]['osszesites'] != null) SignatureFormState.rawData = DataManager.dataQuickCall[0]['osszesites'];
     await Navigator.pushNamed(context, '/signature');
@@ -1006,14 +1055,19 @@ class DataFormState extends State<DataForm> {//-- ---------- ---------- --------
     setState((){});
   }
 
-  Future _buttonCameraPressed({bool forced = false}) async{
-    if(!forced && !enableInteraction) return;
-    setState(() => buttonCamera = ButtonState.loading);
-    Global.routeNext =              NextRoute.photoTake;    
+  Future<void> _buttonCameraPressed({List? data, bool forced = false, int? index}) async{
+    if (!forced && !enableInteraction) return;
+    Global.routeNext =              NextRoute.photoTake;
     PhotoPreviewState.isSignature = false;
-    await Navigator.pushNamed(context, '/photo/take');
-    await refreshImages();
-    setState(() => buttonCamera = ButtonState.default0);
+    final r =                       await Navigator.pushNamed(context, '/photo/take');
+    if (r != null && data != null && index != null) {
+      data[index]['pictures'] = (data[index]['pictures'] is String)
+        ? (jsonDecode(data[index]['pictures']) as List? ?? <dynamic>[])
+        : (data[index]['pictures'] is List ? data[index]['pictures'] : <dynamic>[])
+      ;
+      (data[index]['pictures'] as List).add(r);
+    }
+    setState((){});
   }
 
   Future get _buttonBackPressed async{
@@ -1038,11 +1092,12 @@ class DataFormState extends State<DataForm> {//-- ---------- ---------- --------
     setState((){});
   }
 
-  Future _buttonListPicturesPressed(int i) async{
-    if(!enableInteraction) return;
-    setState(() => buttonListPictures[i] = ButtonState.loading);
-    Global.routeNext =                NextRoute.photoCheck;
-    PhotoPreviewState.selectedIndex = i; 
+  Future<void> _buttonListPicturesPressed(dynamic img) async {
+    if (!enableInteraction) return;
+    final i = (DataManager.dataQuickCall[2] as List).indexWhere((e) => e['id'] == img['id']);
+    if (i < 0) return;
+    PhotoPreviewState.selectedIndex = i;
+    Global.routeNext = NextRoute.photoCheck;
     await Navigator.pushNamed(context, '/photo/preview');
   }
 
@@ -1051,7 +1106,7 @@ class DataFormState extends State<DataForm> {//-- ---------- ---------- --------
     case NextRoute.esetiMunkalapFelvitele:      return 'Eseti Munkalap Foglalás';
     case NextRoute.szezonalisMunkalapFelvitele: return 'Szezonális Munkalap Foglalás';
     default:                                    return 'Foglalás';
-  }}
+  }}  
 
   Future _selectAddPressed({required int index}) async{
     if(!enableInteraction) return;
@@ -1060,7 +1115,14 @@ class DataFormState extends State<DataForm> {//-- ---------- ---------- --------
     dataQuickCall1Copy =      List.from(DataManager.dataQuickCall[1]);
     listOfLookupDatasCopy =   Map.from(listOfLookupDatas);
     isExtraForm =             true;
-    rawDataExtra =            await DataManager().getJsonFromSql(input: await json.decode(rawData[index]['buttons'].toString())[0]['sql_input']);
+    //rawDataExtra =            await DataManager().getJsonFromSql(input: await json.decode(rawData[index]['buttons'].toString())[0]['sql_input']);
+    rawDataExtra =            await DataManager().getJsonFromSql(
+      input: ((rawData[index]['buttons'] is String) 
+      ? (jsonDecode(rawData[index]['buttons']) as List).first 
+      : (rawData[index]['buttons'] is List) 
+        ? (rawData[index]['buttons'] as List).first 
+        : (rawData[index]['buttons'] is Map) ? rawData[index]['buttons'] : {})['sql_input']
+    );
     _resetController(rawDataExtra);
     await DataManager(quickCall: QuickCall.giveDatas, input: {'rawDataInput': rawDataExtra}).beginQuickCall;
     indexOfExtraForm = index;
@@ -1189,7 +1251,6 @@ class DataFormState extends State<DataForm> {//-- ---------- ---------- --------
           Global.routeBack;
           CalendarState.selectedIndexList = null;
           isClosed =                        false;
-          numberOfRequiredPictures = 0;
           Navigator.popUntil(context, ModalRoute.withName('/calendar'));
           await Navigator.pushReplacementNamed(context, '/calendar');
           return false;
@@ -1208,8 +1269,7 @@ class DataFormState extends State<DataForm> {//-- ---------- ---------- --------
         await DataManager(quickCall: QuickCall.askPhotos).beginQuickCall;
         listOfLookupDatas = DataManager.dataQuickCall[1][currentProgress];
         _resetController(rawData);
-        numberOfRequiredPictures = 0;
-        await refreshImages();
+        //await refreshImages();
         setState((){});
         return false;
     }
@@ -1217,6 +1277,7 @@ class DataFormState extends State<DataForm> {//-- ---------- ---------- --------
 
   Future _handleSelectChange(List<dynamic> thisData, String? newValue, int index, {bool isCheckBox = false}) async{ if(enableInteraction){
     try{
+      rawData;
       enableInteraction =         false;
       thisData[index]['value'] =  newValue;
       if(listOfLookupDatas[thisData[index]['id']] != null) {for(dynamic item in listOfLookupDatas[thisData[index]['id']]) {item['selected'] = '0';}}
@@ -1226,8 +1287,9 @@ class DataFormState extends State<DataForm> {//-- ---------- ---------- --------
         input:      {'rawDataInput': thisData, 'index': index, 'isCheckBox': isCheckBox, 'newValue': newValue, 'isExtraForm': isExtraForm}
       ).beginQuickCall;
       buttonSave = DataManager.setButtonSave;
+      rawData;
       _setButtonContinue;
-      await refreshImages();
+      //await refreshImages();
       setState((){});
     }
     catch(e) {if(kDebugMode) print(e);}
@@ -1265,7 +1327,7 @@ class DataFormState extends State<DataForm> {//-- ---------- ---------- --------
     setState((){});
   }
 
-  Future refreshImages() async{
+  /*Future refreshImages() async{
     dynamic getNumberOfPicturesItem() {for(dynamic item in rawData) {if(['id_number_of_pictures_1', 'id_number_of_pictures_2', 'id_number_of_pictures_3', 'id_number_of_pictures_4', 'id_number_of_pictures_5', 'id_number_of_pictures_6'].contains(item['id'])) return item;} return null;}
     void resetButtonListPictures()    {for(int i = 0; i < numberOfPictures[currentProgress]; i++) {buttonListPictures.add(ButtonState.default0);}}
 
@@ -1292,15 +1354,16 @@ class DataFormState extends State<DataForm> {//-- ---------- ---------- --------
     }
     else {numberOfPicturesItem = 0; resetButtonListPictures();}
     buttonListPictures;
-  }
+  }*/
 
   // ---------- < Methods [3] > ------ ---------- ---------- ---------- ---------- ---------- ---------- ---------- ----------
   bool get _isAllMandatoryFilled{
     try{
       if(currentProgress > 0 && buttonListPictures.contains(ButtonState.disabled)) return false;
-      for(dynamic item in (isExtraForm)? rawDataExtra : rawData) {if(
-        (item['value'] == null || item['value'].isEmpty) && Global.trueString.contains(item['mandatory'].toString())
-      ) return false;}
+      for(dynamic item in (isExtraForm)? rawDataExtra : rawData) {switch(item['input_field']){
+        case 'photo_tray':  if((item['pictures'] == null || item['pictures'].isEmpty || item['pictures'] == '[]') && Global.trueString.contains(item['mandatory'].toString()) && Global.trueString.contains(item['visible'].toString()))  return false; break;
+        default:            if((item['value'] == null || item['value'].isEmpty) && Global.trueString.contains(item['mandatory'].toString()) && Global.trueString.contains(item['visible'].toString()))                                    return false; break;
+      }}
       return true;
     }
     catch(e){

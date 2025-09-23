@@ -20,7 +20,7 @@ import 'utils.dart';
 
 class DataManager{
   // ---------- < Variables [Static] > - ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ----------
-  static String thisVersion =                       '1.30b';
+  static String thisVersion =                       '1.32d';
   
   static String openAiPassword =                    'qifqik-sedpuf-rejKu6';
 
@@ -60,7 +60,7 @@ class DataManager{
 
   // ---------- < Methods [Static] > --- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ----------
   // ── Local SQLite for SELECT-without-FROM ──────────────────────────────────────
-  static Database? _exprDb;
+  static Database? _exprDb;  
 
   static Future<Database> _getExprDb() async {
     // One in-memory DB; fast and isolated
@@ -223,7 +223,7 @@ class DataManager{
               };
               Uri uriUrl =              Uri.parse('${urlPath}abroncs_igenyles.php');
               http.Response response =  await http.post(uriUrl, body: json.encode(queryParameters), headers: headers);
-              dataQuickCall[check(0)] = await jsonDecode(await jsonDecode(response.body));
+                dataQuickCall[check(0)] = await jsonDecode(await jsonDecode(response.body));
               break;
 
             case 'Eseti':
@@ -275,7 +275,7 @@ class DataManager{
           else if(DataFormState.rawDataExtra.isNotEmpty) {dataQuickCall[1].add(await generateListOfLookupDatas(DataFormState.rawDataExtra));}
           break;
 
-        case QuickCall.chainGiveDatas:
+        /*case QuickCall.chainGiveDatas:
           // ───── 0️⃣  Detect bulk-mode ───────────────────────────────────
             if (input['index'] == null) {
               for (int i = 0; i < input['rawDataInput'].length; i++) {
@@ -318,6 +318,7 @@ class DataManager{
           catch(e) {/*input['rawDataInput'][input['index']]['kod'] = null;*/}
           
           dynamic updateItemsItem = await getItemUpdateItems();
+          if(kDebugMode) {for(dynamic item in updateItemsItem) {print(item.toString());}}
           if(updateItemsItem == null) return;
           for(dynamic item in updateItemsItem) {
             try{
@@ -326,7 +327,7 @@ class DataManager{
               List<String> sqlCommandLookupData = item['lookup_data'].toString().split(' ');
               if(sqlCommandLookupData[0] == 'SET'){
                 try{
-                  String fieldName = sqlCommandLookupData[1].toString().substring(1);
+                  String fieldName = sqlCommandLookupData [1].toString().substring(1);
                   List<String> listOfStringInput = ['value', 'name', 'input_field', 'input_mask', 'keyboard_type', 'kod'];
                   if(input['isCheckBox']){
                     if(input['newValue'] == '1' && item['event'] == 'on' || input['newValue'] == '0' && item['event'] == 'off'){
@@ -442,6 +443,309 @@ class DataManager{
               if(kDebugMode)print(e);
             }
           }
+          break;*/
+
+        case QuickCall.chainGiveDatas:
+          // ───── helpers ─────────────────────────────────────────────
+          bool isEmptyId(dynamic v) {
+            if (v == null) return true;
+            if (v is String) {
+              final s = v.trim().toLowerCase();
+              // treat '', 'null' and '0' as empty
+              return s.isEmpty || s == 'null' || s == '0';
+            }
+            if (v is num) {
+              // also catch 0 as number
+              return v == 0;
+            }
+            return false;
+          }
+
+          List<dynamic> deepCopyList(List<dynamic> src) =>
+              List<dynamic>.from(src.map((e) => Map<String, dynamic>.from(e)));
+
+          int getIndexFromId({required String id}) {
+            for (int i = 0; i < input['rawDataInput'].length; i++) {
+              if (input['rawDataInput'][i]['id'] == id) return i;
+            }
+            throw Exception('No such id in rawData: $id');
+          }
+
+          bool isLookupDataOnTheSide(String inputId) {
+            for (dynamic item in input['rawDataInput']) {
+              if (item['id'] == inputId) return true;
+            }
+            return false;
+          }
+
+          dynamic getItemFromId({required String id}) {
+            if (input['isExtraForm'] != null && input['isExtraForm']) {
+              for (dynamic item in DataFormState.rawDataExtra) {
+                if (item['id'] == id) return item;
+              }
+            } else {
+              for (dynamic item in dataQuickCall[0]['foglalas']) {
+                if (item['id'] == id) return item;
+              }
+              for (dynamic itemList in dataQuickCall[0]['poziciok']) {
+                for (dynamic item in itemList['adatok']) {
+                  if (item['id'] == id) return item;
+                }
+              }
+              if (dataQuickCall[0]['osszesites'] != null) {
+                for (dynamic item in dataQuickCall[0]['osszesites']) {
+                  if (item['id'] == id) return item;
+                }
+              }
+            }
+            throw Exception('No such Item with id: $id');
+          }
+
+          int getPlaceIndexOfId(String entry) {
+            for (dynamic item in dataQuickCall[0]['foglalas']) {
+              if (item['id'] == entry) return 0;
+            }
+            for (int i = 0; i < dataQuickCall[0]['poziciok'].length; i++) {
+              for (dynamic item in dataQuickCall[0]['poziciok'][i]['adatok']) {
+                if (item['id'] == entry) return i + 1;
+              }
+            }
+            if (dataQuickCall[0]['osszesites'] != null) {
+              for (dynamic item in dataQuickCall[0]['osszesites']) {
+                if (item['id'] == entry) return 0;
+              }
+            }
+            throw Exception('No such Item with id: $entry');
+          }
+
+          Future<dynamic> getItemUpdateItems() async {
+            try {
+              return await json.decode(
+                  input['rawDataInput'][input['index']]['update_items'].toString());
+            } catch (_) {
+              return input['rawDataInput'][input['index']]['update_items'];
+            }
+          }
+
+          // ───── 0️⃣ bulk mode ───────────────────────────────────────
+          if (input['index'] == null) {
+            for (int i = 0; i < input['rawDataInput'].length; i++) {
+              await DataManager(
+                quickCall: QuickCall.chainGiveDatas,
+                input: {
+                  ...input,
+                  'index': i,
+                  'newValue': input['rawDataInput'][i]['value'],
+                },
+              ).beginQuickCall;
+            }
+            break;
+          }
+
+          // ───── 1️⃣ single-item logic ───────────────────────────────
+          try {
+            input['rawDataInput'][input['index']]['kod'] =
+                Global.where(
+                  DataFormState.listOfLookupDatas[input['rawDataInput'][input['index']]['id']],
+                  'megnevezes',
+                  input['newValue'],
+                )['id'];
+          } catch (_) {
+            /* ignore */
+          }
+
+          final updateItemsItem = await getItemUpdateItems();
+          if (updateItemsItem == null) break;
+          for (dynamic item in updateItemsItem) {
+            try {
+              if(item['id'] == 'id_1036_1' && kDebugMode){
+                print('Stop');
+              }
+              final bool varIsLookupDataOnTheSide = isLookupDataOnTheSide(item['id']);
+              final dynamic varGetItemFromId = getItemFromId(id: item['id']);
+              final List<String> sqlCommandLookupData =
+                  item['lookup_data'].toString().split(' ');
+
+              // ── handle SET commands ────────────────────────────────
+              if (sqlCommandLookupData[0] == 'SET') {
+                try {
+                  final String fieldName = sqlCommandLookupData[1].toString().substring(1);
+                  final List<String> listOfStringInput = [
+                    'value',
+                    'name',
+                    'input_field',
+                    'input_mask',
+                    'keyboard_type',
+                    'kod'
+                  ];
+
+                  bool assign(dynamic target, dynamic value) {
+                    final v = (listOfStringInput.contains(fieldName))
+                        ? Global.getStringOrNullFromString(value)
+                        : Global.getIntBoolFromString(value);
+                    target[fieldName] = v;
+                    return true;
+                  }
+
+                  if (input['isCheckBox']) {
+                    final bool fire =
+                        (input['newValue'] == '1' && item['event'] == 'on') ||
+                        (input['newValue'] == '0' && item['event'] == 'off');
+                    if (!fire) continue;
+                  }
+
+                  if (sqlCommandLookupData.length == 4) {
+                    if (item['id'] != null) {
+                      if (varIsLookupDataOnTheSide) {
+                        assign(input['rawDataInput'][getIndexFromId(id: item['id'])],
+                            sqlCommandLookupData[3]);
+                      } else {
+                        assign(varGetItemFromId, sqlCommandLookupData[3]);
+                      }
+                    } else {
+                      switch (fieldName) {
+                        case 'numberOfPictures':
+                          DataFormState.numberOfPictures[DataFormState.currentProgress] =
+                              int.parse(sqlCommandLookupData[3].toString());
+                          break;
+                        default:
+                          break;
+                      }
+                    }
+                  } else if (sqlCommandLookupData.length > 4) {
+                    final varDynamic = await _getCachedLookupData(
+                      thisData: input['rawDataInput'],
+                      input: sqlCommandLookupData.sublist(3).join(' '),
+                      isPhp: (item['php'].toString() == '1'),
+                      cacheEnabled:
+                          (item['cache'] != null && item['cache'].toString() == '1'),
+                    );
+                    final dynamic calc = varDynamic[0][''].toString();
+                    if (varIsLookupDataOnTheSide) {
+                      assign(input['rawDataInput'][getIndexFromId(id: item['id'])], calc);
+                    } else {
+                      assign(varGetItemFromId, calc);
+                    }
+                  }
+                  continue; // handled SET
+                } catch (e) {
+                  if (kDebugMode) dev.log(e.toString());
+                }
+              }
+
+              // ── normal lookup refresh ──────────────────────────────
+              if (input['isCheckBox']) {
+                switch (item['event']) {
+                  case 'on':
+                    if (input['newValue'] == '0') continue;
+                    break;
+                  case 'off':
+                    if (input['newValue'] == '1') continue;
+                    break;
+                  default:
+                    continue;
+                }
+              }
+
+              final list = await _getCachedLookupData(
+                thisData: input['rawDataInput'],
+                input: item['lookup_data'],
+                isPhp: (item['php'].toString() == '1'),
+                cacheEnabled: (item['cache'] != null && item['cache'].toString() == '1'),
+              );
+
+              // sanitize before storing
+              final cleaned = clean(list);
+
+              // deep copy to avoid aliasing across fields
+              DataFormState.listOfLookupDatas[item['id']] = deepCopyList(cleaned);              
+
+              if (varGetItemFromId['input_field'] == 'checkbox') {
+                final src = DataFormState.listOfLookupDatas[item['id']];
+                final firstId = (src.isNotEmpty) ? src[0]['id'] : null;
+                final val = (firstId == null) ? '0' : firstId.toString();
+                if (varIsLookupDataOnTheSide) {
+                  input['rawDataInput'][getIndexFromId(id: item['id'])]['value'] = val;
+                } else {
+                  varGetItemFromId['value'] = val;
+                }
+              }
+              if (varGetItemFromId['input_field'] == 'select' &&
+                  item['lookup_data'] != null) {
+                varGetItemFromId['lookup_data'] = item['lookup_data'];
+              }
+            } catch (e) {
+              if (kDebugMode) print(e);
+            }
+          }
+
+          // ── post-processing: set values WITHOUT clearing lists ────
+          final keysSnapshot =
+              List<String>.from(DataFormState.listOfLookupDatas.keys); // snapshot keys
+          for (final entry in keysSnapshot) {
+            try {
+              if (isLookupDataOnTheSide(entry)) {
+                for (int i = 0; i < input['rawDataInput'].length; i++) {
+                  if (input['rawDataInput'][i]['id'] != entry) continue;
+
+                  final list = (DataFormState.listOfLookupDatas[entry] ?? []) as List;
+                  if (['text', 'number'].contains(input['rawDataInput'][i]['input_field'])) {
+                    if (list.isNotEmpty && !isEmptyId(list[0]['id'])) {
+                      input['rawDataInput'][i]['value'] = list[0]['id'].toString();
+                    } else {
+                      // keep list as-is, just clear value
+                      input['rawDataInput'][i]['value'] = '';
+                    }
+                    break;
+                  }
+                  if (['select', 'search'].contains(input['rawDataInput'][i]['input_field'])) {
+                    // do NOT replace options with []
+                    if (list.isNotEmpty && !isEmptyId(list[0]['id'])) {
+                      for (var item in list) {
+                        if (item['selected'] != null && item['selected'].toString() == '1') {
+                          input['rawDataInput'][i]['value'] = item['id'];
+                          break;
+                        }
+                      }
+                    } else {
+                      // leave options intact; just ensure no selection forced
+                      // input['rawDataInput'][i]['value'] = ''; // optional
+                    }
+                    break;
+                  }
+                }
+              } else {
+                final varGetItemFromId = getItemFromId(id: entry);
+                final list = (DataFormState.listOfLookupDatas[entry] ?? []) as List;
+
+                if (['text', 'number'].contains(varGetItemFromId['input_field'])) {
+                  if (list.isNotEmpty && !isEmptyId(list[0]['id'])) {
+                    varGetItemFromId['value'] = list[0]['id'].toString();
+                  } else {
+                    varGetItemFromId['value'] = '';
+                  }
+                }
+
+                if (['select', 'search'].contains(varGetItemFromId['input_field'])) {
+                  // never nuke list; only pick selection if present
+                  if (list.isNotEmpty && !isEmptyId(list[0]['id'])) {
+                    for (var item in list) {
+                      if (item['selected'] != null && item['selected'].toString() == '1') {
+                        varGetItemFromId['value'] = item['id'];
+                        break;
+                      }
+                    }
+                  }
+                  if (!input['isExtraForm']) {
+                    dataQuickCall[1][getPlaceIndexOfId(entry)][entry] =
+                        DataFormState.listOfLookupDatas[entry];
+                  }
+                }
+              }
+            } catch (e) {
+              if (kDebugMode) print(e);
+            }
+          }
           break;
 
         case QuickCall.chainGiveDatasFormOpen:
@@ -500,7 +804,7 @@ class DataManager{
               : DataFormState.titles[DataFormState.currentProgress]
             ,
           };
-          Uri uriUrl =              Uri.parse('${urlPath}ask_pictures.php');          
+          Uri uriUrl =              Uri.parse('${urlPath}ask_pictures.php');
           http.Response response =  await http.post(uriUrl, body: json.encode(queryParameters), headers: headers);
           dynamic varDynamic = await jsonDecode(response.body)[0][''];
           dataQuickCall[check(2)] = await jsonDecode(varDynamic.toString());
@@ -636,7 +940,7 @@ class DataManager{
           catch(e) {PanelState.errorMessageDialog = 'Nem sikerült végrehajtani az alábbi linket: ${input['name']}\n${input['callback']}'; debugPrint('WebLink hiba: ${input['callback']}');}
           break;
 
-        case QuickCall.redrawDataForm:
+        /*case QuickCall.redrawDataForm:
           var queryParameters = {
             'data':     DataFormState.rawData,
             'tasks':    jsonDecode(input['rawDataInput'][input['index']]['update_items']),
@@ -647,7 +951,7 @@ class DataManager{
           http.Response response =      await http.post(uriUrl, body: json.encode(queryParameters), headers: headers);
           if(kDebugMode) dev.log(response.body.toString());
           dataQuickCall[check(10)] =    json.decode(response.body);
-          break;
+          break;*/
           
         default:break;
       }
@@ -924,12 +1228,12 @@ class DataManager{
           PanelState.data = dataQuickCall[8];
           break;
 
-        case QuickCall.redrawDataForm:
+        /*case QuickCall.redrawDataForm:
           DataFormState.rawData = dataQuickCall[10]['data'];
           if (kDebugMode) dev.log(dataQuickCall[10]['tasks'].toString());
           DataFormState.listOfLookupDatas.addAll(Map<String, dynamic>.from(dataQuickCall[10]['lookupDatas']));
           if (kDebugMode) dev.log(dataQuickCall[10]['errors'].toString());
-          break;
+          break;*/
 
         default:break;
       }
@@ -1009,7 +1313,7 @@ class DataManager{
     final key = '${isPhp ? 'php:' : ''}$input';    
     if (cacheEnabled && Global.lookupCache.containsKey(key)) {
       return Global.lookupCache[key];
-    }    
+    }
     final result = await _getLookupData(thisData: thisData, input: input, isPhp: isPhp);
     if(cacheEnabled) Global.lookupCache[key] = result;
     return result;
@@ -1111,14 +1415,24 @@ class DataManager{
   }
 
   // ---------- < Methods [4] > ------ ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ----------
-  bool _isItEmpty(dynamic input) {
-    if (input == null) return true;
-    if (input is String) {
-      final s = input.trim().toLowerCase();
-      return s.isEmpty || s == 'null' || s == '0';
-    }
-    return false;
-  }
+  List<dynamic> clean(List<dynamic> l) => l.where((e) {
+    final m = e as Map?;
+    if (m == null) return false;
+    final id = m['id'];
+    if (id == null) return false;
+    final s = id.toString().trim();
+    // remove only if id is empty or literally "null" (any case)
+    if (s.isEmpty || s.toLowerCase() == 'null') return false;
+    return true; // keep everything else, including 0, '0', 1, '1'
+  }).toList();
+
+  /*List<dynamic> clean(List<dynamic> l) => l.where((e) {
+    final m = e as Map?;
+    if (m == null) return false;
+    final id = m['id'];
+    final name = m['megnevezes'];
+    return !_isItEmpty(id) && !_isItEmpty(name);
+  }).toList();*/
 
   String _normalizeForSqlite(String sql) {
     // Unquote purely numeric literals:  '123'  ->  123
@@ -1128,6 +1442,14 @@ class DataManager{
       RegExp(r"'(\d+(?:\.\d+)?)'"),
       (m) => m.group(1)!,
     );
+  }
+
+  // ---------- < Methods [4] > ------ ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ----------
+  bool _isItEmpty(dynamic input) {
+    if (input == null) return true;
+    if (input is num) return input == 0; // handle numeric 0
+    final s = input.toString().trim().toLowerCase();
+    return s.isEmpty || s == 'null' || s == '0';
   }
 }
 

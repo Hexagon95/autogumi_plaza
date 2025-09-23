@@ -274,6 +274,7 @@ class SignatureFormState extends State<SignatureForm> {
     Global.routeNext =                NextRoute.photoCheck;
     PhotoPreviewState.selectedIndex = i;
     await Navigator.pushNamed(context, '/photo/preview');
+    setState(() => DataFormState.buttonListPictures[i] = ButtonState.default0);
   }
 
   Future<bool> _handlePop() async{ if(buttonCheck != ButtonState.loading){

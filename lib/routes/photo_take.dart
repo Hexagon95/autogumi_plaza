@@ -113,9 +113,9 @@ class TakePictureScreenState extends State<TakePictureScreen> with WidgetsBindin
 
         case NextRoute.photoTake:
           Global.routeNext = NextRoute.photoPreview;
-          await Navigator.pushNamed(context, '/photo/preview');
+          dynamic result = await Navigator.pushNamed(context, '/photo/preview');
           Global.routeBack;
-          Navigator.pop(context);
+          Navigator.pop(context, result);
           break;
           
         default:throw Exception('Not Implemented');

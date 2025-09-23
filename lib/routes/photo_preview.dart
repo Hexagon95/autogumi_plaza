@@ -177,39 +177,21 @@ class PhotoPreviewState extends State<PhotoPreview>{
 
   Future get _buttonSavePress async{
     setState(() => buttonSave = ButtonState.loading);
+    DataManager.dataQuickCall[2];
     await DataManager().beginProcess;
     buttonSave =              ButtonState.default0;
     editingController.text =  '';
     await DataManager(quickCall: QuickCall.askPhotos).beginQuickCall;
-    if(isSignature){
-      Global.currentRoute;
-      Global.routeNext = NextRoute.signature;
-      Navigator.popUntil(context, ModalRoute.withName('/signature'));
-      await Navigator.pushReplacementNamed(context, '/signature');
-    }
-    else{
-      Global.routeBack;
-      Navigator.pop(context);
-      //await Navigator.pushReplacementNamed(context, '/dataForm');
-    }
+    Global.routeBack;
+    Navigator.pop(context, DataManager.dataQuickCall[2].last);
   }
 
   Future<bool> get _handlePop async{
     switch(Global.currentRoute){
 
       case NextRoute.photoCheck:
-        if(isSignature){
-          Global.routeNext = NextRoute.signature;
-          DataFormState.buttonListPictures[selectedIndex] = ButtonState.default0;
-          Navigator.popUntil(context, ModalRoute.withName('/signature'));
-          await Navigator.pushReplacementNamed(context, '/signature');
-        }
-        else{
-          Global.routeBack;
-          DataFormState.buttonListPictures[selectedIndex] = ButtonState.default0;
-          Navigator.popUntil(context, ModalRoute.withName('/dataForm'));
-          await Navigator.pushReplacementNamed(context, '/dataForm');
-        }
+        Global.routeBack;
+        Navigator.pop(context, null);
         return false;
 
       case NextRoute.photoPreview:

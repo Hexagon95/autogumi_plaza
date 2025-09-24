@@ -18,7 +18,7 @@ class Global{
   static const List<String> falseString =                   ['0', 'fasle', 'False', 'FALSE', 'F', 'f'];
   static List<NextRoute> routes =                           List<NextRoute>.empty(growable: true);
   static NextRoute get currentRoute =>                      routes.last;
-  static void get routeBack                                 {routes.removeLast(); _printRoutes;}
+  static void get routeBack                                 {do{routes.removeLast();}while(currentRoute == NextRoute.default0); _printRoutes;}
   static set routeNext (NextRoute value){
     int check(int i) {while(routes.length > i){routes.removeLast();} while(routes.length <= i){routes.add(NextRoute.default0);} return i;}
     switch(value){
@@ -29,11 +29,11 @@ class Global{
       case NextRoute.esetiMunkalapFelvitele:      routes[check(3)] = value; break;
       case NextRoute.szezonalisMunkalapFelvitele: routes[check(3)] = value; break;
       case NextRoute.abroncsIgenyles:             routes[check(3)] = value; break;
-      case NextRoute.photoTake:                   routes[check(4)] = value; break;
-      case NextRoute.photoPreview:                routes[check(4)] = value; break;
       case NextRoute.photoCheck:                  routes[check(4)] = value; break;
       case NextRoute.signature:                   routes[check(4)] = value; break;
       case NextRoute.probeMeasuring:              routes[check(4)] = value; break;
+      case NextRoute.photoTake:                   routes[check(5)] = value; break;
+      case NextRoute.photoPreview:                routes[check(6)] = value; break;
       default: throw Exception('Default route has been thrown!!!');
     }
     _printRoutes;

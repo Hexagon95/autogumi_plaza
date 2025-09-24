@@ -20,7 +20,7 @@ import 'utils.dart';
 
 class DataManager{
   // ---------- < Variables [Static] > - ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ----------
-  static String thisVersion =                       '1.32d';
+  static String thisVersion =                       '1.32e';
   
   static String openAiPassword =                    'qifqik-sedpuf-rejKu6';
 
@@ -558,9 +558,6 @@ class DataManager{
           if (updateItemsItem == null) break;
           for (dynamic item in updateItemsItem) {
             try {
-              if(item['id'] == 'id_1036_1' && kDebugMode){
-                print('Stop');
-              }
               final bool varIsLookupDataOnTheSide = isLookupDataOnTheSide(item['id']);
               final dynamic varGetItemFromId = getItemFromId(id: item['id']);
               final List<String> sqlCommandLookupData =

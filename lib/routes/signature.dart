@@ -245,7 +245,7 @@ class SignatureFormState extends State<SignatureForm> {
       }
       if(message == null){
         resetVariables;
-        Global.routeBack; Global.routeBack;
+        Global.routeBack; Global.routeBack; Global.routes;
         if(kDebugMode)print(Global.currentRoute);
         CalendarState.selectedIndexList = null;
         await DataManager().beginProcess;
@@ -283,8 +283,10 @@ class SignatureFormState extends State<SignatureForm> {
     await DataManager(quickCall: QuickCall.askPhotos).beginQuickCall;
     refreshImages;
     setState((){});
-    Navigator.popUntil(context, ModalRoute.withName('/dataForm'));
-    await Navigator.pushReplacementNamed(context, '/dataForm');
+    Global.routeBack;
+    return true;
+    //Navigator.popUntil(context, ModalRoute.withName('/dataForm'));
+   //await Navigator.pushReplacementNamed(context, '/dataForm');
   } return false;}
 
   void get resetVariables{

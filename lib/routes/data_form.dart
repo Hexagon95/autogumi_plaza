@@ -542,7 +542,7 @@ class DataFormState extends State<DataForm> {//-- ---------- ---------- --------
             icon:             const Icon(Icons.arrow_downward),
             iconSize:         24,
             elevation:        16,
-            isExpanded:       false,
+            isExpanded:       true,
             alignment:        AlignmentDirectional.centerStart,
             dropdownColor:    const Color.fromRGBO(230, 230, 230, 1),
             menuMaxHeight:    MediaQuery.of(context).size.height / 1.5,
@@ -1002,6 +1002,7 @@ class DataFormState extends State<DataForm> {//-- ---------- ---------- --------
       } else {
         buttonContinue = ButtonState.disabled;
         Global.routeBack;
+        Global.currentRoute;
         Navigator.pop(context);
         /*await DataManager().beginProcess;
         Navigator.popUntil(context, ModalRoute.withName('/calendar'));
@@ -1076,9 +1077,17 @@ class DataFormState extends State<DataForm> {//-- ---------- ---------- --------
   }
 
   Future get _buttonCancelPressed async {if(!enableInteraction) {return;} if(isClosed || await Global.yesNoDialog(context,
-    title:    'Adatlap elhagyása',
-    content:  'Elveti módosításait és visszatér a Naptárhoz?'
-  )) {Global.routeBack; CalendarState.selectedIndexList = null; currentProgress = 0; isClosed = false; Navigator.pop(context);}}
+      title:    'Adatlap elhagyása',
+      content:  'Elveti módosításait és visszatér a Naptárhoz?'
+    )){
+    Global.currentRoute;
+    Global.routeBack;
+    Global.currentRoute;
+    CalendarState.selectedIndexList = null;
+    currentProgress = 0;
+    isClosed = false;
+    Navigator.pop(context);
+  }}
 
   Future get _buttonCancelExtraPressed async{
     if(!enableInteraction) return;
@@ -1249,6 +1258,7 @@ class DataFormState extends State<DataForm> {//-- ---------- ---------- --------
           content:  'Elveti módosításait és visszatér a Naptárhoz?'
         )){
           Global.routeBack;
+          Global.currentRoute;
           CalendarState.selectedIndexList = null;
           isClosed =                        false;
           Navigator.popUntil(context, ModalRoute.withName('/calendar'));

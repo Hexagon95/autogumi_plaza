@@ -20,7 +20,7 @@ import 'utils.dart';
 
 class DataManager{
   // ---------- < Variables [Static] > - ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ----------
-  static String thisVersion =                       '1.32e';
+  static String thisVersion =                       '1.32g';
   
   static String openAiPassword =                    'qifqik-sedpuf-rejKu6';
 
@@ -1001,6 +1001,7 @@ class DataManager{
 
         case NextRoute.tabForm:
           foglalasId =          data[2][DataFormState.selectedIndexInCalendar!]['id'].toString();
+          data[check(3)] =      [];
           if(['Eseti', 'Igénylés'].contains(input['jelleg'])) break;
           var queryParameters = {
             'customer':     customer,

@@ -218,10 +218,14 @@ class DataFormState extends State<DataForm> {//-- ---------- ---------- --------
         titleBarList.add(Text(titles[i], style: TextStyle(color: getColorOfText(i))));
       }
     }
-    return Center(child: Padding(padding: const EdgeInsets.all(15), child: Row(mainAxisAlignment: MainAxisAlignment.center, children: titleBarList)));
+    return Center(child: Padding(padding: const EdgeInsets.all(15), child: Row(children: [
+      Text(_getPlateNumberString, style: TextStyle(color: Global.getColorOfIcon(ButtonState.default0))),
+      Row(mainAxisAlignment: MainAxisAlignment.center, children: titleBarList)
+    ])));
   }
 
-  Widget get  _drawOptionsMenu => (!isClosed || (['Eseti', 'Szezonális'].contains(workType) && Global.currentRoute == NextRoute.tabForm && !isClosed))
+  Widget get  _drawOptionsMenu => (false)//(!isClosed || (['Eseti', 'Szezonális'].contains(workType) && Global.currentRoute == NextRoute.tabForm && !isClosed))
+  // ignore: dead_code
   ? PopupMenuButton(
     icon:             Icon(Icons.menu, color: Global.getColorOfIcon(ButtonState.default0), size: 34),
     color:            Colors.transparent,
@@ -439,9 +443,9 @@ class DataFormState extends State<DataForm> {//-- ---------- ---------- --------
         setState(() => buttonSaveProgress = ButtonState.default0);
       }
     }
-    if (!mounted) return;
+    /*if (!mounted) return;
     // 3) Return to calendar screen (don’t refresh here; Calendar will do it after pop)
-    Navigator.popUntil(context, ModalRoute.withName('/calendar'));
+    Navigator.popUntil(context, ModalRoute.withName('/calendar'));*/
   }
 
   /*Future _quickSave() async{
@@ -539,7 +543,7 @@ class DataFormState extends State<DataForm> {//-- ---------- ---------- --------
           SizedBox(height: 55, width: getWidth(index), child: Padding(padding: const EdgeInsets.all(15), child: DropdownButtonHideUnderline(child: DropdownButton<String>(
             value:            selectedItem,
             hint:             Text(thisData[index]['name'].toString(), textAlign: TextAlign.start),
-            icon:             const Icon(Icons.arrow_downward),
+            icon:             Icon(Icons.arrow_downward, color: Global.getColorOfButton((items.isNotEmpty)? ButtonState.default0 : ButtonState.disabled)),
             iconSize:         24,
             elevation:        16,
             isExpanded:       true,
@@ -554,7 +558,10 @@ class DataFormState extends State<DataForm> {//-- ---------- ---------- --------
           : Container(),
           (input['buttons'] != null)? SizedBox(height: 55, width: getWidth(index) - 60, child: Row(
             mainAxisAlignment:  MainAxisAlignment.end,
-            children:           [Padding(padding: const EdgeInsets.fromLTRB(0, 0, 30, 0), child: IconButton(onPressed: () => _selectAddPressed(index: index), icon: const Icon(Icons.add, size: 30)))]
+            children:           [Padding(padding: const EdgeInsets.fromLTRB(0, 0, 30, 0), child: IconButton(
+              onPressed:          () => _selectAddPressed(index: index),
+              icon:               Icon(Icons.add, size: 30, color: Global.getColorOfButton((items.isEmpty)? ButtonState.default0 : ButtonState.loading))
+            ))]
           )) : Container(),
         ])
         : SizedBox(height: 55, width: getWidth(index), child: TextFormField(
@@ -920,6 +927,7 @@ class DataFormState extends State<DataForm> {//-- ---------- ---------- --------
         case 0:
           DataManager.dataQuickCall[0]['foglalas'] =  rawData;
           DataManager.dataQuickCall[1][0] =           listOfLookupDatas;
+          //await _quickSave();
           rawData =                                   DataManager.dataQuickCall[0]['poziciok'][0]['adatok'];
           listOfLookupDatas =                         DataManager.dataQuickCall[1][1];
           progress[currentProgress] =                 true;
@@ -932,6 +940,7 @@ class DataFormState extends State<DataForm> {//-- ---------- ---------- --------
           DataManager.dataQuickCall[0]['poziciok'][currentProgress - 1]['adatok'] = rawData;
           DataManager.dataQuickCall[1][currentProgress] =                         listOfLookupDatas;
           progress[currentProgress] = true;
+          //await _quickSave();
           await DataManager(quickCall: QuickCall.askPhotos).beginQuickCall;
           rawData =                   DataManager.dataQuickCall[0]['poziciok'][currentProgress - 1]['adatok'];
           for(String entry in DataManager.dataQuickCall[1][currentProgress - 1].keys){
@@ -1047,13 +1056,38 @@ class DataFormState extends State<DataForm> {//-- ---------- ---------- --------
     setState(() => buttonCopy = ButtonState.disabled);
   }
 
-  Future get _buttonExtraCopyPressed async{
-    if(!enableInteraction) return;
+  Future get _buttonExtraCopyPressed async {
+    if (!enableInteraction) return;
     setState(() => buttonCopy = ButtonState.loading);
-    rawDataExtra =  List.from(rawDataExtraCopy);
-    buttonCopy =    ButtonState.default0;
+
+    // Interpret truthy flags the same way you do elsewhere
+    bool isTruthyCopy(dynamic v) =>
+        v != null && Global.trueString.contains(v.toString());
+
+    // Index the source snapshot (previous values) by id
+    final Map<String, dynamic> srcById = {
+      for (final item in rawDataExtraCopy)
+        (item['id'] ?? '').toString(): item
+    };
+
+    // Replace whole field maps only when DEST has copy==true
+    for (int i = 0; i < rawDataExtra.length; i++) {
+      final dst = rawDataExtra[i];
+      final id = (dst['id'] ?? '').toString();
+      if (id.isEmpty) continue;
+
+      if (!isTruthyCopy(dst['copy'])) continue;  // <- use the new flag
+
+      final src = srcById[id];
+      if (src == null) continue;
+
+      // Deep copy to avoid reference aliasing
+      rawDataExtra[i] = jsonDecode(jsonEncode(src));
+    }
+
+    buttonCopy = ButtonState.default0;
     _setButtonContinue;
-    setState((){});
+    setState(() {});
   }
 
   Future<void> _buttonCameraPressed({List? data, bool forced = false, int? index}) async{
@@ -1109,6 +1143,10 @@ class DataFormState extends State<DataForm> {//-- ---------- ---------- --------
     Global.routeNext = NextRoute.photoCheck;
     await Navigator.pushNamed(context, '/photo/preview');
   }
+
+  String get _getPlateNumberString {for(dynamic item in DataManager.dataQuickCall[0]['osszesites']){
+    if(item['id'].toString() == 'id_10030_0') return '${item['value'].toString()}  ';
+  } return '';}
 
   String get _getTitleString {switch(Global.currentRoute){
     case NextRoute.abroncsIgenyles:             return 'Igénylés';

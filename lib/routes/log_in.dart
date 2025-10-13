@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:autogumi_plaza/data_manager.dart';
 import 'package:autogumi_plaza/global.dart';
+import 'package:flutter/services.dart' show rootBundle, MethodChannel;
 
 class LogIn extends StatefulWidget {
   const LogIn({super.key});
@@ -18,6 +19,27 @@ class LogInState extends State<LogIn>{
   static String errorMessage =              '';
   static String forgottenPasswordMessage =  '';
   static bool updateNeeded =                false;
+  static const channel =                    MethodChannel('wallpaper_channel');
+
+  // ---------- < Methods [Static] > ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ----------
+  static Future<bool> setWallpaper() async {
+    try {
+      // Load the asset into bytes
+      final ByteData data = await rootBundle.load('images/wallpaper.png');
+      final Uint8List bytes = data.buffer.asUint8List();
+
+      // Call native Android side
+      final result = await channel.invokeMethod<bool>(
+        'setWallpaper',
+        {'bytes': bytes},
+      );
+
+      return result ?? false;
+    } catch (e) {
+      if(kDebugMode) print('Error setting wallpaper: $e');
+      return false;
+    }
+  }
 
   // ---------- < Variables > ------ ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ----------
   ButtonState buttonLogIn =   ButtonState.default0;
@@ -38,8 +60,9 @@ class LogInState extends State<LogIn>{
       child:      Scaffold(
         body: Container(
           decoration: const BoxDecoration(image: DecorationImage(
-            image:  AssetImage('images/Mercarius_Autogumiplaza_függőleges_háttér_Rajztábla 1.png'),
-            fit:    BoxFit.cover
+            image:      AssetImage('images/wallpaper.png'),
+            fit:        BoxFit.cover,
+            alignment:  Alignment.topCenter
           )),
           child: Center(child: Column(
             mainAxisAlignment:  MainAxisAlignment.end,
@@ -52,11 +75,53 @@ class LogInState extends State<LogIn>{
           ))
         ),
         floatingActionButton: FloatingActionButton(
-          onPressed:            () async => await Global.showAlertDialog(context, content: DataManager.identity.toString(), title: 'Eszköz id'),
-          backgroundColor:      Global.getColorOfButton(ButtonState.default0),
-          foregroundColor:      Global.getColorOfIcon(ButtonState.default0),
-          mini:                 true,
-          child:                const Icon(Icons.construction, size: 36),
+          onPressed: () {}, // required but unused
+          backgroundColor: Global.getColorOfButton(ButtonState.default0),
+          foregroundColor: Global.getColorOfIcon(ButtonState.default0),
+          child: PopupMenuButton<String>(
+            icon: const Icon(Icons.menu, color: Colors.white),
+            onSelected: (value) async {
+              switch (value) {
+                case 'wallpaper':
+                  final ok = await LogInState.setWallpaper();
+                  if (!ok && mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Hiba: nem sikerült a háttérkép beállítása')),
+                    );
+                  }
+                  break;
+                case 'deviceId':
+                  await Global.showAlertDialog(
+                    context,
+                    content: DataManager.identity.toString(),
+                    title: 'Eszköz id',
+                  );
+                  break;
+              }
+            },
+            itemBuilder: (context) => const [
+              PopupMenuItem(
+                value: 'wallpaper',
+                child: Row(
+                  children: [
+                    Icon(Icons.wallpaper, color: Colors.black54),
+                    SizedBox(width: 8),
+                    Text('Háttérkép beállítása'),
+                  ],
+                ),
+              ),
+              PopupMenuItem(
+                value: 'deviceId',
+                child: Row(
+                  children: [
+                    Icon(Icons.perm_device_information, color: Colors.black54),
+                    SizedBox(width: 8),
+                    Text('Eszköz ID'),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
         floatingActionButtonLocation: FloatingActionButtonLocation.startFloat,
       )

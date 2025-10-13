@@ -25,7 +25,7 @@ class DataManager{
   static String openAiPassword =                    'qifqik-sedpuf-rejKu6';
 
   static bool isIgenylesDisabled =                  false;  // true will disable all buttons of "📄 Igénylés".
-  static int verzioTest =                           0;      // anything other than 0 will draw "[Teszt #]" at the LogIn screen.
+  static int verzioTest =                           5;      // anything other than 0 will draw "[Teszt #]" at the LogIn screen.
 
   static bool test =                                false;   // <--- Set the root of the Php files here: true = test, false = live Php file directory. This is the same with the directory of the photos!
   static String urlPath =                           test? 'https://developer.mosaic.hu/android/szerviz_mezandmol/' : 'https://app.mosaic.hu/android/szerviz_mezandmol/';
@@ -62,7 +62,7 @@ class DataManager{
   // ── Local SQLite for SELECT-without-FROM ──────────────────────────────────────
   static Database? _exprDb;  
 
-  static Future<Database> _getExprDb() async {
+  static Future<Database> _getExprDb() async { 
     // One in-memory DB; fast and isolated
     _exprDb ??= await openDatabase(inMemoryDatabasePath);
     // Optional: a tiny table if you ever want constants, but not required.

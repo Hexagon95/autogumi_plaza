@@ -50,7 +50,7 @@ class CalendarState extends State<Calendar> {
 
   // ---------- < Variables > ------------ ---------- ---------- ---------- ---------- ---------- ----------
   CalendarFormat _calendarFormat =  CalendarFormat.month;
-  DateTime _focusedDay =            DateTime.now();
+  static DateTime _focusedDay =            DateTime.now();
   ButtonState buttonAddWork =       ButtonState.default0;
   ButtonState buttonListInquries =  ButtonState.default0;
   bool isListStockInfoOpen =        false;
@@ -75,6 +75,7 @@ class CalendarState extends State<Calendar> {
   // ---------- < Widgets [1] > ---------- ---------- ---------- ---------- ---------- ---------- ----------
   Widget get _calendar => Container(decoration: const BoxDecoration(border: Border(bottom: BorderSide(color: Colors.grey))), child: TableCalendar(
     key:                  ValueKey(incompleteDays.hashCode),
+    locale:               'hu_HU',
     firstDay:             kFirstDay,
     lastDay:              kLastDay,
     focusedDay:           _focusedDay,
@@ -82,13 +83,18 @@ class CalendarState extends State<Calendar> {
     selectedDayPredicate: (day) {      
       return isSameDay(_selectedDay, day);
     },
-    onDaySelected:    _dayPicked,
-    onFormatChanged:  (format)      {if(_calendarFormat != format) setState(() {_calendarFormat = format;});},
-    onPageChanged:    (focusedDay)  {_focusedDay = focusedDay;},
-    eventLoader:      _getEventsForDay,
-    calendarStyle:    CalendarStyle(
-      selectedDecoration: BoxDecoration(color: Global.getColorOfButton(ButtonState.default0), shape: BoxShape.circle),
-      todayDecoration:    BoxDecoration(color: Global.getColorOfButton(ButtonState.disabled), shape: BoxShape.circle)
+    onDaySelected:      _dayPicked,
+    onFormatChanged:    (format)      {if(_calendarFormat != format) setState(() {_calendarFormat = format;});},
+    onPageChanged:      (focusedDay)  {_focusedDay = focusedDay;},
+    eventLoader:        _getEventsForDay,
+    startingDayOfWeek:  StartingDayOfWeek.monday,
+    calendarStyle:      CalendarStyle(
+      selectedDecoration: BoxDecoration(
+        color: ((_focusedDay.day == DateTime.now().day && _focusedDay.month == DateTime.now().month) || (_selectedDay?.day == DateTime.now().day && _selectedDay?.month == DateTime.now().month))? Global.getColorOfButton(ButtonState.default0) : const Color.fromARGB(255, 255, 50, 0),
+        shape: BoxShape.circle
+      ),
+      todayDecoration:    BoxDecoration(color: Global.getColorOfButton(ButtonState.default0), shape: BoxShape.circle),
+      weekendTextStyle:   const TextStyle(color: Color.fromARGB(255, 0, 150, 150))
     )
   ));  
   
@@ -103,7 +109,7 @@ class CalendarState extends State<Calendar> {
               title: Stack(children: [
                 Padding(
                   padding:  const EdgeInsets.fromLTRB(100, 0, 0, 0),
-                  child:    Icon(_getIconOfCase(index), color: Global.getColorOfButton(ButtonState.disabled), size: 90),
+                  child:    Icon(_getIconOfCase(index), color: _getColorOfCase(index), size: 90),
                 ),
                 Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
                   _drawButtonDelete(index),
@@ -224,6 +230,12 @@ class CalendarState extends State<Calendar> {
     case 'Eseti':     return Icons.content_paste_search;
     case 'Igénylés':  return Icons.request_page_outlined;
     default:          return Icons.calendar_month_outlined;
+  }}
+
+  Color _getColorOfCase(int index) {switch(jelleg[index]){
+    case 'Eseti':     return const Color.fromRGBO(200, 200, 255, 1.0);
+    case 'Igénylés':  return const Color.fromRGBO(200, 200, 100, 1.0);
+    default:          return Global.getColorOfButton(ButtonState.disabled);
   }}
 
   Future _dayPicked(selectedDay, focusedDay) async{

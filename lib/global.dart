@@ -8,7 +8,7 @@ import 'package:flutter/services.dart';
 // ---------- - < Enums > ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ----------
 enum NextRoute    {logIn,   calendar,       tabForm,        photoPreview, photoTake,  photoCheck, signature,  esetiMunkalapFelvitele, default0, abroncsIgenyles, szezonalisMunkalapFelvitele, probeMeasuring, panel}
 enum ButtonState  {hidden,  loading,        disabled,       error,        default0}
-enum QuickCall    {tabForm, giveDatas,      chainGiveDatas, verzio,       askPhotos,  default0, cancelWork, tabletBelep, saveEsetiMunkalapFelvitele, saveAbroncsIgenyles, chainGiveDatasFormOpen, saveSzezonalisMunkalapFelvitele, askIncompleteDays, askPlateNumber, askEsetiMunkalapMeghiusulasOkai, logIn, forgottenPassword, logInNamePassword, panel, callButtonPhp, callButtonWebLink, redrawDataForm}
+enum QuickCall    {tabForm, giveDatas,      chainGiveDatas, verzio,       askPhotos,  default0, cancelWork, tabletBelep, saveEsetiMunkalapFelvitele, saveAbroncsIgenyles, chainGiveDatasFormOpen, saveSzezonalisMunkalapFelvitele, askIncompleteDays, askPlateNumber, askEsetiMunkalapMeghiusulasOkai, logIn, forgottenPassword, logInNamePassword, panel, callButtonPhp, callButtonWebLink, redrawDataForm, uploadSignature}
 enum Probe        {bluetoothCheck, deviceSearch, measureCommand, default0}
 
 class Global{
@@ -48,16 +48,32 @@ class Global{
   static BoxDecoration customButtonDesign(ButtonState input) => BoxDecoration(
     //border:       Border.all(color: getColorOfText(input), width: 1),
     color:        getColorOfButton(input),
-    borderRadius: const BorderRadius.all(Radius.circular(8))
+    borderRadius: const BorderRadius.all(Radius.circular(8)) // '1️⃣'
   );
 
-  static Map<String, dynamic> lookupCache = {};  
+  static Map<String, dynamic> lookupCache =   {};  
+  static final RegExp _placeholderRegex =     RegExp(r'<%([^>]+)>');
+  static Map<String, String> placeholderMap = {
+    'n':  '☀️',
+    'h':  '❄️',
+    '4':  '🌦️',
+    'k':  '🛞',
+  };
 
   // ---------- < SQL Commands > ----- -------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ----------
   static const String sqlCreateTableIdentity = "CREATE TABLE identityTable(id INTEGER PRIMARY KEY, identity TEXT)";
 
   // ---------- < Methods [Static] > - -------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ----------
   static Color invertColor(Color input) => Color.fromRGBO((input.red - 255).abs(), (input.green - 255).abs(), (input.blue - 255).abs(), 1.0);
+
+  static String parse(String? input) {
+    if (input == null) return '';
+    if (!input.contains('<%')) return input;
+    return input.replaceAllMapped(_placeholderRegex, (match) {
+      final key = match.group(1);
+      return placeholderMap[key] ?? '';
+    });
+  }
 
   static Map<ButtonState, Color> customColor = {
     ButtonState.default0: const Color.fromRGBO(0, 180, 125, 1.0),

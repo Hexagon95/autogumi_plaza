@@ -20,14 +20,14 @@ import 'utils.dart';
 
 class DataManager{
   // ---------- < Variables [Static] > - ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ----------
-  static String thisVersion =                       '1.32g';
+  static String thisVersion =                       '1.38a';
+  static int verzioTest =                           1;      // anything other than 0 will draw "[Teszt #]" at the LogIn screen.
   
   static String openAiPassword =                    'qifqik-sedpuf-rejKu6';
-
+ 
   static bool isIgenylesDisabled =                  false;  // true will disable all buttons of "📄 Igénylés".
-  static int verzioTest =                           5;      // anything other than 0 will draw "[Teszt #]" at the LogIn screen.
 
-  static bool test =                                false;   // <--- Set the root of the Php files here: true = test, false = live Php file directory. This is the same with the directory of the photos!
+  static bool test =                                false;  // <--- Set the root of the Php files here: true = test, false = live Php file directory. This is the same with the directory of the photos!
   static String urlPath =                           test? 'https://developer.mosaic.hu/android/szerviz_mezandmol/' : 'https://app.mosaic.hu/android/szerviz_mezandmol/';
   static String rootPath =                          test? 'https://developer.mosaic.hu/' : 'https://appdoc.mosaic.hu/';
   static String get sqlUrlLink =>                   'https://app.mosaic.hu/sql/ExternalInputChangeSQL.php?ceg=mezandmol&SQL=';
@@ -256,7 +256,7 @@ class DataManager{
           Future<Map<String, dynamic>> generateListOfLookupDatas(List<dynamic> rawData) async{
             Map<String, dynamic> listOfLookupDatas = <String, dynamic>{};
             for(dynamic item in rawData){
-              if(!['select','search'].contains(item['input_field'])) continue;
+              if(!['select','search', 'text-lookup'].contains(item['input_field'])) continue;
               listOfLookupDatas[item['id']] = await _getCachedLookupData(
                 thisData:     input['rawDataInput'],
                 input:        item['lookup_data'],
@@ -695,7 +695,7 @@ class DataManager{
                     }
                     break;
                   }
-                  if (['select', 'search'].contains(input['rawDataInput'][i]['input_field'])) {
+                  if (['select', 'search', 'text-lookup'].contains(input['rawDataInput'][i]['input_field'])) {
                     // do NOT replace options with []
                     if (list.isNotEmpty && !isEmptyId(list[0]['id'])) {
                       for (var item in list) {
@@ -723,7 +723,7 @@ class DataManager{
                   }
                 }
 
-                if (['select', 'search'].contains(varGetItemFromId['input_field'])) {
+                if (['select', 'search', 'text-lookup'].contains(varGetItemFromId['input_field'])) {
                   // never nuke list; only pick selection if present
                   if (list.isNotEmpty && !isEmptyId(list[0]['id'])) {
                     for (var item in list) {
@@ -761,7 +761,7 @@ class DataManager{
                 ;
                 break;
               }
-              if(['select','search'].contains(rawDataInput[i]['input_field'])){
+              if(['select','search', 'text-lookup'].contains(rawDataInput[i]['input_field'])){
                 if(input['lookupDatas'][entry].length == 0 || _isItEmpty(DataFormState.listOfLookupDatas[entry][0]['id'])) {input['lookupDatas'][entry] = List<dynamic>.empty();}
                 else {for(var item in input['lookupDatas'][entry]){
                   if(item['selected'] != null && item['selected'].toString() == '1') {rawDataInput[i]['value'] = item['id']; break;}
@@ -811,19 +811,35 @@ class DataManager{
           }
           break;
 
-        case QuickCall.cancelWork:
-          var queryParameters = {
-            'customer':     customer,
-            'foglalas_id':  data[2][input['index']]['id'].toString(),
-            'indoklas':     input['indoklas'],
-            'user_id':      userId,
-            'jelleg':       input['jelleg']
-          };
-          Uri uriUrl =              Uri.parse('${urlPath}cancel_work.php');          
-          http.Response response =  await http.post(uriUrl, body: json.encode(queryParameters), headers: headers);
-          dataQuickCall[check(3)] = await jsonDecode(await jsonDecode(response.body));
-          if(kDebugMode)print(dataQuickCall[3].toString());
-          break;
+        case QuickCall.cancelWork: switch(input['jelleg']){
+
+          case 'Igénylés':
+            var queryParameters = {
+              'customer':     customer,
+              'bizonylat_id': data[2][input['index']]['id'].toString(),
+              'indoklas':     input['indoklas'],
+              'user_id':      userId,
+            };
+            Uri uriUrl =              Uri.parse('${urlPath}cancel_igenyles.php');          
+            http.Response response =  await http.post(uriUrl, body: json.encode(queryParameters), headers: headers);
+            dataQuickCall[check(3)] = await jsonDecode(await jsonDecode(response.body));
+            if(kDebugMode)print(dataQuickCall[3].toString());
+            break;
+
+          default:
+            var queryParameters = {
+              'customer':     customer,
+              'foglalas_id':  data[2][input['index']]['id'].toString(),
+              'indoklas':     input['indoklas'],
+              'user_id':      userId,
+              'jelleg':       input['jelleg']
+            };
+            Uri uriUrl =              Uri.parse('${urlPath}cancel_work.php');          
+            http.Response response =  await http.post(uriUrl, body: json.encode(queryParameters), headers: headers);
+            dataQuickCall[check(3)] = await jsonDecode(await jsonDecode(response.body));
+            if(kDebugMode)print(dataQuickCall[3].toString());
+            break;
+        } break;
 
         case QuickCall.tabletBelep:
           var queryParameters = {
@@ -850,8 +866,21 @@ class DataManager{
           SignatureFormState.message =  (dataQuickCall[5].isNotEmpty)? dataQuickCall[5][0] : null;
           break;
 
+        case QuickCall.uploadSignature:
+          var queryParameters = {
+            'customer':       customer,
+            'bizonylat_id':   input['bizonylat_id'],
+            'alairo':         input['alairo'],
+            'alairas':        input['alairas'],
+          };
+          Uri uriUrl = Uri.parse('${urlPath}upload_signature.php');
+          http.Response response =      await http.post(uriUrl, body: json.encode(queryParameters), headers: headers);
+          if(kDebugMode) dev.log(response.body);
+          dataQuickCall[check(10)] =     (['[]', '"[]"', '""[]""'].contains(response.body))? [] : json.decode(json.decode(response.body));
+          if(kDebugMode) dev.log(dataQuickCall[10].toString());
+          break;
+  
         case QuickCall.saveSzezonalisMunkalapFelvitele:
-          dataQuickCall[0]['foglalas'] = DataFormState.rawData;
           if(input['lezart'] == null) input['lezart'] = 0;
           var queryParameters = {
             'customer':   customer,
@@ -1072,7 +1101,8 @@ class DataManager{
           var queryParameters = {
             'customer':     customer,
             'eszkoz_id':    identity.toString(),
-            'datum':        input['datum'].toString().split(' ')[0]
+            'datum':        input['datum'].toString().split(' ')[0],
+            'parent_id':    input['parent_id']
           };
           Uri uriUrl =              Uri.parse('${urlPath}eseti_munkalap.php');
           http.Response response =  await http.post(uriUrl, body: json.encode(queryParameters), headers: headers);
@@ -1149,7 +1179,7 @@ class DataManager{
 
   Future get formOpen async{
     for(int i = 0; i < dataQuickCall[0]['foglalas'].length; i++){
-      if(['select', 'search'].contains(dataQuickCall[0]['foglalas'][i]['input_field'].toString())){
+      if(['select', 'search', 'text-lookup'].contains(dataQuickCall[0]['foglalas'][i]['input_field'].toString())){
         dynamic item = dataQuickCall[0]['foglalas'][i];
         if(item['update_items'] != null){
           for(int j = 0; j < item['update_items'].length; j++){
@@ -1191,6 +1221,7 @@ class DataManager{
 
         case QuickCall.tabForm:
           DataFormState.rawData =   dataQuickCall[0]['foglalas'];
+          DataFormState.options =   dataQuickCall[0]['beallitasok'] ?? [];
           // ----- Title progressBar Reset ----- //
           DataFormState.progress =          List<bool>.empty(growable: true);
           DataFormState.numberOfPictures =  List<int>.empty(growable: true);
@@ -1198,7 +1229,7 @@ class DataManager{
           for(int i = 0; i < dataQuickCall[0]['poziciok'].length + 1; i++){
             DataFormState.progress.add(false);
             DataFormState.numberOfPictures.add(0);
-            DataFormState.titles.add((i == 0)? 'Foglalás' : dataQuickCall[0]['poziciok'][i - 1]['pozicio'].toString());
+            DataFormState.titles.add((i == 0)? 'Foglalás' : '${Global.parse(dataQuickCall[0]['poziciok'][i - 1]['emoji']?.toString() ?? '')}${dataQuickCall[0]['poziciok'][i - 1]['pozicio'].toString()}');
           }
           break;
 

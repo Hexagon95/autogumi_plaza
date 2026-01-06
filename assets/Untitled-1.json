@@ -1,0 +1,45 @@
+{
+      "type":"1",
+      "icon":"file",
+      "title":"PLB669 - Kovi Autó-Shop Gumiszerviz",
+      "value":"Igénylés AB2025\/0099",
+      "buttons":[
+         {
+            "name":     "Nyomtatás",
+            "callback": "https:\/\/invoice.mosaic.hu\/pdfgenerator\/mercarius\/igenyles.php?kategoria_id=15&link=COSEVANDGIUYLHBTSQOU&ceg=mercarius",
+            "color":    "secondary",
+            "icon":     "printer",
+            "question": "",
+            "type":     "link",
+            "php":      0
+         },
+         {
+            "name":     "Jóváhagyva",
+            "callback": "https:\/\/app.mosaic.hu\/android\/szerviz_mezandmol\/bizonylat_statusz_update.php?id=59960&status=14&user=1",
+            "color":    "success",
+            "icon":     "check",
+            "question": "Jóváhagyva státuszt tároljam?",
+            "type":     "php",
+            "php":      1
+         },
+         {
+            "name":     "Elutasítva",
+            "callback": "https:\/\/app.mosaic.hu\/android\/szerviz_mezandmol\/bizonylat_statusz_update.php?id=59960&status=15&user=1",
+            "color":    "danger",
+            "icon":     "x",
+            "question": "Elutasítva státuszt tároljam?",
+            "type":     "php",
+            "php":      1
+         },
+         {
+            "name":         "Munkalap",
+            "callback":     "",
+            "color":        "danger",
+            "icon":         "x",
+            "question":     "Eseti munkalap létrehozása?",
+            "type":         "esetimunkalap",
+            "parameters":   {"parent_id": 12314},
+            "php":          0
+         }
+      ]
+   }

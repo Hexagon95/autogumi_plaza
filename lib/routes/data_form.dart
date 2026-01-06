@@ -6,7 +6,6 @@ import 'package:autogumi_plaza/routes/calendar.dart';
 import 'package:autogumi_plaza/data_manager.dart';
 import '../global.dart';
 import 'package:flutter_datetime_picker_plus/flutter_datetime_picker_plus.dart' as picker;
-import 'package:dropdown_search/dropdown_search.dart';
 import 'package:masked_text/masked_text.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/cupertino.dart';
@@ -24,11 +23,12 @@ class DataForm extends StatefulWidget {//-------- ---------- ---------- --------
 
 class DataFormState extends State<DataForm> {//-- ---------- ---------- ---------- ---------- ---------- ---------- ---------- <DataFormState>
   // ---------- < Wariables [Static] > ---------- ---------- ---------- ---------- ---------- ---------- ---------- ----------
-  static List<dynamic> rawData =                      List<dynamic>.empty();
-  static List<dynamic> rawDataExtra =                 List<dynamic>.empty();
-  static List<dynamic> rawDataExtraCopy =             List<dynamic>.empty();
-  static List<dynamic> rawDataCopy =                  List<dynamic>.empty();
-  static List<dynamic> dataQuickCall1Copy =           List<dynamic>.empty();
+  static List<dynamic> rawData =                      [];
+  static List<dynamic> options =                      [];
+  static List<dynamic> rawDataExtra =                 [];
+  static List<dynamic> rawDataExtraCopy =             [];
+  static List<dynamic> rawDataCopy =                  [];
+  static List<dynamic> dataQuickCall1Copy =           [];
   static Map<String, dynamic> listOfLookupDatasCopy = {};
   static List<ButtonState> buttonListPictures =       List<ButtonState>.empty(growable: true);
   static List<int> numberOfPictures =                 List<int>.empty(growable: true);
@@ -44,6 +44,15 @@ class DataFormState extends State<DataForm> {//-- ---------- ---------- --------
   static bool isClosed =                              false;
   static bool isExtraForm =                           false;
   static bool isScreenLocked =                        false;
+  static Map<String, bool> enableInteraction =        {
+    'buttonContinue'      : true,
+    'buttonSave'          : true,
+    'buttonSignature'     : true,
+    'buttonCopy'          : true,
+    'buttonExtraCopy'     : true,
+    'selectAdd'           : true,
+    'handleSelectChange'  : true,
+  };
   static int? amount;
   static int? selectedIndexInCalendar;
   static int get currentProgress{
@@ -56,6 +65,7 @@ class DataFormState extends State<DataForm> {//-- ---------- ---------- --------
   static ButtonState _buttonContinue = ButtonState.disabled; static ButtonState get buttonContinue => _buttonContinue; static set buttonContinue(ButtonState input){
     _buttonContinue = (isClosed && currentProgress == progress.length - 1)? ButtonState.disabled : input;
   }
+  static dynamic option(String input) {for(dynamic item in options) {if(item['name'] == input) return item;} return null;}
 
   // ---------- < Wariables [1] > ---- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ----------
   List<TextEditingController> controllerCopy =  List<TextEditingController>.empty(growable: true);
@@ -65,7 +75,6 @@ class DataFormState extends State<DataForm> {//-- ---------- ---------- --------
   ButtonState buttonBack =                      ButtonState.default0;
   ButtonState buttonSave =                      ButtonState.disabled;
   ButtonState buttonSaveProgress =              ButtonState.default0;
-  bool enableInteraction =                      true;
   BoxDecoration customBoxDecoration =           BoxDecoration(            
     border:       Border.all(color: const Color.fromARGB(130, 184, 184, 184), width: 1),
     color:        Colors.white,
@@ -75,8 +84,7 @@ class DataFormState extends State<DataForm> {//-- ---------- ---------- --------
     border:       Border.all(color: const Color.fromARGB(255, 255, 0, 0), width: 1),
     color:        const Color.fromARGB(255, 255, 230, 230),
     borderRadius: const BorderRadius.all(Radius.circular(8))
-  );
-
+  );  
   bool get changeDetected{
     if(currentProgress < 2) return false;
     for(int i = 0; i < DataManager.dataQuickCall[0]['poziciok'][currentProgress - 1]['adatok'].length; i++){
@@ -88,6 +96,7 @@ class DataFormState extends State<DataForm> {//-- ---------- ---------- --------
     }
     return false;
   }
+  bool skipWillPopScopeSequences = false;
 
   // ---------- < Constructor > ------ ---------- ---------- ---------- ---------- ---------- ---------- ---------- ----------
   DataFormState() {_resetController(rawData);}
@@ -210,21 +219,23 @@ class DataFormState extends State<DataForm> {//-- ---------- ---------- --------
     Color getColorOfText(int i) => Global.getColorOfIcon((i == currentProgress)? ButtonState.default0 : ButtonState.disabled);
 
     List<Widget> titleBarList = List<Widget>.empty(growable: true);
-    for(int i = 0; i < progress.length; i++){
-      if(i == 0) {titleBarList.add(Text(_getTitleString, style: TextStyle(color: getColorOfText(i))));}
+    if(progress.isEmpty || ['', ' ', 'false'].contains(progress[0].toString())) {titleBarList.add(_getTitleString(false));}
+    else {for(int i = 0; i < progress.length; i++){      
+      if(i == 0) {titleBarList.add(_getTitleString(true, getColorOfText: getColorOfText, i: i));}
       else{
         if(i == 1) titleBarList.add(Text(' > Pozíciók: ', style: TextStyle(color: Global.getColorOfIcon(ButtonState.disabled))));
         if(i > 1) titleBarList.add(Text(' > ', style: TextStyle(color: Global.getColorOfIcon(ButtonState.disabled))));
-        titleBarList.add(Text(titles[i], style: TextStyle(color: getColorOfText(i))));
+        titleBarList.add(Text(Global.parse(titles[i]), style: TextStyle(color: getColorOfText(i))));
       }
-    }
+    }}
+    String plateNumberString = _getPlateNumberString;
     return Center(child: Padding(padding: const EdgeInsets.all(15), child: Row(children: [
-      Text(_getPlateNumberString, style: TextStyle(color: Global.getColorOfIcon(ButtonState.default0))),
+      Text((['null  ', 'Null  ', 'NULL  ', '  '].contains(plateNumberString)? '' : plateNumberString), style: TextStyle(color: Global.getColorOfIcon(ButtonState.default0))),
       Row(mainAxisAlignment: MainAxisAlignment.center, children: titleBarList)
     ])));
   }
 
-  Widget get  _drawOptionsMenu => (false)//(!isClosed || (['Eseti', 'Szezonális'].contains(workType) && Global.currentRoute == NextRoute.tabForm && !isClosed))
+  Widget get  _drawOptionsMenu => (false) //(!isClosed || (['Eseti', 'Szezonális'].contains(workType) && Global.currentRoute == NextRoute.tabForm && !isClosed))
   // ignore: dead_code
   ? PopupMenuButton(
     icon:             Icon(Icons.menu, color: Global.getColorOfIcon(ButtonState.default0), size: 34),
@@ -284,7 +295,7 @@ class DataFormState extends State<DataForm> {//-- ---------- ---------- --------
   );
 
   Widget get _drawButtonBack => TextButton(
-    onPressed:  () async => await _buttonBackPressed,
+    onPressed:  () => executeSafely(_buttonBackPressed),
     style:      ButtonStyle(backgroundColor: MaterialStateProperty.all(Colors.transparent)),
     child:      Padding(padding: const EdgeInsets.all(5), child: Row(children: [
       Icon(Icons.arrow_back, color: Global.getColorOfIcon(buttonBack), size: 30)
@@ -315,7 +326,7 @@ class DataFormState extends State<DataForm> {//-- ---------- ---------- --------
   }}
 
   Widget get _drawButtonContinue => Padding(padding: const EdgeInsets.fromLTRB(0, 0, 80, 0), child: TextButton(
-    onPressed:  () async => (buttonContinue == ButtonState.default0)? _buttonContinuePressed : null,
+    onPressed:  () async => (buttonContinue == ButtonState.default0)? executeSafely(_buttonContinuePressed) : null,
     style:      ButtonStyle(backgroundColor: MaterialStateProperty.all(Colors.transparent)),
     child:      Padding(padding: const EdgeInsets.all(5), child: Row(children: [
       (buttonContinue == ButtonState.loading)? _progressIndicator(Global.getColorOfIcon(buttonContinue)) : Container(),
@@ -392,10 +403,12 @@ class DataFormState extends State<DataForm> {//-- ---------- ---------- --------
   : Container();
 
   // ---------- < Methods [1] > ------ ---------- ---------- ---------- ---------- ---------- ---------- ---------- ----------
-  @override
-  void initState(){
+  @override void initState(){
     super.initState();
-    _initOpenForm();
+    WidgetsBinding.instance.addPostFrameCallback((_) async{
+      await _initOpenForm();
+      if(mounted && !['Igénylés'].contains(workType)) setState(() => _jumpToLastPageIfClosed());
+    });
   }
 
   @override
@@ -405,7 +418,7 @@ class DataFormState extends State<DataForm> {//-- ---------- ---------- --------
   }
 
   Future<void> _quickSave() async {
-    if (!enableInteraction || quickSaveLock) return;
+    if (quickSaveLock) return;
     quickSaveLock = true;
     setState(() => buttonSaveProgress = ButtonState.loading);
     try {
@@ -478,17 +491,17 @@ class DataFormState extends State<DataForm> {//-- ---------- ---------- --------
   }*/
 
   Widget _getWidget(List<dynamic> thisData, dynamic input, int index){
-    bool editable =           (Global.trueString.contains(input['editable'].toString()));
-    controller[index].text =  (thisData[index]['value'] == null)? '' : thisData[index]['value'].toString();
+    bool editable =          (Global.trueString.contains(input['editable'].toString()));
+    controller[index].text = _noNullText(Global.parse(thisData[index]['value'].toString()));
     double getWidth(int index) {int sorDB = 0; for(var item in thisData) {if(item['sor'] == thisData[index]['sor']) sorDB++;} return MediaQuery.of(context).size.width / sorDB - 22;}
     TextInputType? getKeyboard(String? keyboardType) {if(keyboardType == null) return null; switch(keyboardType){
       case 'number':  return TextInputType.number;
-      default:        return TextInputType.text;
+      default:        return TextInputType.text; 
     }}
 
     switch(input['input_field']){
 
-      case 'search':
+      /*case 'search':
         List<String> items =    List<String>.empty(growable: true);
         for(var item in listOfLookupDatas[input['id']]) {items.add(item['megnevezes'].toString());}
         return (items.isNotEmpty && !isClosed)
@@ -527,9 +540,50 @@ class DataFormState extends State<DataForm> {//-- ---------- ---------- --------
             border:         InputBorder.none,
           ),
           onChanged:  null,
-        ));
+        ));*/
 
-      case 'select':
+      case 'search': {
+        final List<dynamic>? lookupData = listOfLookupDatas[input['id']];
+        final bool hasItems = lookupData != null && lookupData.isNotEmpty && !isClosed;
+
+        if (hasItems && editable) {
+          return GestureDetector(
+            onTap: () async => await _showSearchDialog(thisData, input, index),
+            child: SizedBox(
+              height: 70,
+              width: getWidth(index),
+              child: AbsorbPointer(
+                child: TextField(
+                  controller: controller[index],
+                  readOnly: true,
+                  decoration: InputDecoration(
+                    contentPadding: const EdgeInsets.all(10),
+                    labelText: Global.parse(thisData[index]['name']),
+                    border: InputBorder.none,
+                    suffixIcon: const Icon(Icons.search),
+                  ),
+                ),
+              ),
+            ),
+          );
+        }
+        // Fallback: disabled text field when no data / closed
+        return SizedBox(
+          height: 70,
+          width: getWidth(index),
+          child: TextFormField(
+            enabled: false,
+            controller: controller[index],
+            decoration: InputDecoration(
+              contentPadding: const EdgeInsets.all(10),
+              labelText: Global.parse(thisData[index]['name']),
+              border: InputBorder.none,
+            ),
+          ),
+        );
+      }
+
+      /*case 'select':
         bool isInLookupData(String input, List<dynamic>? list) {if(list != null)for(var item in list) {if(item['id'].toString() == input) return true;} return false;}
         String getItem(dynamic varList, String id) {for(dynamic item in varList) {if(item['id'] == id) return item['megnevezes'];} return '';}
 
@@ -574,7 +628,89 @@ class DataFormState extends State<DataForm> {//-- ---------- ---------- --------
             border:         InputBorder.none,
           ),
           onChanged:  null,
-        ));
+        ));*/
+
+      case 'select': {
+        bool isInLookupData(String input, List<dynamic>? list) {if(list != null) {for(var item in list) {if(item['id'].toString() == input) return true;}}return false;}
+        String getItem(dynamic varList, String id) {for(dynamic item in varList) {if(item['id'] == id) return item['megnevezes'];}return '';}
+        final List<dynamic>? lookupData = listOfLookupDatas[input['id']];
+        final String? selectedItem = (isInLookupData(thisData[index]['value']?.toString() ?? '', lookupData))? thisData[index]['value'].toString() : null;
+        final bool hasData = lookupData != null && (lookupData.isNotEmpty || input['buttons'] != null);
+        if (hasData && editable && !isClosed) {
+          // Show read-only text field, open dialog on tap
+          return Stack(
+            children: [
+              GestureDetector(
+                onTap: () async => await _showSelectDialog(thisData, input, index),
+                child: SizedBox(
+                  height: 70,
+                  width: getWidth(index),
+                  child: Padding(
+                    padding: const EdgeInsets.all(4),
+                    child: AbsorbPointer(
+                      child: TextField(
+                        controller: controller[index]
+                          ..text = (selectedItem != null)
+                              ? _noNullText(Global.parse(getItem(lookupData, selectedItem)))
+                              : '',
+                        readOnly: true,
+                        decoration: InputDecoration(
+                          contentPadding: EdgeInsets.zero,
+                          labelText: Global.parse(thisData[index]['name'].toString()),
+                          border: InputBorder.none,
+                          suffixIcon: Icon(
+                            Icons.arrow_downward,                            
+                            color: Global.getColorOfButton((lookupData.isNotEmpty)? ButtonState.default0 : ButtonState.disabled)
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              // Optional "+" button for extra form, same as before
+              // Show "+" inside the field ONLY when list is empty and plus is allowed
+              if(input['buttons'] != null && (lookupData.isEmpty)) SizedBox(
+                height: 70,
+                width: getWidth(index) - 60,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(0, 0, 30, 0),
+                      child: IconButton(
+                        onPressed: () => _selectAddPressed(index: index),
+                        icon: Icon(
+                          Icons.add,
+                          size: 30,
+                          color: Global.getColorOfButton(ButtonState.default0),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          );
+        }
+        // Fallback: non-editable mode (keep your original behavior)
+        return SizedBox(
+          height: 70,
+          width: getWidth(index),
+          child: TextFormField(
+            enabled: false,
+            initialValue: (selectedItem != null && lookupData != null)
+                ? getItem(lookupData, selectedItem)
+                : null,
+            controller: (selectedItem != null) ? null : controller[index],
+            decoration: InputDecoration(
+              contentPadding: const EdgeInsets.all(10),
+              labelText: Global.parse(thisData[index]['name']),
+              border: InputBorder.none,
+            ),
+          ),
+        );
+      }
 
       case 'number':
       case 'integer': switch(input['name']){
@@ -588,7 +724,7 @@ class DataFormState extends State<DataForm> {//-- ---------- ---------- --------
             focusNode:          focusNode[index],
             decoration:         InputDecoration(
               contentPadding:     const EdgeInsets.all(10),
-              labelText:          input['name'],
+              labelText:          Global.parse(input['name']),
               border:             InputBorder.none, 
             ),
             style:        TextStyle(color: (editable && !isClosed)? const Color.fromARGB(255, 51, 51, 51) : const Color.fromARGB(255, 153, 153, 153)),
@@ -621,7 +757,7 @@ class DataFormState extends State<DataForm> {//-- ---------- ---------- --------
           focusNode:          focusNode[index],
           decoration:         InputDecoration(
             contentPadding:     const EdgeInsets.all(10),
-            labelText:          input['name'],
+            labelText:          Global.parse(input['name']),
             border:             InputBorder.none,
           ),
           style:        TextStyle(color: (editable && !isClosed)? const Color.fromARGB(255, 51, 51, 51) : const Color.fromARGB(255, 153, 153, 153)),
@@ -631,14 +767,14 @@ class DataFormState extends State<DataForm> {//-- ---------- ---------- --------
 
       case 'checkbox': return SizedBox(height: 55, width: getWidth(index), child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
         Text(
-          '   ${thisData[index]['name'].toString()}',
+          Global.parse('   ${thisData[index]['name'].toString()}'),
           style: TextStyle(color: (editable && !isClosed)? const Color.fromARGB(255, 51, 51, 51) : const Color.fromARGB(255, 153, 153, 153))
         ),
         Row(children: [
           Visibility(visible: (!editable || isClosed), child: const Icon(Icons.lock, color: Color.fromRGBO(200, 200, 200, 1))),
           CupertinoSwitch(
             value:        (thisData[index]['value'] != null && thisData[index]['value'].toString() == '1'),
-            onChanged:    (value) async => (editable && !isClosed)? await _handleSelectChange(thisData, value? '1' : '0', index, isCheckBox: true) : null,
+            onChanged:    (value) async {if(!(editable && !isClosed)) return; await executeSafely(() async {await _handleSelectChange(thisData, value ? '1' : '0', index, isCheckBox: true);});},
             activeColor:  Global.getColorOfButton((editable && !isClosed)? ButtonState.default0 : ButtonState.disabled),
           )
         ])
@@ -650,7 +786,7 @@ class DataFormState extends State<DataForm> {//-- ---------- ---------- --------
           controller:       controller[index],
           decoration:       InputDecoration(
             contentPadding:   const EdgeInsets.all(10),
-            labelText:        input['name'],
+            labelText:        Global.parse(input['name']),
             border:           InputBorder.none,
           ),
           style: TextStyle(color: (editable && !isClosed)? const Color.fromARGB(255, 51, 51, 51) : const Color.fromARGB(255, 153, 153, 153)),
@@ -792,6 +928,41 @@ class DataFormState extends State<DataForm> {//-- ---------- ---------- --------
         );
       }
 
+      case 'text-lookup': {
+        final List<dynamic>? lookupData = listOfLookupDatas[input['id']];
+        final bool hasData = lookupData != null && lookupData.isNotEmpty;
+        // value = megnevezes (text), kod = id
+        final String currentText = Global.parse(thisData[index]['value']?.toString() ?? '');
+        controller[index].text = _noNullText(currentText);
+        final bool enabled = hasData && editable && !isClosed;
+        return Stack(
+          children: [
+            SizedBox(
+              height: 70,
+              width: getWidth(index),
+              child: TextField(
+                enabled: false,
+                controller: controller[index],
+                decoration: InputDecoration(
+                  contentPadding: const EdgeInsets.fromLTRB(10, 10, 52, 10),
+                  labelText: Global.parse(thisData[index]['name']),
+                  border: InputBorder.none,
+                ),
+              ),
+            ),
+            Positioned(
+              right: 0,
+              top: 0,
+              bottom: 0,
+              child: IconButton(
+                icon: const Icon(Icons.edit_note_outlined, size: 28),
+                onPressed: enabled ? () async => await _showTextLookupDialog(thisData, input, index) : null,
+              ),
+            ),
+          ],
+        );
+      }
+
       default: return (input['input_mask'] != null && input['input_mask'].toString().isNotEmpty)
         ? SizedBox(height: 55, width: getWidth(index), child: MaskedTextField(
           enabled:          (editable && !isClosed),
@@ -890,78 +1061,77 @@ class DataFormState extends State<DataForm> {//-- ---------- ---------- --------
             thisData[index]['value'] =  controller[index].text;
             buttonSave =                DataManager.setButtonSave;
           }),
-          onEditingComplete:() async {if(thisData[index]['update_items'].
+          onEditingComplete:() async {if(thisData[index]['update_items'] != null && thisData[index]['update_items'].
           isNotEmpty){
             await DataManager(
               quickCall:  QuickCall.chainGiveDatas,
               input:      {'rawDataInput': thisData, 'index': index, 'isCheckBox': false, 'newValue': thisData[index]['value'], 'isExtraForm': isExtraForm}
             ).beginQuickCall;
             thisData[index]['value'] =  controller[index].text;
-            buttonSave =                DataManager.setButtonSave;
-            FocusManager.instance.primaryFocus?.unfocus();
-            setState((){});
-          }},
+            buttonSave =                DataManager.setButtonSave;            
+          } FocusManager.instance.primaryFocus?.unfocus();
+            setState((){});},
           style: TextStyle(color: (editable && !isClosed)? const Color.fromARGB(255, 51, 51, 51) : const Color.fromARGB(255, 153, 153, 153)),
         ))
       ;
     }
   }
 
-  Future get _buttonContinuePressed async{
-    if(!enableInteraction) return;
-    if(isExtraForm){
-      setState(() => buttonContinue = ButtonState.loading);
-      rawDataExtraCopy = List.from(rawDataExtra);
-      //await DataManager().executeSql(input: await jsonDecode(rawData[indexOfExtraForm]['buttons'].toString())[0]['sql_output'], parameter: rawDataExtra);
-      await DataManager().executeSql(
-        input:      (rawData[indexOfExtraForm]['buttons'] is String
-            ? jsonDecode(rawData[indexOfExtraForm]['buttons'])
-            : rawData[indexOfExtraForm]['buttons'])[0]['sql_output'],
-        parameter:  rawDataExtra,
-      );
-      buttonContinue = ButtonState.disabled;
-      await _extraFormFinish;
-    }
-    else{
-      switch(currentProgress){
-        case 0:
-          DataManager.dataQuickCall[0]['foglalas'] =  rawData;
-          DataManager.dataQuickCall[1][0] =           listOfLookupDatas;
-          //await _quickSave();
-          rawData =                                   DataManager.dataQuickCall[0]['poziciok'][0]['adatok'];
-          listOfLookupDatas =                         DataManager.dataQuickCall[1][1];
-          progress[currentProgress] =                 true;
-          await DataManager(quickCall: QuickCall.askPhotos).beginQuickCall;
-          _resetController(rawData);
-          break;
-
-        default:
-          if(currentProgress == progress.length - 1) break;
-          DataManager.dataQuickCall[0]['poziciok'][currentProgress - 1]['adatok'] = rawData;
-          DataManager.dataQuickCall[1][currentProgress] =                         listOfLookupDatas;
-          progress[currentProgress] = true;
-          //await _quickSave();
-          await DataManager(quickCall: QuickCall.askPhotos).beginQuickCall;
-          rawData =                   DataManager.dataQuickCall[0]['poziciok'][currentProgress - 1]['adatok'];
-          for(String entry in DataManager.dataQuickCall[1][currentProgress - 1].keys){
-            if(DataManager.dataQuickCall[1][currentProgress][entry] != null){
-              DataManager.dataQuickCall[1][currentProgress][entry] = DataManager.dataQuickCall[1][currentProgress - 1][entry];
-            }}
-          listOfLookupDatas =         DataManager.dataQuickCall[1][currentProgress];
-          _resetController(rawData);
-          break;
+  Future<void> _buttonContinuePressed() async{
+    if(!enableInteraction['buttonContinue']!) return;
+    try{
+      if(isExtraForm){
+        setState(() {buttonContinue = ButtonState.loading; enableInteraction['buttonContinue'] = false;});
+        rawDataExtraCopy = List.from(rawDataExtra);
+        //await DataManager().executeSql(input: await jsonDecode(rawData[indexOfExtraForm]['buttons'].toString())[0]['sql_output'], parameter: rawDataExtra);
+        await DataManager().executeSql(
+          input:      (rawData[indexOfExtraForm]['buttons'] is String
+              ? jsonDecode(rawData[indexOfExtraForm]['buttons'])
+              : rawData[indexOfExtraForm]['buttons'])[0]['sql_output'],
+          parameter:  rawDataExtra,
+        );
+        buttonContinue = ButtonState.disabled;
+        await _extraFormFinish;
       }
-      FocusScope.of(context).unfocus();
-      setState((){});
+      else{
+        setState(() {buttonContinue = ButtonState.loading; enableInteraction['buttonContinue'] = false;});
+        switch(currentProgress){
+          case 0:
+            await _quickSave();
+            rawData =                                   DataManager.dataQuickCall[0]['poziciok'][0]['adatok'];
+            listOfLookupDatas =                         DataManager.dataQuickCall[1][1];
+            progress[currentProgress] =                 true;
+            await DataManager(quickCall: QuickCall.askPhotos).beginQuickCall;
+            _resetController(rawData);
+            break;
+
+          default:
+            if(currentProgress == progress.length - 1) break;
+            await _quickSave();
+            progress[currentProgress] = true;
+            await DataManager(quickCall: QuickCall.askPhotos).beginQuickCall;
+            rawData =                   DataManager.dataQuickCall[0]['poziciok'][currentProgress - 1]['adatok'];
+            for(String entry in DataManager.dataQuickCall[1][currentProgress - 1].keys){
+              if(DataManager.dataQuickCall[1][currentProgress][entry] != null){
+                DataManager.dataQuickCall[1][currentProgress][entry] = DataManager.dataQuickCall[1][currentProgress - 1][entry];
+              }}
+            listOfLookupDatas =         DataManager.dataQuickCall[1][currentProgress];
+            _resetController(rawData);
+            break;
+        }
+        FocusScope.of(context).unfocus();
+      }
     }
-    //await refreshImages();
-    setState((){});
+    finally{
+      setState(() {enableInteraction['buttonContinue'] = true; buttonContinue = (_isAllMandatoryFilled)? ButtonState.default0 : ButtonState.disabled;});
+    }
   }
 
-  Future get _buttonSavePressed async {if(!enableInteraction) {return;} switch(Global.currentRoute){
+  Future get _buttonSavePressed async {if(!enableInteraction['buttonSave']!) {return;} switch(Global.currentRoute){
     case NextRoute.abroncsIgenyles:
     case NextRoute.esetiMunkalapFelvitele:
     case NextRoute.szezonalisMunkalapFelvitele:
+      enableInteraction['buttonSave'] = false;
       setState(() => buttonContinue = ButtonState.loading);
       await DataManager(
         quickCall:  (){switch(Global.currentRoute){
@@ -971,25 +1141,6 @@ class DataFormState extends State<DataForm> {//-- ---------- ---------- --------
         }}(),
         input: {'lezart': 0}
       ).beginQuickCall;
-      /*if(
-        DataManager.dataQuickCall[5] != null    &&
-        (DataManager.dataQuickCall[5].isNotEmpty || DataManager.dataQuickCall[5].toString() != "[]") &&
-        DataManager.dataQuickCall[5][0]['name'] != null &&
-        DataManager.dataQuickCall[5][0]['message'] != null
-      ){
-        await Global.showAlertDialog(context,
-          title:    DataManager.dataQuickCall[5][0]['name'],
-          content:  DataManager.dataQuickCall[5][0]['message']
-        );
-        setState((){buttonContinue = ButtonState.default0;});
-      }
-      else {
-        buttonContinue = ButtonState.disabled;
-        Global.routeBack;
-        await DataManager().beginProcess;
-        Navigator.popUntil(context, ModalRoute.withName('/calendar'));
-        await Navigator.pushReplacementNamed(context, '/calendar');
-      }*/
       final raw = DataManager.dataQuickCall[5];
       Map<String, dynamic>? contentMap;
 
@@ -1006,41 +1157,54 @@ class DataFormState extends State<DataForm> {//-- ---------- ---------- --------
           content: contentMap['message'],
         );
         setState(() {
-          buttonContinue = ButtonState.default0;
+          enableInteraction['buttonSave'] = true;
+          buttonContinue =    ButtonState.default0;
         });
       } else {
-        buttonContinue = ButtonState.disabled;
+        enableInteraction['buttonSave'] = true;
+        buttonContinue =    ButtonState.disabled;
         Global.routeBack;
         Global.currentRoute;
         Navigator.pop(context);
-        /*await DataManager().beginProcess;
-        Navigator.popUntil(context, ModalRoute.withName('/calendar'));
-        await Navigator.pushReplacementNamed(context, '/calendar');*/
       }
       break;
 
     default: return;
   }}
 
-  Future get _buttonSignaturePressed async{
-    if(!enableInteraction) return;
-    setState(() => buttonContinue = ButtonState.loading);
-    DataManager.dataQuickCall[0]['poziciok'][currentProgress - 1]['adatok'] = rawData;
-    DataManager.dataQuickCall[1][currentProgress] =                           listOfLookupDatas;
-    _resetController(rawData);
-    PhotoPreviewState.isSignature = true;
-    await DataManager(quickCall: QuickCall.askPhotos).beginQuickCall;
-    Global.routeNext =  NextRoute.signature;
-    buttonContinue =    ButtonState.default0;
-    //await refreshImages();
-    setState((){});
-    if(DataManager.dataQuickCall[0]['osszesites'] != null) SignatureFormState.rawData = DataManager.dataQuickCall[0]['osszesites'];
-    await Navigator.pushNamed(context, '/signature');
-  }
+  Future get _buttonSignaturePressed async {switch(workType){
+
+    case 'Igénylés':
+      if(await Global.yesNoDialog(context,
+        title: 'Igénylés lezárása',
+        content: 'Kívánja lezárni és elmenteni a munkát?'
+      )){
+        await DataManager(quickCall: QuickCall.saveAbroncsIgenyles, input: {'lezart': 1}).beginQuickCall;
+        Global.routeBack;
+        skipWillPopScopeSequences = true;
+        Navigator.pop(context);
+      }
+      break;
+
+    default:
+      if (!enableInteraction['buttonSignature']!) return;
+      setState(() {
+        buttonContinue = ButtonState.loading;
+        enableInteraction['buttonSignature'] = false;
+      });
+      DataManager.dataQuickCall[0]['poziciok'][currentProgress - 1]['adatok'] = rawData;
+      DataManager.dataQuickCall[1][currentProgress] = listOfLookupDatas;
+      await _openSignatureScreen();
+      setState(() {
+        buttonContinue = ButtonState.default0;
+        enableInteraction['buttonSignature'] = true;
+      });
+      break;
+  }}
 
   Future get _buttonCopyPressed async{
-    if(!enableInteraction) return;
-    setState(() => buttonCopy = ButtonState.loading);
+    if(!enableInteraction['buttonCopy']!) return;
+    setState(() {buttonCopy = ButtonState.loading; enableInteraction['buttonCopy'] = false;});
     if(await Global.yesNoDialog(
       context,
       title:    'Adatok lemásolása',
@@ -1053,12 +1217,12 @@ class DataFormState extends State<DataForm> {//-- ---------- ---------- --------
         ;
       }
     }
-    setState(() => buttonCopy = ButtonState.disabled);
+    setState(() {buttonCopy = ButtonState.disabled; enableInteraction['buttonCopy'] = true;});
   }
 
   Future get _buttonExtraCopyPressed async {
-    if (!enableInteraction) return;
-    setState(() => buttonCopy = ButtonState.loading);
+    if (!enableInteraction['buttonExtraCopy']!) return;
+    setState(() {buttonCopy = ButtonState.loading; enableInteraction['buttonExtraCopy'] = false;});
 
     // Interpret truthy flags the same way you do elsewhere
     bool isTruthyCopy(dynamic v) =>
@@ -1085,13 +1249,12 @@ class DataFormState extends State<DataForm> {//-- ---------- ---------- --------
       rawDataExtra[i] = jsonDecode(jsonEncode(src));
     }
 
-    buttonCopy = ButtonState.default0;
+    buttonCopy = ButtonState.default0; enableInteraction['buttonExtraCopy'] = true;
     _setButtonContinue;
     setState(() {});
   }
 
-  Future<void> _buttonCameraPressed({List? data, bool forced = false, int? index}) async{
-    if (!forced && !enableInteraction) return;
+  Future<void> _buttonCameraPressed({List? data, int? index}) async{    
     Global.routeNext =              NextRoute.photoTake;
     PhotoPreviewState.isSignature = false;
     final r =                       await Navigator.pushNamed(context, '/photo/take');
@@ -1105,12 +1268,12 @@ class DataFormState extends State<DataForm> {//-- ---------- ---------- --------
     setState((){});
   }
 
-  Future get _buttonBackPressed async{
-    if(!enableInteraction) return;
+  Future<void> _buttonBackPressed() async{
+    if(enableInteraction.containsValue(false)) return;
     if(await _handlePop()) {Navigator.pop(context);}
   }
 
-  Future get _buttonCancelPressed async {if(!enableInteraction) {return;} if(isClosed || await Global.yesNoDialog(context,
+  Future get _buttonCancelPressed async {if(enableInteraction.containsValue(false)) {return;} if(isClosed || await Global.yesNoDialog(context,
       title:    'Adatlap elhagyása',
       content:  'Elveti módosításait és visszatér a Naptárhoz?'
     )){
@@ -1124,7 +1287,7 @@ class DataFormState extends State<DataForm> {//-- ---------- ---------- --------
   }}
 
   Future get _buttonCancelExtraPressed async{
-    if(!enableInteraction) return;
+    if(enableInteraction.containsValue(false)) return;
     controller =                    List.from(controllerCopy);
     rawData =                       List.from(rawDataCopy);
     DataManager.dataQuickCall[1] =  List.from(dataQuickCall1Copy);
@@ -1136,7 +1299,7 @@ class DataFormState extends State<DataForm> {//-- ---------- ---------- --------
   }
 
   Future<void> _buttonListPicturesPressed(dynamic img) async {
-    if (!enableInteraction) return;
+    if (enableInteraction.containsValue(false)) return;
     final i = (DataManager.dataQuickCall[2] as List).indexWhere((e) => e['id'] == img['id']);
     if (i < 0) return;
     PhotoPreviewState.selectedIndex = i;
@@ -1144,19 +1307,42 @@ class DataFormState extends State<DataForm> {//-- ---------- ---------- --------
     await Navigator.pushNamed(context, '/photo/preview');
   }
 
-  String get _getPlateNumberString {for(dynamic item in DataManager.dataQuickCall[0]['osszesites']){
-    if(item['id'].toString() == 'id_10030_0') return '${item['value'].toString()}  ';
-  } return '';}
+  String get _getPlateNumberString{
+    if(DataManager.dataQuickCall[0]['osszesites']?.isNotEmpty ?? false) {for(dynamic item in DataManager.dataQuickCall[0]['osszesites']){
+      if(item['id'].toString() == 'id_10030_0') return '${item['value'].toString()}  ';
+    }}
+    for(dynamic item in DataManager.dataQuickCall[0]['foglalas']){
+      if(item['name'] == 'Jármű' || item['id'] == 'id_30') return '${item['value'].toString()}  ';
+    }
+    return '';
+  }
 
-  String get _getTitleString {switch(Global.currentRoute){
-    case NextRoute.abroncsIgenyles:             return 'Igénylés';
-    case NextRoute.esetiMunkalapFelvitele:      return 'Eseti Munkalap Foglalás';
-    case NextRoute.szezonalisMunkalapFelvitele: return 'Szezonális Munkalap Foglalás';
-    default:                                    return 'Foglalás';
-  }}  
+  Widget _getTitleString(bool isSafe, {Color Function(int)? getColorOfText, int? i}) {
+    Color fixedColor = isSafe? getColorOfText!(i!) : Colors.white;
+    switch(Global.currentRoute){
+
+      case NextRoute.abroncsIgenyles: return Row(children:[
+        Icon(Icons.request_page_outlined, color: fixedColor),
+        Text(' Igénylés', style: TextStyle(color: fixedColor))
+      ]);
+
+      case NextRoute.esetiMunkalapFelvitele: return Row(children:[
+        Icon(Icons.content_paste_search, color: fixedColor),
+        Text(' Eseti Munkalap Foglalás', style: TextStyle(color: fixedColor))
+      ]);
+
+      case NextRoute.szezonalisMunkalapFelvitele: return Row(children:[
+        Icon(Icons.calendar_month_outlined, color: fixedColor),
+        Text(' Szezonális Munkalap Foglalás', style: TextStyle(color: fixedColor))
+      ]);
+
+      default: return Text(workType, style: TextStyle(color: fixedColor));
+    }
+  }
 
   Future _selectAddPressed({required int index}) async{
-    if(!enableInteraction) return;
+    if(!enableInteraction['selectAdd']!) return;
+    enableInteraction['selectAdd'] = false;
     controllerCopy =          List.from(controller);
     rawDataCopy =             List.from(rawData);
     dataQuickCall1Copy =      List.from(DataManager.dataQuickCall[1]);
@@ -1174,12 +1360,13 @@ class DataFormState extends State<DataForm> {//-- ---------- ---------- --------
     await DataManager(quickCall: QuickCall.giveDatas, input: {'rawDataInput': rawDataExtra}).beginQuickCall;
     indexOfExtraForm = index;
     _setButtonContinue;
+    enableInteraction['selectAdd'] = true;
     setState((){});
   }
 
   // ignore: unused_element
   Future _measureProfilmelyseg({required int index}) async{
-    if(!enableInteraction) return;
+    if(enableInteraction.containsValue(false)) return;
     if(await Global.yesNoDialog(context,
       title: 'Profilmélység Mérése Szondával',
       content: 'Kívánja az abroncs profilmélységét szondával mérni?'
@@ -1199,12 +1386,18 @@ class DataFormState extends State<DataForm> {//-- ---------- ---------- --------
   void get _setButtonContinue => buttonContinue = (_isAllMandatoryFilled)? ButtonState.default0 : ButtonState.disabled;
 
   Future<void> _initOpenForm() async{
-    if(DataManager.dataQuickCall[0]['formopen']?.isNotEmpty ?? false){
-      await DataManager(
-        quickCall:  QuickCall.chainGiveDatas,
-        input:      {'rawDataInput': [{'id': 'formopener', 'update_items': DataManager.dataQuickCall[0]['formopen']}], 'isCheckBox': false, 'isExtraForm': false}
-      ).beginQuickCall;
-      setState((){});
+    try{
+      showLoadingDialog(context);
+      if(DataManager.dataQuickCall[0]['formopen']?.isNotEmpty ?? false){
+        await DataManager(
+          quickCall:  QuickCall.chainGiveDatas,
+          input:      {'rawDataInput': [{'id': 'formopener', 'update_items': DataManager.dataQuickCall[0]['formopen']}], 'isCheckBox': false, 'isExtraForm': false}
+        ).beginQuickCall;
+        setState((){});
+      }
+    }
+    finally{
+      hideLoadingDialog(context);
     }
   }
 
@@ -1281,14 +1474,14 @@ class DataFormState extends State<DataForm> {//-- ---------- ---------- --------
         'Km óra állás' => valueDouble.toStringAsFixed(0),
         _ =>              valueDouble.toString()
       };
-      controller[index].text =  numberFieldString;
+      controller[index].text =  _noNullText(numberFieldString);
       thisData[index]['value'] = numberFieldString;
     }
     setState((){});
   }
 
   Future<bool> _handlePop() async{
-    if(isScreenLocked) return false;
+    if(skipWillPopScopeSequences) {skipWillPopScopeSequences = false; return true;}
     switch(currentProgress){
       case 0:
         if(isClosed || await Global.yesNoDialog(context,
@@ -1323,10 +1516,10 @@ class DataFormState extends State<DataForm> {//-- ---------- ---------- --------
     }
   }
 
-  Future _handleSelectChange(List<dynamic> thisData, String? newValue, int index, {bool isCheckBox = false}) async{ if(enableInteraction){
+  Future _handleSelectChange(List<dynamic> thisData, String? newValue, int index, {bool isCheckBox = false}) async{ if(enableInteraction['handleSelectChange']!){
     try{
       rawData;
-      enableInteraction =         false;
+      enableInteraction['handleSelectChange'] = false;
       thisData[index]['value'] =  newValue;
       if(listOfLookupDatas[thisData[index]['id']] != null) {for(dynamic item in listOfLookupDatas[thisData[index]['id']]) {item['selected'] = '0';}}
       setState((){});
@@ -1334,14 +1527,12 @@ class DataFormState extends State<DataForm> {//-- ---------- ---------- --------
         quickCall:  QuickCall.chainGiveDatas,
         input:      {'rawDataInput': thisData, 'index': index, 'isCheckBox': isCheckBox, 'newValue': newValue, 'isExtraForm': isExtraForm}
       ).beginQuickCall;
-      buttonSave = DataManager.setButtonSave;
       rawData;
-      _setButtonContinue;
       //await refreshImages();
       setState((){});
     }
     catch(e) {if(kDebugMode) print(e);}
-    finally {enableInteraction = true;}
+    finally {enableInteraction['handleSelectChange'] = true; buttonSave = DataManager.setButtonSave; _setButtonContinue;}
   }}
 
   void _resetController(List<dynamic> thisData) {
@@ -1418,5 +1609,381 @@ class DataFormState extends State<DataForm> {//-- ---------- ---------- --------
       if(kDebugMode)print(e);
       return true;
     }
+  }
+
+  Future<void> _showTextLookupDialog(List<dynamic> thisData, dynamic input, int index) async {
+    final List<dynamic> fullList =
+        (listOfLookupDatas[input['id']] as List<dynamic>? ?? <dynamic>[]);
+    if (fullList.isEmpty) return;
+    final textCtrl = TextEditingController(text: controller[index].text);
+    String typed = textCtrl.text;
+    String normalize(String s) => s.trim().toLowerCase();
+    dynamic findExact(String s) {
+      final q = normalize(s);
+      for (final item in fullList) {
+        final label = normalize((item['megnevezes'] ?? '').toString());
+        if (label == q) return item;
+      }
+      return null;
+    }
+    String findSuggestion(String s) {
+      final q = normalize(s);
+      if (q.isEmpty) return '';
+      for (final item in fullList) {
+        final label = Global.parse((item['megnevezes'] ?? '').toString());
+        if (normalize(label).startsWith(q)) return label;
+      }
+      return '';
+    }
+    final result = await showDialog<Map<String, dynamic>?>(
+      context: context,
+      barrierDismissible: true,
+      builder: (dialogCtx) => StatefulBuilder(
+        builder: (dialogCtx, setStateDialog) {
+          final suggestion = findSuggestion(typed);
+          final exactItem = findExact(typed);
+          final canAccept = exactItem != null;
+          // ✅ show info only when we have an exact match
+          final infoText = canAccept ? _noNullText(exactItem['info']) : '';
+          return AlertDialog(
+            title: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    input['name']?.toString() ?? '',
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.close),
+                  splashRadius: 20,
+                  onPressed: () => Navigator.of(dialogCtx).pop(),
+                ),
+              ],
+            ),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Text input
+                TextField(
+                  controller: textCtrl,
+                  autofocus: true,
+                  decoration: const InputDecoration(
+                    hintText: 'Írd be pontosan…',
+                    prefixIcon: Icon(Icons.search),
+                    isDense: true,
+                  ),
+                  onChanged: (v) => setStateDialog(() {
+                    typed = v;
+                  }),
+                ),
+                const SizedBox(height: 10),
+                // Faint suggestion (keep as it is)
+                if (suggestion.isNotEmpty && normalize(suggestion) != normalize(typed))
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: Opacity(
+                      opacity: 0.45,
+                      child: Text(
+                        suggestion,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(fontStyle: FontStyle.italic),
+                      ),
+                    ),
+                  ),
+                // ✅ Info of the matching item (same-ish style as OK)
+                if (infoText.isNotEmpty) ...[
+                  const SizedBox(height: 10),
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      infoText,
+                      maxLines: 3,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(dialogCtx).textTheme.labelLarge,
+                    ),
+                  ),
+                ],
+              ],
+            ),
+            actionsAlignment: MainAxisAlignment.center,
+            actions: [
+              TextButton.icon(
+                onPressed: canAccept
+                    ? () => Navigator.of(dialogCtx).pop(<String, dynamic>{
+                          'id': exactItem['id'],
+                          'megnevezes': exactItem['megnevezes'],
+                        })
+                    : null,
+                icon: const Icon(Icons.check, size: 26),
+                label: const Text('OK'),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+    if (result == null) return;
+    final String id = result['id']?.toString() ?? '';
+    final String label = Global.parse(result['megnevezes']?.toString() ?? '');
+    setState(() {
+      thisData[index]['value'] = label; // ✅ megnevezes goes to value
+      thisData[index]['kod'] = id;      // ✅ id goes to kod
+      controller[index].text = _noNullText(label);
+    });
+    await _handleSelectChange(thisData, label, index);
+  }
+
+  void showLoadingDialog(BuildContext context) => showDialog(context: context, barrierDismissible: false, builder: (BuildContext context) {
+    return WillPopScope(
+      onWillPop:  () async => false, // disables back button
+      child:      const Dialog(
+        backgroundColor:  Colors.white,
+        shape:            RoundedRectangleBorder(
+          borderRadius:     BorderRadius.all(Radius.circular(12)),
+        ),
+        child:            Padding(
+          padding:          EdgeInsets.all(20),
+          child:            Column(
+            mainAxisSize:     MainAxisSize.min,
+            children:           [
+              Text(
+                'Űrlap Betöltés',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              SizedBox(height: 10),
+              Text(
+                'Űrlap betöltése folyamatban, kérem várjon.',
+                textAlign: TextAlign.center,
+              ),
+              SizedBox(height: 20),
+              CircularProgressIndicator(),
+            ],
+          ),
+        ),
+      ),
+    );
+  });
+
+  Future<void> _showSelectDialog(List<dynamic> thisData, dynamic input, int index) async {
+    final List<dynamic> fullList = (listOfLookupDatas[input['id']] as List<dynamic>? ?? <dynamic>[]);
+    if (fullList.isEmpty) return;
+    List<dynamic> filteredList = List<dynamic>.from(fullList);
+    final searchController = TextEditingController();
+    final result = await showDialog<Map<String, dynamic>?>(
+      context: context,
+      barrierDismissible: true,
+      builder: (dialogCtx) => StatefulBuilder(
+        builder: (dialogCtx, setStateDialog) => AlertDialog(
+          title: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      input['name']?.toString() ?? '',
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.close),
+                    splashRadius: 20,
+                    onPressed: () => Navigator.of(dialogCtx).pop(),
+                  ),
+                ],
+              ),
+              if (fullList.length > 5) ...[
+                const SizedBox(height: 10),
+                TextField(
+                  controller: searchController,
+                  decoration: const InputDecoration(
+                    hintText: 'Keresés…',
+                    prefixIcon: Icon(Icons.search),
+                    isDense: true,
+                  ),
+                  onChanged: (value) {
+                    final q = value.toLowerCase();
+                    setStateDialog(() {
+                      filteredList = fullList.where((item) {
+                        final text = (item['megnevezes'] ?? '').toString().toLowerCase();
+                        return text.contains(q);
+                      }).toList();
+                    });
+                  },
+                ),
+              ],
+            ],
+          ),
+          // ---- CONTENT LIST ----
+          content: SizedBox(
+            width: double.maxFinite,
+            child: ListView.builder(
+              shrinkWrap: true,
+              itemCount: filteredList.length,
+              itemBuilder: (_, i) {
+                final item = filteredList[i];
+                return ListTile(
+                  title: Text(Global.parse(item['megnevezes']?.toString() ?? '')),
+                  onTap: () => Navigator.of(dialogCtx).pop(<String, dynamic>{
+                    'id': item['id'],
+                    'megnevezes': item['megnevezes'],
+                  }),
+                );
+              },
+            ),
+          ),
+          // ---- BOTTOM BUTTON (CENTERED) ----
+          actionsAlignment: MainAxisAlignment.center,
+          actions: [
+            if (input['buttons'] != null)
+              TextButton.icon(
+                icon: const Icon(Icons.add, size: 26),
+                label: const Text(' Másik felvitele'),
+                onPressed: () async {
+                  Navigator.of(dialogCtx).pop();
+                  await _selectAddPressed(index: index);
+                },
+              ),
+          ],
+        ),
+      ),
+    );
+    // ---- SELECTION AS BEFORE ----
+    if (result == null) return;
+    setState(() {
+      thisData[index]['value'] = result['id'].toString();
+      controller[index].text = _noNullText(result['megnevezes'].toString());
+    });
+    await _handleSelectChange(thisData, result['id'].toString(), index);
+  }
+
+  Future<void> _showSearchDialog(List<dynamic> thisData, dynamic input, int index) async{
+    final List<dynamic> fullList = (listOfLookupDatas[input['id']] as List<dynamic>? ?? <dynamic>[]);
+    if (fullList.isEmpty) return;
+    List<dynamic> filteredList = List<dynamic>.from(fullList);
+    final searchController = TextEditingController();
+    final result = await showDialog<Map<String, dynamic>?>(
+      context:            context,
+      barrierDismissible: true,
+      builder:            (dialogCtx) => StatefulBuilder(
+        builder:  (dialogCtx, setStateDialog) => AlertDialog(
+          title:  Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(input['name']?.toString() ?? ''),
+                  IconButton(
+                    icon: const Icon(Icons.close),
+                    splashRadius: 20,
+                    onPressed: () => Navigator.of(dialogCtx).pop(),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              TextField(
+                controller: searchController,
+                decoration: const InputDecoration(
+                  hintText: 'Keresés…',
+                  prefixIcon: Icon(Icons.search),
+                  isDense: true,
+                ),
+                onChanged: (value) {
+                  final q = value.toLowerCase();
+                  setStateDialog(() {
+                    filteredList = fullList.where((item) {
+                      final text =
+                          (item['megnevezes'] ?? '').toString().toLowerCase();
+                      return text.contains(q);
+                    }).toList();
+                  });
+                },
+              ),
+            ],
+          ),
+          content: SizedBox(
+            width: double.maxFinite,
+            child: ListView.builder(
+              shrinkWrap: true,
+              itemCount: filteredList.length,
+              itemBuilder: (_, i) {
+                final item = filteredList[i];
+                return ListTile(
+                  title: Text(Global.parse(item['megnevezes']?.toString() ?? '')),
+                  onTap: () => Navigator.of(dialogCtx).pop(<String, dynamic>{
+                    'megnevezes': item['megnevezes'],
+                  }),
+                );
+              },
+            ),
+          ),
+        ),
+      ),
+    );
+    if (result == null) return;
+    final String label = Global.parse(result['megnevezes']?.toString() ?? '');
+    // For "search" your value has always been the text itself
+    setState(() {thisData[index]['value'] = label; controller[index].text = _noNullText(label);});
+    await _handleSelectChange(thisData, label, index);
+  }
+
+  void hideLoadingDialog(BuildContext context) {
+    Navigator.of(context, rootNavigator: true).pop();
+  }
+
+  void _jumpToLastPageIfClosed() async {
+    final lezart = (option('Lezárt')?['value']?.toString() == '1');
+    if (!lezart) return;
+    isClosed = true;
+    // 🚀 go straight to signature
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      await _openSignatureScreen();
+    });
+  }
+
+  // ---------- < Methods [4] > ------ ---------- ---------- ---------- ---------- ---------- ---------- ---------- ----------
+  Future<void> _openSignatureScreen() async {
+    if(!mounted) return;
+    PhotoPreviewState.isSignature = true;
+    await DataManager(quickCall: QuickCall.askPhotos).beginQuickCall;
+    if(DataManager.dataQuickCall[0]['osszesites'] != null) SignatureFormState.rawData = DataManager.dataQuickCall[0]['osszesites'];
+    if(!isClosed) {await Navigator.pushNamed(context, '/signature');}
+    else {
+      await Navigator.pushNamed(context, '/pdfSignature', arguments: {
+        'pdfUrl':       option('PDF')?['value'] ?? '',
+        'bizonylatId':  DataManager.data[2][selectedIndexInCalendar!]['id'].toString(),
+        'title':        'Összesítés',
+        'isClosed':     true
+      });
+      Global.routeBack;
+      Navigator.pop(context);
+    }
+  }
+  
+  // ---------- < Method wrappers > -- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ----------
+  Future<void> executeSafely(Future<void> Function() action) async {
+    if (isScreenLocked) return;
+    isScreenLocked = true;
+    showLoadingDialog(context);
+    try {
+      await action();
+    } finally {
+      isScreenLocked = false;
+      hideLoadingDialog(context);
+      if (mounted) setState(() {});
+    }
+  }
+
+  String _noNullText(dynamic v) {
+    final s = (v ?? '').toString().trim();
+    if (s.isEmpty) return '';
+    if (s.toLowerCase() == 'null') return '';
+    return s;
   }
 }

@@ -31,7 +31,7 @@ class SignatureFormState extends State<SignatureForm> {
   ButtonState buttonCheck =   ButtonState.disabled;
   final SignatureController _controller = SignatureController(
     penStrokeWidth:         1,
-    disabled:               DataFormState.buttonListPictures.isNotEmpty,
+    disabled:               DataFormState.buttonListPictures.isNotEmpty || (DataFormState.option('Lezárt')?['value']?.toString() == '1'),
     penColor:               Colors.black,
     exportBackgroundColor:  Colors.white,
     onDrawStart:            (){},
@@ -45,6 +45,7 @@ class SignatureFormState extends State<SignatureForm> {
     border:       Border.all(color: Global.getColorOfButton(ButtonState.disabled), width: 1),
     borderRadius: const BorderRadius.all(Radius.circular(8))
   );
+  bool get isClosed => (DataFormState.option('Lezárt')?['value']?.toString() == '1');
 
   // ---------- < Widget [Build] > ------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ----------
   @override
@@ -58,17 +59,22 @@ class SignatureFormState extends State<SignatureForm> {
       appBar:           AppBar(
         backgroundColor:  Global.getColorOfButton(ButtonState.default0),
         foregroundColor:  Global.getColorOfIcon(ButtonState.default0),
-        title:            const Center(child: Text('Összesítés és Lezárás', style: TextStyle(fontSize: 26)))
+        title:            Center(child: Text(isClosed ? 'Összesítés' : 'Összesítés és Lezárás', style: const TextStyle(fontSize: 26))),
       ),
       backgroundColor:  Colors.white,
-      body:             OrientationBuilder(builder: (context, orientation) {
-        return Column(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: <Widget>[ //ListView(children: <Widget>[
-          _drawFormList,
-          _drawSignatureBlock,
-          _drawEnterName,
-          _drawBottomBar,
-        ]);
-      })
+      body: OrientationBuilder(builder: (context, orientation) {
+        return Column(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: <Widget>[
+            _drawFormList,
+            if (!isClosed) ...[
+              _drawSignatureBlock,
+              _drawEnterName,
+              _drawBottomBar,
+            ],
+          ],
+        );
+      }),
     ));
   }
 
@@ -236,16 +242,24 @@ class SignatureFormState extends State<SignatureForm> {
       setState(() => buttonCheck = ButtonState.loading);
       final Uint8List? data = await _controller.toPngBytes();
       if(data != null) signatureBase64 = base64.encode(data);
-      DataManager.dataQuickCall[0]['beallitasok'][1]['value'] = signatureBase64;
-      DataManager.dataQuickCall[0]['beallitasok'][2]['value'] = editingController.text;
-      switch(DataFormState.workType){
-        case 'Igénylés':  await DataManager(quickCall: QuickCall.saveAbroncsIgenyles, input: {'lezart': 1}).beginQuickCall;         break;
+      DataManager.dataQuickCall[0]['beallitasok'][getIndexFromOptions('Átvevő aláírása')]['value'] =  signatureBase64;
+      DataManager.dataQuickCall[0]['beallitasok'][getIndexFromOptions('Átvevő neve')]['value'] =      editingController.text;
+      switch(DataFormState.workType){        
+        case 'Igénylés':  await DataManager(quickCall: QuickCall.saveAbroncsIgenyles, input: {'lezart': 1}).beginQuickCall;         break;  
         case 'Eseti':     await DataManager(quickCall: QuickCall.saveEsetiMunkalapFelvitele, input: {'lezart': 1}).beginQuickCall;  break;
-        default:          await DataManager().beginProcess;                                                                         break;
+        default:
+          Global.routeNext = NextRoute.signature; 
+          await DataManager().beginProcess;
+          Global.routeBack;
+          break;
       }
-      if(message == null){
+      if(
+          message == null ||
+          ['NULL', 'Null','null', '', ' ', '[]', '[ ]', '{}', '{ }'].contains(message.toString()) ||
+          (message is Map && [null, '', ' ', 'null'].contains(message['message']))
+        ){
         resetVariables;
-        Global.routeBack; Global.routeBack; Global.routes;
+        Global.routeBack; Global.routes;
         if(kDebugMode)print(Global.currentRoute);
         CalendarState.selectedIndexList = null;
         await DataManager().beginProcess;
@@ -290,9 +304,10 @@ class SignatureFormState extends State<SignatureForm> {
   } return false;}
 
   void get resetVariables{
-    rawData =           List<dynamic>.empty();
-    editingController = TextEditingController();
-    signatureBase64 =   '';
+    rawData =                           List<dynamic>.empty();
+    editingController =                 TextEditingController();
+    signatureBase64 =                   '';
+    DataFormState.buttonListPictures =  List<ButtonState>.empty(growable: true);
   }
 
   // ---------- < Methods [2] > ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ----------
@@ -300,4 +315,7 @@ class SignatureFormState extends State<SignatureForm> {
     DataFormState.buttonListPictures = List<ButtonState>.empty(growable: true);
     for(int i = 0; i < DataFormState.numberOfPictures[DataFormState.currentProgress]; i++) {DataFormState.buttonListPictures.add(ButtonState.default0);}
   }
+  int getIndexFromOptions(String input) {for(int i = 0; i < DataManager.dataQuickCall[0]['beallitasok'].length; i++){
+    if(DataManager.dataQuickCall[0]['beallitasok'][i]['name'] == input) return i;
+  } throw Exception('Nincs ilyen Beállítás!');}
 }

@@ -20,8 +20,8 @@ import 'utils.dart';
 
 class DataManager{
   // ---------- < Variables [Static] > - ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ----------
-  static String thisVersion =                       '1.38a';
-  static int verzioTest =                           1;      // anything other than 0 will draw "[Teszt #]" at the LogIn screen.
+  static String thisVersion =                       '1.39c';
+  static int verzioTest =                           0;      // anything other than 0 will draw "[Teszt #]" at the LogIn screen.
   
   static String openAiPassword =                    'qifqik-sedpuf-rejKu6';
  
@@ -53,14 +53,15 @@ class DataManager{
   // ---------- < Variables [1] > ------ ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ----------
   final Map<String,String> headers = {'Content-Type': 'application/json'};
   dynamic input;
-  QuickCall? quickCall;
+  QuickCall? quickCall;  
 
   // ---------- < Constructors > ------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ----------
   DataManager({this.quickCall, this.input});
 
   // ---------- < Methods [Static] > --- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ----------
   // ── Local SQLite for SELECT-without-FROM ──────────────────────────────────────
-  static Database? _exprDb;  
+  static Database? _exprDb;
+  static Database? _prefsDb;
 
   static Future<Database> _getExprDb() async { 
     // One in-memory DB; fast and isolated
@@ -143,6 +144,36 @@ class DataManager{
     }
     identity = Identity(id: 0, identity: result[0]['identity'].toString());
   }
+  
+  static Future<Database> _getPrefsDb() async {
+    _prefsDb ??= await openDatabase(
+      p.join(await getDatabasesPath(), 'prefs.db'),
+      onCreate: (db, version) async {
+        await db.execute(Global.sqlCreateTableIdentity);
+        await db.execute(Global.sqlCreateTableLastUser);
+      },
+      version: 1,
+    );
+    return _prefsDb!;
+  }
+
+  static Future<String?> get lastUserNameSQLite async {
+    final db = await _getPrefsDb();
+    final rows = await db.query('lastUserTable', limit: 1);
+    if (rows.isEmpty) return null;
+    final v = rows[0]['userName']?.toString();
+    if (v == null || v.trim().isEmpty) return null;
+    return v;
+  }
+
+  static Future<void> saveLastUserNameSQLite(String userName) async {
+    final db = await _getPrefsDb();
+    await db.insert(
+      'lastUserTable',
+      {'id': 0, 'userName': userName.trim()},
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
+  }
 
   static ButtonState get setButtonSave {
     for(var item in DataFormState.rawData){
@@ -186,7 +217,7 @@ class DataManager{
 
         case QuickCall.logInNamePassword:
           var queryParameters = {
-            'customer':       customer,
+            'customer':       'mosaic', //customer,
             'eszkoz_id':      identity.toString(),
             'user_name':      input['user_name'],
             'user_password':  input['user_password'],
@@ -233,7 +264,7 @@ class DataManager{
                 'datum':        CalendarState.selectedDate,
                 'foglalas_id':  data[2][DataFormState.selectedIndexInCalendar!]['id'].toString()
               };
-              Uri uriUrl =              Uri.parse('${urlPath}worksheetFormEseti.php');          
+              Uri uriUrl =              Uri.parse('${urlPath}worksheetFormEseti.php');
               http.Response response =  await http.post(uriUrl, body: json.encode(queryParameters), headers: headers);
               dataQuickCall[check(0)] = await jsonDecode(await jsonDecode(response.body));
               break;
@@ -273,177 +304,7 @@ class DataManager{
             for(dynamic item in dataQuickCall[0]['poziciok']) {dataQuickCall[1].add(await generateListOfLookupDatas(item['adatok']));}
           }
           else if(DataFormState.rawDataExtra.isNotEmpty) {dataQuickCall[1].add(await generateListOfLookupDatas(DataFormState.rawDataExtra));}
-          break;
-
-        /*case QuickCall.chainGiveDatas:
-          // ───── 0️⃣  Detect bulk-mode ───────────────────────────────────
-            if (input['index'] == null) {
-              for (int i = 0; i < input['rawDataInput'].length; i++) {
-                await DataManager(
-                  quickCall:  QuickCall.chainGiveDatas,
-                  input: {
-                    ...input,                   // keep the other flags
-                    'index'     : i,            // now act as single-item mode
-                    'newValue'  : input['rawDataInput'][i]['value'],
-                  },
-                ).beginQuickCall;
-              }
-              break;                            // ← finished bulk pre-fill
-            }
-            
-          // ───── 1️⃣  *existing* single-item logic below ────────────────
-          int getIndexFromId({required String id}) {for(int i = 0; i < input['rawDataInput'].length; i++) {if(input['rawDataInput'][i]['id'] == id) return i;} throw Exception('No such id in rawData: $id');}
-          bool isLookupDataOnTheSide(String inputId) {for(dynamic item in input['rawDataInput']) {if(item['id'] == inputId) return true;} return false;}
-          dynamic getItemFromId({required String id}){
-            if(input['isExtraForm'] != null && input['isExtraForm']) {for(dynamic item in DataFormState.rawDataExtra) {if(item['id'] == id) return item;}}
-            else{
-              for(dynamic item in dataQuickCall[0]['foglalas']) {if(item['id'] == id) return item;}
-              for(dynamic itemList in dataQuickCall[0]['poziciok']) {for(dynamic item in itemList['adatok']) {{if(item['id'] == id) return item;}}}
-              if(dataQuickCall[0]['osszesites'] != null) for(dynamic item in dataQuickCall[0]['osszesites']) {if(item['id'] == id) return item;}
-            }
-            throw Exception('No such Item with id: $id');
-          }
-          int getPlaceIndexOfId(String entry){
-            for(dynamic item in dataQuickCall[0]['foglalas']) {if(item['id'] == entry) return 0;}
-            for(int i = 0; i < dataQuickCall[0]['poziciok'].length; i++) {for(dynamic item in dataQuickCall[0]['poziciok'][i]['adatok']) {{if(item['id'] == entry) return i + 1;}}}
-            if(dataQuickCall[0]['osszesites'] != null) for(dynamic item in dataQuickCall[0]['osszesites']) {if(item['id'] == entry) return 0;}
-            throw Exception('No such Item with id: $entry');
-          }
-          Future<dynamic> getItemUpdateItems() async{
-            try {return await json.decode(input['rawDataInput'][input['index']]['update_items'].toString());}
-            catch(e) {return input['rawDataInput'][input['index']]['update_items'];}
-          }
-
-          try {input['rawDataInput'][input['index']]['kod'] = Global.where(DataFormState.listOfLookupDatas[input['rawDataInput'][input['index']]['id']],'megnevezes',input['newValue'])['id'];}
-          catch(e) {/*input['rawDataInput'][input['index']]['kod'] = null;*/}
-          
-          dynamic updateItemsItem = await getItemUpdateItems();
-          if(kDebugMode) {for(dynamic item in updateItemsItem) {print(item.toString());}}
-          if(updateItemsItem == null) return;
-          for(dynamic item in updateItemsItem) {
-            try{
-              bool varIsLookupDataOnTheSide =     isLookupDataOnTheSide(item['id']);
-              dynamic varGetItemFromId =          getItemFromId(id: item['id']);
-              List<String> sqlCommandLookupData = item['lookup_data'].toString().split(' ');
-              if(sqlCommandLookupData[0] == 'SET'){
-                try{
-                  String fieldName = sqlCommandLookupData [1].toString().substring(1);
-                  List<String> listOfStringInput = ['value', 'name', 'input_field', 'input_mask', 'keyboard_type', 'kod'];
-                  if(input['isCheckBox']){
-                    if(input['newValue'] == '1' && item['event'] == 'on' || input['newValue'] == '0' && item['event'] == 'off'){
-                      if(sqlCommandLookupData.length == 4){
-                        if(item['id'] != null){
-                          if(varIsLookupDataOnTheSide)  {input['rawDataInput'][getIndexFromId(id: item['id'])][fieldName] = (listOfStringInput.contains(fieldName))? Global.getStringOrNullFromString(sqlCommandLookupData[3]) : Global.getIntBoolFromString(sqlCommandLookupData[3]);}
-                          else                          {varGetItemFromId[fieldName] =                                      (listOfStringInput.contains(fieldName))? Global.getStringOrNullFromString(sqlCommandLookupData[3]) : Global.getIntBoolFromString(sqlCommandLookupData[3]);}
-                        }
-                        else {switch(fieldName){
-                          case 'numberOfPictures': DataFormState.numberOfPictures[DataFormState.currentProgress] = int.parse(sqlCommandLookupData[3].toString());
-                          default:break;
-                        }}
-                      }
-                      if(sqlCommandLookupData.length > 4){
-                        dynamic varDynamic = await _getCachedLookupData(
-                          thisData:     input['rawDataInput'],
-                          input:        sqlCommandLookupData.sublist(3).join(' '),
-                          isPhp:        (item['php'].toString() == '1'),
-                          cacheEnabled: (item['cache'] != null && item['cache'].toString() == '1')
-                        );
-                        if(varIsLookupDataOnTheSide)  {input['rawDataInput'][getIndexFromId(id: item['id'])][fieldName] = Global.getIntBoolFromString(varDynamic[0][''].toString());}
-                        else                          {varGetItemFromId[fieldName] =                                      Global.getIntBoolFromString(varDynamic[0][''].toString());}
-                      }
-                    }
-                  }
-                  else if(item['id'] != null){
-                    if(sqlCommandLookupData.length == 4){
-                      if(varIsLookupDataOnTheSide)  {input['rawDataInput'][getIndexFromId(id: item['id'])][fieldName] = (listOfStringInput.contains(fieldName))? Global.getStringOrNullFromString(sqlCommandLookupData[3]) : Global.getIntBoolFromString(sqlCommandLookupData[3]);}
-                      else                          {varGetItemFromId[fieldName] =                                      (listOfStringInput.contains(fieldName))? Global.getStringOrNullFromString(sqlCommandLookupData[3]) : Global.getIntBoolFromString(sqlCommandLookupData[3]);}
-                    }
-                    if(sqlCommandLookupData.length > 4){
-                      dynamic varDynamic = await _getCachedLookupData(
-                        thisData:     input['rawDataInput'],
-                        input:        sqlCommandLookupData.sublist(3).join(' '),
-                        isPhp:        (item['php'].toString() == '1'),
-                        cacheEnabled: (item['cache'] != null && item['cache'].toString() == '1')
-                      );
-                      if(varIsLookupDataOnTheSide)  {input['rawDataInput'][getIndexFromId(id: item['id'])][fieldName] = (listOfStringInput.contains(fieldName))? Global.getStringOrNullFromString(varDynamic[0][''].toString()) : Global.getIntBoolFromString(varDynamic[0][''].toString());}
-                      else                          {varGetItemFromId[fieldName] =                                      (listOfStringInput.contains(fieldName))? Global.getStringOrNullFromString(varDynamic[0][''].toString()) : Global.getIntBoolFromString(varDynamic[0][''].toString());}
-                    }
-                  }
-                  continue;
-                }
-                catch(e){
-                  if(kDebugMode)dev.log(e.toString());
-                }
-              }
-              if(input['isCheckBox']) {switch(item['event']){
-                case 'on':  if(input['newValue'] == '0') continue; break;
-                case 'off': if(input['newValue'] == '1') continue; break;
-                default:                                 continue;
-              }}
-              DataFormState.listOfLookupDatas[item['id']] = await _getCachedLookupData(
-                thisData:     input['rawDataInput'],
-                input:        item['lookup_data'],
-                isPhp:        (item['php'].toString() == '1'),
-                cacheEnabled: (item['cache'] != null && item['cache'].toString() == '1')
-              );
-              if(varGetItemFromId['input_field'] == 'checkbox'){
-                if(varIsLookupDataOnTheSide){
-                  input['rawDataInput'][getIndexFromId(id: item['id'])]['value'] = DataFormState.listOfLookupDatas[item['id']][0]['id'].toString();
-                }
-                else{
-                  varGetItemFromId['value'] = DataFormState.listOfLookupDatas[item['id']][0]['id'].toString();
-                }
-              }
-              if(varGetItemFromId['input_field'] == 'select' && item['lookup_data'] != null) {varGetItemFromId['lookup_data'] = item['lookup_data'];}
-            }
-            catch(e){
-              if(kDebugMode)print(e);
-            }
-          }
-          for(String entry in DataFormState.listOfLookupDatas.keys){
-            try{
-              if(isLookupDataOnTheSide(entry)){
-                for(int i = 0; i < input['rawDataInput'].length; i++){
-                  if(input['rawDataInput'][i]['id'] == entry){
-                    if(['text', 'number'].contains(input['rawDataInput'][i]['input_field'])){
-                      input['rawDataInput'][i]['value'] = _isItEmpty(DataFormState.listOfLookupDatas[entry][0]['id'])
-                        ? ''
-                        : DataFormState.listOfLookupDatas[entry][0]['id'].toString()
-                      ;
-                      break;
-                    }
-                    if(['select','search'].contains(input['rawDataInput'][i]['input_field'])){
-                      if(DataFormState.listOfLookupDatas[entry].length == 0 || _isItEmpty(DataFormState.listOfLookupDatas[entry][0]['id'])) {DataFormState.listOfLookupDatas[entry] = List<dynamic>.empty();}
-                      else {for(var item in DataFormState.listOfLookupDatas[entry]){
-                        if(item['selected'] != null && item['selected'].toString() == '1') {input['rawDataInput'][i]['value'] = item['id']; break;}
-                      }}
-                      break;
-                    }
-                  }
-                }
-              }
-              else{
-                dynamic varGetItemFromId = getItemFromId(id: entry);
-                if(['text', 'number'].contains(varGetItemFromId['input_field'])){
-                  varGetItemFromId['value'] = _isItEmpty(DataFormState.listOfLookupDatas[entry][0]['id'])
-                    ? ''
-                    : DataFormState.listOfLookupDatas[entry][0]['id'].toString()
-                  ;
-                }
-                if(['select','search'].contains(varGetItemFromId['input_field'])){
-                  if(DataFormState.listOfLookupDatas[entry].length == 0 || _isItEmpty(DataFormState.listOfLookupDatas[entry][0]['id'])) {DataFormState.listOfLookupDatas[entry] = List<dynamic>.empty();}
-                  else {for(var item in DataFormState.listOfLookupDatas[entry]){
-                    if(item['selected'] != null && item['selected'].toString() == '1') {varGetItemFromId['value'] = item['id']; break;}
-                  }}
-                  if(!input['isExtraForm']) {dataQuickCall[1][getPlaceIndexOfId(entry)][entry] = DataFormState.listOfLookupDatas[entry];}
-                }
-              }
-            }
-            catch(e){
-              if(kDebugMode)print(e);
-            }
-          }
-          break;*/
+          break;        
 
         case QuickCall.chainGiveDatas:
           // ───── helpers ─────────────────────────────────────────────
@@ -745,7 +606,389 @@ class DataManager{
           }
           break;
 
-        case QuickCall.chainGiveDatasFormOpen:
+        /*case QuickCall.chainGiveDatas:
+          // ───── helpers ─────────────────────────────────────────────
+          bool isEmptyId(dynamic v) {
+            if (v == null) return true;
+            if (v is String) {
+              final s = v.trim().toLowerCase();
+              // match your old semantics:
+              // treat '', 'null' and '0' as empty
+              return s.isEmpty || s == 'null' || s == '0';
+            }
+            if (v is num) return v == 0;
+            return false;
+          }
+
+          List<dynamic> deepCopyList(List<dynamic> src) =>
+              List<dynamic>.from(src.map((e) => Map<String, dynamic>.from(e as Map)));
+
+          Future<dynamic> getItemUpdateItemsAt(List<dynamic> rawData, int index) async {
+            try {
+              return json.decode(rawData[index]['update_items'].toString());
+            } catch (_) {
+              return rawData[index]['update_items'];
+            }
+          }
+
+          // ───── raw input (side fields) ──────────────────────────────
+          final List<dynamic> raw = (input['rawDataInput'] as List?) ?? const [];
+
+          // side fields index (rawDataInput)
+          final Map<String, Map<String, dynamic>> sideById = <String, Map<String, dynamic>>{};
+          for (final it in raw) {
+            if (it is Map) {
+              final id = it['id']?.toString();
+              if (id != null && id.isNotEmpty) {
+                sideById[id] = it.cast<String, dynamic>(); // reference
+              }
+            }
+          }
+
+          // form fields index (foglalas + poziciok.adatok + osszesites) OR extra
+          final Map<String, Map<String, dynamic>> formById = <String, Map<String, dynamic>>{};
+          if (input['isExtraForm'] == true) {
+            for (final it in DataFormState.rawDataExtra) {
+              if (it is Map) {
+                final id = it['id']?.toString();
+                if (id != null && id.isNotEmpty) {
+                  formById[id] = it.cast<String, dynamic>(); // reference
+                }
+              }
+            }
+          } else {
+            final foglalas = (dataQuickCall[0]['foglalas'] as List?) ?? const [];
+            for (final it in foglalas) {
+              if (it is Map) {
+                final id = it['id']?.toString();
+                if (id != null && id.isNotEmpty) {
+                  formById[id] = it.cast<String, dynamic>(); // reference
+                }
+              }
+            }
+
+            final poziciok = (dataQuickCall[0]['poziciok'] as List?) ?? const [];
+            for (final pos in poziciok) {
+              final adatok = (pos as Map?)?['adatok'] as List?;
+              if (adatok == null) continue;
+              for (final it in adatok) {
+                if (it is Map) {
+                  final id = it['id']?.toString();
+                  if (id != null && id.isNotEmpty) {
+                    formById[id] = it.cast<String, dynamic>(); // reference
+                  }
+                }
+              }
+            }
+
+            final ossz = dataQuickCall[0]['osszesites'];
+            if (ossz is List) {
+              for (final it in ossz) {
+                if (it is Map) {
+                  final id = it['id']?.toString();
+                  if (id != null && id.isNotEmpty) {
+                    formById[id] = it.cast<String, dynamic>(); // reference
+                  }
+                }
+              }
+            }
+          }
+
+          // id -> place index (0 for foglalas/osszesites, i+1 for poziciok[i])
+          final Map<String, int> placeIndexById = <String, int>{};
+          if (input['isExtraForm'] != true) {
+            final foglalas = (dataQuickCall[0]['foglalas'] as List?) ?? const [];
+            for (final it in foglalas) {
+              if (it is Map) {
+                final id = it['id']?.toString();
+                if (id != null && id.isNotEmpty) placeIndexById[id] = 0;
+              }
+            }
+
+            final poziciok = (dataQuickCall[0]['poziciok'] as List?) ?? const [];
+            for (int i = 0; i < poziciok.length; i++) {
+              final adatok = (poziciok[i] as Map?)?['adatok'] as List?;
+              if (adatok == null) continue;
+              for (final it in adatok) {
+                if (it is Map) {
+                  final id = it['id']?.toString();
+                  if (id != null && id.isNotEmpty) placeIndexById[id] = i + 1;
+                }
+              }
+            }
+
+            final ossz = dataQuickCall[0]['osszesites'];
+            if (ossz is List) {
+              for (final it in ossz) {
+                if (it is Map) {
+                  final id = it['id']?.toString();
+                  if (id != null && id.isNotEmpty) placeIndexById[id] = 0;
+                }
+              }
+            }
+          }
+
+          bool isLookupDataOnTheSide(String id) => sideById.containsKey(id);
+
+          Map<String, dynamic> getFieldById(String id) {
+            // preserve old semantics: if not on the side, prefer form
+            final f = formById[id];
+            if (f != null) return f;
+            final s = sideById[id];
+            if (s != null) return s;
+            throw Exception('No such Item with id: $id');
+          }
+
+          // ───── event handling policy (this is the “form_open compatibility”) ─────
+          // Old behavior: form_open tasks also run during normal chain updates.
+          // Keep that by default, but allow opting out if you ever want.
+          final bool includeFormOpenEverywhere =
+              (input['includeFormOpenEverywhere'] as bool?) ?? true;
+
+          // If you call chainGiveDatas specifically at form-open time, you can set:
+          // input['onlyFormOpen'] = true
+          final bool onlyFormOpen = (input['onlyFormOpen'] as bool?) ?? false;
+
+          bool shouldRunTaskForCurrentCall(Map task, {required bool isCheckBox, required dynamic newValue}) {
+            final ev = task['event']?.toString();
+
+            if (onlyFormOpen) {
+              return ev == 'form_open';
+            }
+
+            // normal calls:
+            if (ev == 'form_open' && !includeFormOpenEverywhere) return false;
+
+            // checkbox gating (kept from old code)
+            if (isCheckBox) {
+              switch (ev) {
+                case 'on':
+                  return newValue?.toString() == '1';
+                case 'off':
+                  return newValue?.toString() == '0';
+                default:
+                  // if checkbox + unknown event, old code "continue"d
+                  return false;
+              }
+            }
+
+            // non-checkbox: old code ran everything (including form_open)
+            return true;
+          }
+
+          // ───── Apply one index (no recursion) ─────────────────────────
+          Future<void> processOne(int index) async {
+            final dynamic newValue = input['newValue'];
+
+            // set kod like before (safe)
+            try {
+              raw[index]['kod'] = Global.where(
+                DataFormState.listOfLookupDatas[raw[index]['id']],
+                'megnevezes',
+                newValue,
+              )['id'];
+            } catch (_) {
+              /* ignore */
+            }
+
+            final updateItemsItem = await getItemUpdateItemsAt(raw, index);
+            if (updateItemsItem == null) return;
+
+            for (final dynItem in (updateItemsItem as List)) {
+              try {
+                final item = dynItem as Map;
+
+                // event filtering / policy (this is the key part)
+                final bool runThis = shouldRunTaskForCurrentCall(
+                  item,
+                  isCheckBox: (input['isCheckBox'] == true),
+                  newValue: newValue,
+                );
+                if (!runThis) continue;
+
+                final String? targetId = item['id']?.toString();
+
+                // SET without id is allowed in your old code (numberOfPictures etc.)
+                final List<String> sqlCommandLookupData =
+                    item['lookup_data'].toString().split(' ');
+
+                // ── handle SET commands ────────────────────────────────
+                if (sqlCommandLookupData.isNotEmpty && sqlCommandLookupData[0] == 'SET') {
+                  try {
+                    final String fieldName = sqlCommandLookupData[1].toString().substring(1);
+                    final List<String> listOfStringInput = [
+                      'value',
+                      'name',
+                      'input_field',
+                      'input_mask',
+                      'keyboard_type',
+                      'kod'
+                    ];
+
+                    void assign(Map<String, dynamic> target, dynamic value) {
+                      target[fieldName] = listOfStringInput.contains(fieldName)
+                          ? Global.getStringOrNullFromString(value)
+                          : Global.getIntBoolFromString(value);
+                    }
+
+                    if (sqlCommandLookupData.length == 4) {
+                      if (targetId != null && targetId.isNotEmpty) {
+                        final bool onSide = isLookupDataOnTheSide(targetId);
+                        if (onSide) {
+                          assign(sideById[targetId]!, sqlCommandLookupData[3]);
+                        } else {
+                          assign(getFieldById(targetId), sqlCommandLookupData[3]);
+                        }
+                      } else {
+                        // match your old special-case behavior
+                        switch (fieldName) {
+                          case 'numberOfPictures':
+                            DataFormState.numberOfPictures[DataFormState.currentProgress] =
+                                int.parse(sqlCommandLookupData[3].toString());
+                            break;
+                          default:
+                            break;
+                        }
+                      }
+                    } else if (sqlCommandLookupData.length > 4) {
+                      final varDynamic = await _getCachedLookupData(
+                        thisData: raw,
+                        input: sqlCommandLookupData.sublist(3).join(' '),
+                        isPhp: (item['php'].toString() == '1'),
+                        cacheEnabled: (item['cache'] != null && item['cache'].toString() == '1'),
+                      );
+                      final dynamic calc = varDynamic[0][''].toString();
+
+                      if (targetId != null && targetId.isNotEmpty) {
+                        final bool onSide = isLookupDataOnTheSide(targetId);
+                        if (onSide) {
+                          assign(sideById[targetId]!, calc);
+                        } else {
+                          assign(getFieldById(targetId), calc);
+                        }
+                      }
+                    }
+                    continue; // SET handled
+                  } catch (e) {
+                    if (kDebugMode) dev.log(e.toString());
+                  }
+                }
+
+                // ── normal lookup refresh ──────────────────────────────
+                if (targetId == null || targetId.isEmpty) continue;
+
+                final list = await _getCachedLookupData(
+                  thisData: raw,
+                  input: item['lookup_data'],
+                  isPhp: (item['php'].toString() == '1'),
+                  cacheEnabled: (item['cache'] != null && item['cache'].toString() == '1'),
+                );
+
+                final cleaned = clean(list);
+                DataFormState.listOfLookupDatas[targetId] = deepCopyList(cleaned);
+
+                final Map<String, dynamic> target = getFieldById(targetId);
+
+                // checkbox auto-value like before
+                if (target['input_field'] == 'checkbox') {
+                  final src = (DataFormState.listOfLookupDatas[targetId] ?? []) as List;
+                  final firstId = (src.isNotEmpty) ? src[0]['id'] : null;
+                  final val = (firstId == null) ? '0' : firstId.toString();
+                  if (isLookupDataOnTheSide(targetId)) {
+                    sideById[targetId]!['value'] = val;
+                  } else {
+                    target['value'] = val;
+                  }
+                }
+
+                // keep lookup_data on select like before
+                if (target['input_field'] == 'select' && item['lookup_data'] != null) {
+                  target['lookup_data'] = item['lookup_data'];
+                }
+              } catch (e) {
+                if (kDebugMode) print(e);
+              }
+            }
+
+            // ── post-processing: set values WITHOUT clearing lists ────
+            final keysSnapshot = List<String>.from(DataFormState.listOfLookupDatas.keys);
+
+            for (final entry in keysSnapshot) {
+              try {
+                final list = (DataFormState.listOfLookupDatas[entry] ?? []) as List;
+
+                // decide which field to update (side or form)
+                if (isLookupDataOnTheSide(entry)) {
+                  final field = sideById[entry];
+                  if (field == null) continue;
+
+                  final inputField = field['input_field']?.toString() ?? '';
+                  if (['text', 'number'].contains(inputField)) {
+                    field['value'] = (list.isNotEmpty && !isEmptyId(list[0]['id']))
+                        ? list[0]['id'].toString()
+                        : '';
+                  } else if (['select', 'search', 'text-lookup'].contains(inputField)) {
+                    if (list.isNotEmpty && !isEmptyId(list[0]['id'])) {
+                      for (final opt in list) {
+                        if (opt is Map && opt['selected']?.toString() == '1') {
+                          field['value'] = opt['id'];
+                          break;
+                        }
+                      }
+                    }
+                  }
+                } else {
+                  final field = formById[entry];
+                  if (field == null) continue;
+
+                  final inputField = field['input_field']?.toString() ?? '';
+                  if (['text', 'number'].contains(inputField)) {
+                    field['value'] = (list.isNotEmpty && !isEmptyId(list[0]['id']))
+                        ? list[0]['id'].toString()
+                        : '';
+                  } else if (['select', 'search', 'text-lookup'].contains(inputField)) {
+                    if (list.isNotEmpty && !isEmptyId(list[0]['id'])) {
+                      for (final opt in list) {
+                        if (opt is Map && opt['selected']?.toString() == '1') {
+                          field['value'] = opt['id'];
+                          break;
+                        }
+                      }
+                    }
+
+                    if (input['isExtraForm'] != true) {
+                      final place = placeIndexById[entry];
+                      if (place != null &&
+                          place < dataQuickCall[1].length &&
+                          dataQuickCall[1][place] is Map) {
+                        dataQuickCall[1][place][entry] = DataFormState.listOfLookupDatas[entry];
+                      }
+                    }
+                  }
+                }
+              } catch (e) {
+                if (kDebugMode) print(e);
+              }
+            }
+          }
+
+          // ───── 0️⃣ bulk mode WITHOUT self-recursion ─────────────────
+          if (input['index'] == null) {
+            for (int i = 0; i < raw.length; i++) {
+              input['index'] = i;
+              input['newValue'] = raw[i]['value'];
+              await processOne(i);
+            }
+            input.remove('index');
+            input.remove('newValue');
+            break;
+          }
+
+          // ───── 1️⃣ single-item logic ───────────────────────────────
+          await processOne(input['index'] as int);
+          break;*/
+        
+        /*case QuickCall.chainGiveDatasFormOpen:
           dynamic getItemFromId({required String id}){
             for(dynamic item in dataQuickCall[0]['foglalas']) {if(item['id'] == id) return item;}
             for(dynamic itemList in dataQuickCall[0]['poziciok']) {for(dynamic item in itemList['adatok']) {{if(item['id'] == id) return item;}}}
@@ -788,6 +1031,140 @@ class DataManager{
           }
           catch(e){
             if(kDebugMode)print(e);
+          }
+          break;*/
+
+        case QuickCall.chainGiveDatasFormOpen:
+          // ------------------ Fast indexes (built once) ------------------
+          final List<dynamic> foglalas = (dataQuickCall[0]['foglalas'] as List?) ?? const [];
+          final List<dynamic> poziciok = (dataQuickCall[0]['poziciok'] as List?) ?? const [];
+
+          // id -> direct reference to the field map in foglalas/poziciok
+          final Map<String, Map<String, dynamic>> byId = <String, Map<String, dynamic>>{};          
+
+          // IMPORTANT:
+          // If you want changes to immediately affect dataQuickCall structures, you must store references.
+          // So use the "DON'T clone" line above.
+          // I'll do it correctly here (reference, no clone):
+
+          byId.clear();
+          for (final f in foglalas) {
+            if (f is Map<String, dynamic>) {
+              final id = f['id']?.toString();
+              if (id != null && id.isNotEmpty) byId[id] = f;
+            } else if (f is Map) {
+              final id = f['id']?.toString();
+              if (id != null && id.isNotEmpty) byId[id] = f.cast<String, dynamic>();
+            }
+          }
+          for (final p in poziciok) {
+            final adatok = (p as Map?)?['adatok'] as List?;
+            if (adatok == null) continue;
+            for (final f in adatok) {
+              if (f is Map<String, dynamic>) {
+                final id = f['id']?.toString();
+                if (id != null && id.isNotEmpty) byId[id] = f;
+              } else if (f is Map) {
+                final id = f['id']?.toString();
+                if (id != null && id.isNotEmpty) byId[id] = f.cast<String, dynamic>();
+              }
+            }
+          }
+
+          // ------------------ Helpers ------------------
+          bool isEmptyValue(dynamic v) => _isItEmpty(v);
+
+          void applyValueToField({
+            required Map<String, dynamic> field,
+            required List<dynamic> lookupList,
+          }) {
+            final inputField = field['input_field']?.toString() ?? '';
+
+            if (inputField == 'text') {
+              field['value'] = (lookupList.isEmpty || isEmptyValue(lookupList[0]['id']))
+                  ? ''
+                  : lookupList[0]['id'].toString();
+              return;
+            }
+
+            if (['select', 'search', 'text-lookup'].contains(inputField)) {
+              // Preserve your current behavior: if list empty / id empty => nuke options list
+              if (lookupList.isEmpty || isEmptyValue(lookupList[0]['id'])) {
+                lookupList = <dynamic>[];
+              } else {
+                for (final opt in lookupList) {
+                  if (opt is Map && opt['selected']?.toString() == '1') {
+                    field['value'] = opt['id'];
+                    break;
+                  }
+                }
+              }
+              return;
+            }
+          }
+
+          // ------------------ Preserve your existing 'kod' set attempt ------------------
+          try {
+            foglalas[input['i']]['kod'] = foglalas[input['i']]['value'];
+          } catch (_) {
+            foglalas[input['i']]['kod'] = null;
+          }
+
+          // ------------------ Main optimized logic ------------------
+          try {
+            final Map<String, dynamic> lookupDatas =
+                (input['lookupDatas'] as Map?)?.cast<String, dynamic>() ?? <String, dynamic>{};
+
+            final dynamic updateItems = foglalas[input['i']]['update_items'];
+            if (updateItems == null) break;
+
+            // 1) Collect only the tasks we actually need (event=form_open)
+            final List<dynamic> tasks = <dynamic>[];
+            if (updateItems is List) {
+              for (final t in updateItems) {
+                if (t is Map && t['event']?.toString() == 'form_open') tasks.add(t);
+              }
+            }
+
+            if (tasks.isEmpty) break;
+
+            // 2) Fetch all lookups (one per task) + update lookup_data on the target field
+            for (final t in tasks) {
+              final id = t['id']?.toString();
+              if (id == null || id.isEmpty) continue;
+
+              final lookupSql = t['lookup_data']?.toString();
+              if (lookupSql == null || lookupSql.isEmpty) continue;
+
+              final isPhp = (t['php']?.toString() == '1');
+
+              lookupDatas[id] = await _getLookupDataFromRawData(
+                input: lookupSql,
+                isPhp: isPhp,
+              );
+
+              // set lookup_data onto the real field (O(1) via index)
+              final target = byId[id];
+              if (target != null) {
+                target['lookup_data'] = lookupSql;
+              }
+            }
+
+            // 3) Apply results to the fields (O(k), no scanning per id)
+            for (final entry in lookupDatas.keys) {
+              final target = byId[entry];
+              if (target == null) continue;
+
+              final list = lookupDatas[entry];
+              if (list is List) {
+                applyValueToField(field: target, lookupList: list);
+              }
+            }
+
+            // Keep your original debug-ish tail expressions if you want:
+            // dataQuickCall; input['lookupDatas'];
+          } catch (e) {
+            if (kDebugMode) print(e);
           }
           break;
 
@@ -1209,6 +1586,7 @@ class DataManager{
           break;
 
         case QuickCall.logInNamePassword:
+          LogInState.errorMessage = '';
           LogInState.logInNamePassword = dataQuickCall[31];
           userId =          (dataQuickCall[31].isNotEmpty)? int.parse(dataQuickCall[31][0]['id'].toString()) : -1;
           break;
@@ -1511,5 +1889,5 @@ class Identity{
     }
   }
   @override
-  String toString() => identity;
+  String toString() => identity; //'00000000000000000000000000000000';
 }

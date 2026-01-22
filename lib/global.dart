@@ -62,6 +62,7 @@ class Global{
 
   // ---------- < SQL Commands > ----- -------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ----------
   static const String sqlCreateTableIdentity = "CREATE TABLE identityTable(id INTEGER PRIMARY KEY, identity TEXT)";
+  static const String sqlCreateTableLastUser = "CREATE TABLE lastUserTable(id INTEGER PRIMARY KEY, userName TEXT)";
 
   // ---------- < Methods [Static] > - -------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ----------
   static Color invertColor(Color input) => Color.fromRGBO((input.red - 255).abs(), (input.green - 255).abs(), (input.blue - 255).abs(), 1.0);

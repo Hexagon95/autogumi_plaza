@@ -170,107 +170,103 @@ class LogInState extends State<LogIn>{
   
   // ---------- < Methods [1] > ---- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ----------
   Future<void> _onLogInPressed() async {
-  DataManager.customer = 'mosaic';
-  errorMessage = '';
-  forgottenPasswordMessage = '';
-  setState(() => buttonLogIn = ButtonState.loading);
+    DataManager.customer = 'mosaic';
+    //errorMessage = '';
+    forgottenPasswordMessage = '';
+    setState(() => buttonLogIn = ButtonState.loading);
 
-  // 1) Check version first
-  await DataManager(quickCall: QuickCall.verzio).beginQuickCall;
-  if (updateNeeded) {
-    setState(() => buttonLogIn = ButtonState.disabled);
-    await tryOtaUpdate();
-    return;
-  }
+    // 1) Check version first
+    await DataManager(quickCall: QuickCall.verzio).beginQuickCall;
+    if (updateNeeded) {
+      setState(() => buttonLogIn = ButtonState.disabled);
+      await tryOtaUpdate();
+      return;
+    }
 
-  // 2) Ask username + password
-  final result = await Global.logInDialog(
-    context,
-    userNameInput: (logInNamePassword != null && logInNamePassword.isNotEmpty)
-        ? logInNamePassword[0]['nev'].toString()
-        : null,
-  );
+    await DataManager(input: {'number': 0, 'login': 'customer'}).beginProcess;
+    if (errorMessage.isNotEmpty) {
+      await Global.showAlertDialog(context, title: 'Hiba!', content: errorMessage);
+      if (mounted) setState(() => buttonLogIn = ButtonState.default0);
+      return;
+    }    
 
-  if (result == null) {
-    if (mounted) setState(() => buttonLogIn = ButtonState.default0);
-    return;
-  }
+    // 2) Ask username + password
+    final savedUserName = await DataManager.lastUserNameSQLite;
+    final result = await Global.logInDialog(
+      context,
+      userNameInput: savedUserName ?? ((logInNamePassword != null && logInNamePassword.isNotEmpty)? logInNamePassword[0]['nev'].toString() : null),
+    );
 
-  // 👉 Show spinner while authenticating (this is the key change)
-  if (mounted) setState(() => buttonLogIn = ButtonState.loading);
+    if (result == null) {
+      if (mounted) setState(() => buttonLogIn = ButtonState.default0);
+      return;
+    }
 
-  // 3) Forgotten password?
-  if (result['buttonState'] == ButtonState.loading) {
+    // 👉 Show spinner while authenticating (this is the key change)
+    if (mounted) setState(() => buttonLogIn = ButtonState.loading);
+
+    // 3) Forgotten password?
+    if (result['buttonState'] == ButtonState.loading) {
+      await DataManager(
+        quickCall: QuickCall.forgottenPassword,
+        input: {'user_name': result['userName']},
+      ).beginQuickCall;
+
+      await Global.showAlertDialog(
+        context,
+        title: 'Elfelejtett jelszó',
+        content: forgottenPasswordMessage,
+      );
+
+      if (mounted) setState(() => buttonLogIn = ButtonState.default0);
+      return;
+    }
+
+    // 4) Normal login
     await DataManager(
-      quickCall: QuickCall.forgottenPassword,
-      input: {'user_name': result['userName']},
+      quickCall: QuickCall.logInNamePassword,
+      input: {
+        'user_name': result['userName'],
+        'user_password': result['userPassword'],
+      },
     ).beginQuickCall;
 
-    await Global.showAlertDialog(
-      context,
-      title: 'Elfelejtett jelszó',
-      content: forgottenPasswordMessage,
-    );
+    if (logInNamePassword == null || logInNamePassword.isEmpty) {
+      await Global.showAlertDialog(
+        context,
+        title: 'Ismeretlen felhasználónév!',
+        content: 'A megadott felhasználónév: ${result['userName']} ismeretlen!',
+      );
+      if (mounted) setState(() => buttonLogIn = ButtonState.default0);
+      return;
+    }
 
-    if (mounted) setState(() => buttonLogIn = ButtonState.default0);
-    return;
+    if (logInNamePassword[0]['jelszo_ok'].toString() == '0') {
+      await Global.showAlertDialog(
+        context,
+        title: 'Helytelen jelszó!',
+        content: 'A megadott jelszó helytelen!',
+      );
+      if (mounted) setState(() => buttonLogIn = ButtonState.default0);
+      return;
+    }
+    if (logInNamePassword[0]['jelszo_ok'].toString() == '1') {await DataManager.saveLastUserNameSQLite(result['userName']);}
+
+    // 5) Continue flow
+    await DataManager(input: {'number': 1, 'login': 'service'}).beginProcess;
+    if (errorMessage.isNotEmpty) {
+      await Global.showAlertDialog(context, title: 'Hiba!', content: errorMessage);
+      if (mounted) setState(() => buttonLogIn = ButtonState.default0);
+      return;
+    }
+    await DataManager(quickCall: QuickCall.tabletBelep).beginQuickCall;
+    Global.routeNext = NextRoute.panel;
+    await DataManager(quickCall: QuickCall.panel).beginQuickCall;
+
+    //if (mounted) setState(() => buttonLogIn = ButtonState.default0);
+    if (!mounted) return;
+    await Navigator.pushNamed(context, '/panel');
   }
-
-  // 4) Normal login
-  await DataManager(
-    quickCall: QuickCall.logInNamePassword,
-    input: {
-      'user_name': result['userName'],
-      'user_password': result['userPassword'],
-    },
-  ).beginQuickCall;
-
-  if (logInNamePassword == null || logInNamePassword.isEmpty) {
-    await Global.showAlertDialog(
-      context,
-      title: 'Ismeretlen felhasználónév!',
-      content: 'A megadott felhasználónév: ${result['userName']} ismeretlen!',
-    );
-    if (mounted) setState(() => buttonLogIn = ButtonState.default0);
-    return;
-  }
-
-  if (logInNamePassword[0]['jelszo_ok'].toString() == '0') {
-    await Global.showAlertDialog(
-      context,
-      title: 'Helytelen jelszó!',
-      content: 'A megadott jelszó helytelen!',
-    );
-    if (mounted) setState(() => buttonLogIn = ButtonState.default0);
-    return;
-  }
-
-  // 5) Continue flow
-  await DataManager(quickCall: QuickCall.tabletBelep).beginQuickCall;
-
-  await DataManager(input: {'number': 0, 'login': 'customer'}).beginProcess;
-  if (errorMessage.isNotEmpty) {
-    await Global.showAlertDialog(context, title: 'Hiba!', content: errorMessage);
-    if (mounted) setState(() => buttonLogIn = ButtonState.default0);
-    return;
-  }
-
-  await DataManager(input: {'number': 1, 'login': 'service'}).beginProcess;
-  if (errorMessage.isNotEmpty) {
-    await Global.showAlertDialog(context, title: 'Hiba!', content: errorMessage);
-    if (mounted) setState(() => buttonLogIn = ButtonState.default0);
-    return;
-  }
-
-  Global.routeNext = NextRoute.panel;
-
-  await DataManager(quickCall: QuickCall.panel).beginQuickCall;
-
-  //if (mounted) setState(() => buttonLogIn = ButtonState.default0);
-  if (!mounted) return;
-  await Navigator.pushNamed(context, '/panel');
-}
-
 
   /*Future get _buttonLogInPressed async{
     DataManager.customer =      'mosaic';

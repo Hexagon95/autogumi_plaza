@@ -67,7 +67,7 @@ class DataFormState extends State<DataForm> {//-- ---------- ---------- --------
   }
   static dynamic option(String input) {for(dynamic item in options) {if(item['name'] == input) return item;} return null;}
 
-  // ---------- < Wariables [1] > ---- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ----------
+  // ---------- < Variables [1] > ---- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ----------
   List<TextEditingController> controllerCopy =  List<TextEditingController>.empty(growable: true);
   List<TextEditingController> controller =      List<TextEditingController>.empty(growable: true);
   List<FocusNode> focusNode =                   List<FocusNode>.empty(growable: true);
@@ -97,6 +97,8 @@ class DataFormState extends State<DataForm> {//-- ---------- ---------- --------
     return false;
   }
   bool skipWillPopScopeSequences = false;
+  String _trimRight(String s) => s.replaceFirst(RegExp(r'\s+$'), '');
+
 
   // ---------- < Constructor > ------ ---------- ---------- ---------- ---------- ---------- ---------- ---------- ----------
   DataFormState() {_resetController(rawData);}
@@ -492,7 +494,8 @@ class DataFormState extends State<DataForm> {//-- ---------- ---------- --------
 
   Widget _getWidget(List<dynamic> thisData, dynamic input, int index){
     bool editable =          (Global.trueString.contains(input['editable'].toString()));
-    controller[index].text = _noNullText(Global.parse(thisData[index]['value'].toString()));
+    final newText = _noNullText(Global.parse(thisData[index]['value']?.toString()));
+    if (controller[index].text != newText && !focusNode[index].hasFocus) {controller[index].text = newText;}
     double getWidth(int index) {int sorDB = 0; for(var item in thisData) {if(item['sor'] == thisData[index]['sor']) sorDB++;} return MediaQuery.of(context).size.width / sorDB - 22;}
     TextInputType? getKeyboard(String? keyboardType) {if(keyboardType == null) return null; switch(keyboardType){
       case 'number':  return TextInputType.number;
@@ -1061,7 +1064,27 @@ class DataFormState extends State<DataForm> {//-- ---------- ---------- --------
             thisData[index]['value'] =  controller[index].text;
             buttonSave =                DataManager.setButtonSave;
           }),
-          onEditingComplete:() async {if(thisData[index]['update_items'] != null && thisData[index]['update_items'].
+          onEditingComplete: () async {final cleaned = _trimRight(controller[index].text);
+            controller[index].text = cleaned;
+            thisData[index]['value'] = cleaned;
+            if (thisData[index]['update_items'] != null && thisData[index]['update_items'].isNotEmpty){
+              await DataManager(
+                quickCall: QuickCall.chainGiveDatas,
+                input: {
+                  'rawDataInput': thisData,
+                  'index':        index,
+                  'isCheckBox':   false,
+                  'newValue':     cleaned,
+                  'isExtraForm':  isExtraForm
+                },
+              ).beginQuickCall;
+              thisData[index]['value'] = controller[index].text;
+              buttonSave = DataManager.setButtonSave;
+            }
+            FocusManager.instance.primaryFocus?.unfocus();
+            if (mounted) setState((){});
+          },
+          /*onEditingComplete:() async {if(thisData[index]['update_items'] != null && thisData[index]['update_items'].
           isNotEmpty){
             await DataManager(
               quickCall:  QuickCall.chainGiveDatas,
@@ -1070,7 +1093,7 @@ class DataFormState extends State<DataForm> {//-- ---------- ---------- --------
             thisData[index]['value'] =  controller[index].text;
             buttonSave =                DataManager.setButtonSave;            
           } FocusManager.instance.primaryFocus?.unfocus();
-            setState((){});},
+            setState((){});},*/
           style: TextStyle(color: (editable && !isClosed)? const Color.fromARGB(255, 51, 51, 51) : const Color.fromARGB(255, 153, 153, 153)),
         ))
       ;
@@ -1961,6 +1984,8 @@ class DataFormState extends State<DataForm> {//-- ---------- ---------- --------
         'title':        'Összesítés',
         'isClosed':     true
       });
+      options =   [];
+      isClosed =  false;
       Global.routeBack;
       Navigator.pop(context);
     }
@@ -1981,9 +2006,16 @@ class DataFormState extends State<DataForm> {//-- ---------- ---------- --------
   }
 
   String _noNullText(dynamic v) {
-    final s = (v ?? '').toString().trim();
+    final s = (v ?? '').toString();
     if (s.isEmpty) return '';
     if (s.toLowerCase() == 'null') return '';
     return s;
   }
+
+  /*String _noNullText(dynamic v) {
+    final s = (v ?? '').toString().trim();
+    if (s.isEmpty) return '';
+    if (s.toLowerCase() == 'null') return '';
+    return s;
+  }*/
 }

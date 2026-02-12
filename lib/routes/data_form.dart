@@ -1203,9 +1203,17 @@ class DataFormState extends State<DataForm> {//-- ---------- ---------- --------
         content: 'Kívánja lezárni és elmenteni a munkát?'
       )){
         await DataManager(quickCall: QuickCall.saveAbroncsIgenyles, input: {'lezart': 1}).beginQuickCall;
-        Global.routeBack;
-        skipWillPopScopeSequences = true;
-        Navigator.pop(context);
+        if(SignatureFormState.message == null || SignatureFormState.message.isEmpty){
+          Global.routeBack;
+          skipWillPopScopeSequences = true;
+          Navigator.pop(context);
+        }
+        else{
+          await Global.showAlertDialog(context,
+            title:    SignatureFormState.message['name'] ?? '',
+            content:  SignatureFormState.message['message'] ?? ''
+          );
+        }
       }
       break;
 

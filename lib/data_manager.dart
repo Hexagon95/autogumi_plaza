@@ -20,8 +20,8 @@ import 'utils.dart';
 
 class DataManager{
   // ---------- < Variables [Static] > - ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ----------
-  static String thisVersion =                       '1.39c';
-  static int verzioTest =                           0;      // anything other than 0 will draw "[Teszt #]" at the LogIn screen.
+  static String thisVersion =                       '1.39d';
+  static int verzioTest =                           1;      // anything other than 0 will draw "[Teszt #]" at the LogIn screen.
   
   static String openAiPassword =                    'qifqik-sedpuf-rejKu6';
  
@@ -1169,9 +1169,10 @@ class DataManager{
           break;
 
         case QuickCall.askPhotos:
+          foglalasId = data[2][DataFormState.selectedIndexInCalendar!]['id'].toString();
           var queryParameters = {
-            'customer':     customer,
-            'foglalas_id':  data[2][DataFormState.selectedIndexInCalendar!]['id'].toString(),
+            'customer':     (foglalasId != null && int.parse(foglalasId!) < 0)? 'mercarius' : customer,
+            'foglalas_id':  foglalasId?.replaceFirst(RegExp(r'^-+'), ''),
             'jelleg':       (DataFormState.workType == 'Igénylés')? 'Eseti' : DataFormState.workType,
             'pozicio':      PhotoPreviewState.isSignature
               ? 'Signature'
@@ -1180,7 +1181,7 @@ class DataManager{
           };
           Uri uriUrl =              Uri.parse('${urlPath}ask_pictures.php');
           http.Response response =  await http.post(uriUrl, body: json.encode(queryParameters), headers: headers);
-          dynamic varDynamic = await jsonDecode(response.body)[0][''];
+          dynamic varDynamic =      await jsonDecode(response.body)[0][''];
           dataQuickCall[check(2)] = await jsonDecode(varDynamic.toString());
           if(kDebugMode){
             String varString = dataQuickCall[2].toString();
@@ -1231,7 +1232,7 @@ class DataManager{
 
         case QuickCall.saveEsetiMunkalapFelvitele:
           var queryParameters = {
-            'customer':   customer,
+            'customer':   (foglalasId != null && int.parse(foglalasId!) < 0)? 'mercarius' : customer,
             'parameter':  (input['lezart'] != 1 && input['quickSave'] == null)? jsonEncode(DataFormState.rawData) : jsonEncode(dataQuickCall[0]),
             'user_id':    userId, //data[0][1]['dolgozo_kod'],
             'lezart':     input['lezart']
@@ -1243,10 +1244,15 @@ class DataManager{
           SignatureFormState.message =  (dataQuickCall[5].isNotEmpty)? dataQuickCall[5][0] : null;
           break;
 
+          /* 'customer': (foglalasId != null && int.parse(foglalasId!) < 0)? 'mercarius' : customer,
+            'parameter': jsonEncode({
+              'id':       foglalasId?.replaceFirst(RegExp(r'^-+'), ''),
+              'pozicio':  PhotoPreviewState.isSignature*/
+
         case QuickCall.uploadSignature:
           var queryParameters = {
-            'customer':       customer,
-            'bizonylat_id':   input['bizonylat_id'],
+            'customer':       (foglalasId != null && int.parse(foglalasId!) < 0)? 'mercarius' : customer,
+            'bizonylat_id':   input['bizonylat_id']?.replaceFirst(RegExp(r'^-+'), ''),
             'alairo':         input['alairo'],
             'alairas':        input['alairas'],
           };
@@ -1282,6 +1288,8 @@ class DataManager{
           Uri uriUrl = Uri.parse('${urlPath}save_abroncs_igenyles.php');
           http.Response response =      await http.post(uriUrl, body: json.encode(queryParameters), headers: headers);
           dataQuickCall[check(5)] =     (['[]', '"[]"', '""[]""'].contains(response.body))? [] : json.decode(json.decode(response.body));
+          if(kDebugMode) dev.log(dataQuickCall[5].toString());
+          if(kDebugMode) dev.log(queryParameters['parameter'].toString());
           SignatureFormState.message =  (dataQuickCall[5].isNotEmpty)? dataQuickCall[5][0] : null;
           break;
 
@@ -1398,7 +1406,7 @@ class DataManager{
           };
           Uri uriUrl =              Uri.parse('${urlPath}tasks.php');          
           http.Response response =  await http.post(uriUrl, body: json.encode(queryParameters), headers: headers);
-          data[check(2)] =         await jsonDecode(response.body);
+          data[check(2)] =          await jsonDecode(response.body);
           if(kDebugMode){
             String varString = data[2].toString();
             print(varString);
@@ -1429,9 +1437,9 @@ class DataManager{
 
         case NextRoute.photoPreview:
           var queryParameters = {
-            'customer': customer,
+            'customer': (foglalasId != null && int.parse(foglalasId!) < 0)? 'mercarius' : customer,
             'parameter': jsonEncode({
-              'id':       foglalasId,
+              'id':       foglalasId?.replaceFirst(RegExp(r'^-+'), ''),
               'pozicio':  PhotoPreviewState.isSignature
                 ? 'Signature'
                 : DataFormState.titles[DataFormState.currentProgress]

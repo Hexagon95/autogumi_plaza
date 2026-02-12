@@ -179,11 +179,11 @@ class PhotoPreviewState extends State<PhotoPreview>{
     setState(() => buttonSave = ButtonState.loading);
     DataManager.dataQuickCall[2];
     await DataManager().beginProcess;
-    buttonSave =              ButtonState.default0;
     editingController.text =  '';
     await DataManager(quickCall: QuickCall.askPhotos).beginQuickCall;
     Global.routeBack;
-    Navigator.pop(context, DataManager.dataQuickCall[2].last);
+    setState(() => buttonSave = ButtonState.default0);
+    Navigator.pop(context, DataManager.dataQuickCall[2].isNotEmpty? DataManager.dataQuickCall[2].last : []);
   }
 
   Future<bool> get _handlePop async{

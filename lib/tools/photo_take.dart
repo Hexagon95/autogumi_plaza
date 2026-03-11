@@ -11,11 +11,7 @@ import 'package:autogumi_plaza/routes/data_form.dart';
 import 'package:autogumi_plaza/routes/photo_preview.dart';
 
 class TakePictureScreen extends StatefulWidget {
-  // ---------- < Variables [1] > -------- ---------- ---------- ----------
-  final CameraDescription camera;
-
-  // ---------- < Constructor > ---------- ---------- ---------- ----------
-  const TakePictureScreen({super.key,required this.camera});  
+  const TakePictureScreen({super.key});
 
   @override
   TakePictureScreenState createState() => TakePictureScreenState();
@@ -27,10 +23,10 @@ class TakePictureScreenState extends State<TakePictureScreen> with WidgetsBindin
 
   // ---------- < Variables [1] > -------- ---------- ---------- ----------
   ButtonState buttonTakePicture = ButtonState.default0;
-  late CameraController     _controller;
   late AnimationController  _flashModeControlRowAnimationController;
   late AnimationController  _exposureModeControlRowAnimationController;
-  late Future<void>         _initializeControllerFuture;  
+  late Future<void> _initializeControllerFuture;
+  CameraController? _controller;  
 
   // ---------- < WidgetBuild > ---------- ---------- ---------- ----------
   @override
@@ -49,7 +45,7 @@ class TakePictureScreenState extends State<TakePictureScreen> with WidgetsBindin
         body:             FutureBuilder<void>(
           future:   _initializeControllerFuture,
           builder:  (context, snapshot) {
-            if(snapshot.connectionState == ConnectionState.done) {return Center(child: CameraPreview(_controller));}
+            if(snapshot.connectionState == ConnectionState.done && _controller != null) {return Center(child: CameraPreview(_controller!));}
             else{return const Center(child: CircularProgressIndicator());}
           },
         ),
@@ -75,15 +71,22 @@ class TakePictureScreenState extends State<TakePictureScreen> with WidgetsBindin
       vsync:                                  this,
     );
     _exposureModeControlRowAnimationController =  AnimationController(duration: const Duration(milliseconds: 300),vsync: this);
-    _controller =                                 CameraController(widget.camera, ResolutionPreset.ultraHigh);    
-    _initializeControllerFuture =                 _controller.initialize();
+    _initializeControllerFuture = _initCamera();
+  }
+
+  Future<void> _initCamera() async {
+    final cameras = await availableCameras();
+    if (cameras.isEmpty) throw Exception('No cameras found');
+    _controller = CameraController(cameras.first, ResolutionPreset.ultraHigh);
+    await _controller!.initialize();
   }
 
   @override
   void dispose() {
     _ambiguate(WidgetsBinding.instance)?.removeObserver(this);
     _flashModeControlRowAnimationController.dispose();
-    _exposureModeControlRowAnimationController.dispose();   
+    _exposureModeControlRowAnimationController.dispose();
+    _controller?.dispose();
     super.dispose(); 
   }
 
@@ -104,7 +107,9 @@ class TakePictureScreenState extends State<TakePictureScreen> with WidgetsBindin
       setState(() =>  buttonTakePicture = ButtonState.disabled);
       await _initializeControllerFuture;
       indexOfShot++;
-      final image =                   await _controller.takePicture();
+      final controller = _controller;
+      if (controller == null) return;
+      final image = await controller.takePicture();
       PhotoPreviewState.imageIdList.add(indexOfShot);
       PhotoPreviewState.imagePath =   image.path;
       PhotoPreviewState.imageBase64 = base64Encode(io.File(image.path).readAsBytesSync());      

@@ -1,10 +1,4 @@
 // ignore_for_file: use_build_context_synchronously, deprecated_member_use
-import 'package:autogumi_plaza/routes/probe_measuring.dart';
-import 'package:autogumi_plaza/routes/photo_preview.dart';
-import 'package:autogumi_plaza/routes/signature.dart';
-import 'package:autogumi_plaza/routes/calendar.dart';
-import 'package:autogumi_plaza/data_manager.dart';
-import '../global.dart';
 import 'package:flutter_datetime_picker_plus/flutter_datetime_picker_plus.dart' as picker;
 import 'package:masked_text/masked_text.dart';
 import 'package:flutter/foundation.dart';
@@ -13,6 +7,12 @@ import 'package:flutter/services.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'dart:convert';
+import 'package:autogumi_plaza/tools/probe_measuring.dart' if(dart.library.html) 'package:autogumi_plaza/tools/web/probe_measuring.dart' as probe_measuring;
+import 'package:autogumi_plaza/routes/photo_preview.dart';
+import 'package:autogumi_plaza/routes/signature.dart';
+import 'package:autogumi_plaza/routes/calendar.dart';
+import 'package:autogumi_plaza/data_manager.dart';
+import 'package:autogumi_plaza/global.dart';
 
 class DataForm extends StatefulWidget {//-------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- <DataForm>
   const DataForm({super.key});
@@ -744,12 +744,14 @@ class DataFormState extends State<DataForm> {//-- ---------- ---------- --------
           controller:         controller[index],
           onEditingComplete:  () => setState((){
             _formatInput(controller[index], int.parse(thisData[index]['decimal_places']?.toString() ?? '0'));
+            //_formatInput(controller[index], 1);
             _checkDouble(thisData, controller[index].text, input, index);
             _handleSelectChange(thisData, controller[index].text, index);
             focusNode[index].unfocus();
           }),
           onTapOutside:       (PointerDownEvent varPointerDownEvent) => setState((){
             _formatInput(controller[index], int.parse(thisData[index]['decimal_places']?.toString() ?? '0'));
+            //_formatInput(controller[index], 1);
             _checkDouble(thisData, controller[index].text, input, index);
             _handleSelectChange(thisData, controller[index].text, index);
             focusNode[index].unfocus();
@@ -766,6 +768,77 @@ class DataFormState extends State<DataForm> {//-- ---------- ---------- --------
           style:        TextStyle(color: (editable && !isClosed)? const Color.fromARGB(255, 51, 51, 51) : const Color.fromARGB(255, 153, 153, 153)),
           keyboardType: const TextInputType.numberWithOptions(decimal: true),
         ));
+      }
+
+      case 'yesnopicker': {
+        final bool enabled = (editable && !isClosed);
+        // mandatory?
+        final bool mandatory = input['mandatory'] != null && Global.trueString.contains(input['mandatory'].toString());
+        // current value: null / '1' / '0'
+        final String? raw = thisData[index]['value']?.toString();
+        final bool yesSelected = raw == '1' || raw?.toLowerCase() == 'true';
+        final bool noSelected  = raw == '0' || raw?.toLowerCase() == 'false';
+        Future<void> setYes() async {
+          if (!enabled) return;
+          await executeSafely(() async {await _handleSelectChange(thisData, '1', index, isCheckBox: true);});
+        }
+        Future<void> setNo() async {
+          if (!enabled) return;
+          await executeSafely(() async {await _handleSelectChange(thisData, '0', index, isCheckBox: true);});
+        }
+        Future<void> clear() async {
+          if (!enabled) return;
+          if (mandatory) return; // cannot clear if mandatory
+          await executeSafely(() async {await _handleSelectChange(thisData, null, index, isCheckBox: true);});
+        }
+        TextStyle labelStyle = TextStyle(color: enabled? const Color.fromARGB(255, 51, 51, 51) : const Color.fromARGB(255, 153, 153, 153));
+        // small helper widget for the checkbox+label
+        Widget optionBox({required bool selected, required String text, required VoidCallback onTap}){
+          return InkWell(
+            onTap: onTap,
+            borderRadius: BorderRadius.circular(6),
+            child: Row(mainAxisSize: MainAxisSize.min, children: [
+              Checkbox(
+                value:                  selected,
+                onChanged:              (_) => onTap(),
+                materialTapTargetSize:  MaterialTapTargetSize.shrinkWrap,
+                visualDensity:          VisualDensity.compact,
+              ),
+              Text(text, style: labelStyle),
+            ]),
+          );
+        }
+        return SizedBox(height: 55, width: getWidth(index), child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+          Expanded(
+            child: Text(
+              Global.parse('   ${thisData[index]['name'].toString()}'),
+              overflow: TextOverflow.ellipsis,
+              style:    labelStyle,
+            ),
+          ),
+          if (!enabled)
+            const Padding(
+              padding:  EdgeInsets.only(right: 6),
+              child:    Icon(Icons.lock, color: Color.fromRGBO(200, 200, 200, 1)),
+            ),
+          // IGEN / NEM
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              optionBox(
+                selected: yesSelected,
+                text:     'igen.       ',
+                onTap:    () {if (yesSelected) {clear();} else {setYes();}},
+              ),
+              const SizedBox(width: 8),
+              optionBox(
+                selected: noSelected,
+                text:     'nem.       ',
+                onTap:    () {if (noSelected) {clear();} else {setNo();}},
+              ),
+            ],
+          )
+        ]));
       }
 
       case 'checkbox': return SizedBox(height: 55, width: getWidth(index), child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
@@ -881,7 +954,7 @@ class DataFormState extends State<DataForm> {//-- ---------- ---------- --------
         // 📸 camera button on the left
         rowButtons.add(
           TextButton(
-            onPressed:  (editable && !isClosed && taken < maxImgs) ? () async => _buttonCameraPressed(data: thisData, index: index) : null,
+            onPressed:  !kIsWeb? (editable && !isClosed && taken < maxImgs) ? () async => _buttonCameraPressed(data: thisData, index: index) : null : null,
             style:      compactBtnStyle(Colors.transparent),
             child:      Icon(
               Icons.camera_alt,
@@ -897,7 +970,7 @@ class DataFormState extends State<DataForm> {//-- ---------- ---------- --------
           final state = enabled ? ButtonState.default0 : ButtonState.disabled;
           rowButtons.add(
             TextButton(
-              onPressed: enabled ? () => _buttonListPicturesPressed(input['pictures'][j]) : null,
+              onPressed: !kIsWeb? enabled ? () => _buttonListPicturesPressed(input['pictures'][j]) : null : null,
               style: compactBtnStyle(Colors.transparent),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
@@ -966,34 +1039,89 @@ class DataFormState extends State<DataForm> {//-- ---------- ---------- --------
         );
       }
 
-      default: return (input['input_mask'] != null && input['input_mask'].toString().isNotEmpty)
-        ? SizedBox(height: 55, width: getWidth(index), child: MaskedTextField(
-          enabled:          (editable && !isClosed),
-          controller:       controller[index],
-          mask:             input['input_mask'],
-          keyboardType:     getKeyboard(input['keyboard_type']),
-
-          decoration:       InputDecoration(
-            contentPadding:   const EdgeInsets.all(10),
-            labelText:        input['name'],
-            hintText:         input['input_mask'],
-            border:           InputBorder.none,
-          ),
-          onEditingComplete: () async{
-            maskEditingComplete(thisData, input, index);
-            if(thisData[index]['update_items'].isNotEmpty){
-              await DataManager(
-                quickCall:  QuickCall.chainGiveDatas,
-                input:      {'rawDataInput': thisData, 'index': index, 'isCheckBox': false, 'newValue': thisData[index]['value'], 'isExtraForm': isExtraForm}
-              ).beginQuickCall;
-              thisData[index]['value'] = controller[index].text;
-              buttonSave = DataManager.setButtonSave;
-              FocusManager.instance.primaryFocus?.unfocus();
-              setState((){});
-            }
-          },
-          style: TextStyle(color: (editable && !isClosed)? const Color.fromARGB(255, 51, 51, 51) : const Color.fromARGB(255, 153, 153, 153)),
-        ))
+      default:
+        final hasMask =       input['input_mask'] != null && input['input_mask'].toString().isNotEmpty;
+        final isNumberKb =    (input['keyboard_type']?.toString() == 'number');
+        final isDecimalMask = hasMask && input['input_mask'].toString().contains('.');
+        if (isDecimalMask && isNumberKb) {
+          return SizedBox(
+            height: 55,
+            width:  getWidth(index),
+            child:  TextField(
+              enabled:          (editable && !isClosed),
+              controller:       controller[index],
+              keyboardType:     const TextInputType.numberWithOptions(decimal: true),
+              inputFormatters:  [
+                // let the user type digits, comma, dot
+                FilteringTextInputFormatter.allow(RegExp(r'[0-9\.,]')),
+              ],
+              decoration: InputDecoration(
+                contentPadding: const EdgeInsets.all(10),
+                labelText:      input['name'],
+                border:         InputBorder.none,
+              ),
+              onEditingComplete: () async {
+                final mask = input['input_mask'].toString();
+                final formatted = _applyNumericMaskStrict(controller[index].text, mask);
+                if (formatted == '__INVALID__') {
+                  await Global.showAlertDialog(
+                    context,
+                    title: '⚠️ Nem megfelelő érték!',
+                    content: 'A megadott érték nem felel meg a formátumnak.',
+                  );
+                  controller[index].text = '';
+                  thisData[index]['value'] = '';
+                  FocusManager.instance.primaryFocus?.unfocus();
+                  if (mounted) setState(() {});
+                  return;
+                }
+                controller[index].text = formatted;
+                thisData[index]['value'] = formatted;
+                // ✅ after mask validation, do min/max validation
+                await _checkDouble(thisData, formatted, input, index);
+                // ✅ send the (possibly cleared) validated value
+                await _handleSelectChange(thisData, thisData[index]['value']?.toString(), index);
+                FocusManager.instance.primaryFocus?.unfocus();
+                if (mounted) setState(() {});
+              },
+            ),
+          );
+        }
+        // ⬇️ keep your existing MaskedTextField behavior for non-number kb masks
+        return (hasMask)
+        ? SizedBox(
+            height: 55,
+            width: getWidth(index),
+            child: MaskedTextField(
+              enabled:    (editable && !isClosed),
+              controller: controller[index],
+              mask:       input['input_mask'],
+              keyboardType: getKeyboard(input['keyboard_type']),
+              decoration:   InputDecoration(
+                contentPadding: const EdgeInsets.all(10),
+                labelText:      input['name'],
+                hintText:       input['input_mask'],
+                border:         InputBorder.none,
+              ),
+              onEditingComplete: () async {maskEditingComplete(thisData, input, index); if (thisData[index]['update_items'].isNotEmpty) {
+                await DataManager(
+                  quickCall: QuickCall.chainGiveDatas,
+                  input: {
+                    'rawDataInput': thisData,
+                    'index':        index,
+                    'isCheckBox':   false,
+                    'newValue':     thisData[index]['value'],
+                    'isExtraForm':  isExtraForm
+                  },
+                ).beginQuickCall;
+                thisData[index]['value'] = controller[index].text;
+                buttonSave = DataManager.setButtonSave;
+                FocusManager.instance.primaryFocus?.unfocus();
+                setState((){});
+              }},
+              style: TextStyle(color: (editable && !isClosed)? const Color.fromARGB(255, 51, 51, 51) : const Color.fromARGB(255, 153, 153, 153)),
+            )
+          )
         : (input['name'].toString().contains('e-mail'))
         ? SizedBox(height: 55, width: getWidth(index), child: TextField(
           enabled:          (editable && !isClosed),
@@ -1176,7 +1304,7 @@ class DataFormState extends State<DataForm> {//-- ---------- ---------- --------
       if (contentMap != null && contentMap['name'] != null && contentMap['message'] != null) {
         await Global.showAlertDialog(
           context,
-          title: contentMap['name'],
+          title: 'ℹ️ ${contentMap['name']}',
           content: contentMap['message'],
         );
         setState(() {
@@ -1210,7 +1338,7 @@ class DataFormState extends State<DataForm> {//-- ---------- ---------- --------
         }
         else{
           await Global.showAlertDialog(context,
-            title:    SignatureFormState.message['name'] ?? '',
+            title:    'ℹ️ ${SignatureFormState.message['name']}',
             content:  SignatureFormState.message['message'] ?? ''
           );
         }
@@ -1305,7 +1433,7 @@ class DataFormState extends State<DataForm> {//-- ---------- ---------- --------
   }
 
   Future get _buttonCancelPressed async {if(enableInteraction.containsValue(false)) {return;} if(isClosed || await Global.yesNoDialog(context,
-      title:    'Adatlap elhagyása',
+      title:    'ℹ️ Adatlap elhagyása',
       content:  'Elveti módosításait és visszatér a Naptárhoz?'
     )){
     Global.currentRoute;
@@ -1403,11 +1531,11 @@ class DataFormState extends State<DataForm> {//-- ---------- ---------- --------
       content: 'Kívánja az abroncs profilmélységét szondával mérni?'
     )){
       Global.routeNext =          NextRoute.probeMeasuring;
-      ProbeMeasuringState.index = index;
+      probe_measuring.ProbeMeasuringState.index = index;
       await Navigator.of(context).push(
         PageRouteBuilder(
           opaque:       false,
-          pageBuilder:  (_, __, ___) => const ProbeMeasuring()
+          pageBuilder:  (_, __, ___) => const probe_measuring.ProbeMeasuring()
         )
       );
     }
@@ -1444,7 +1572,7 @@ class DataFormState extends State<DataForm> {//-- ---------- ---------- --------
         if(controller[index].text.length != input['input_mask'].length || isDotNumberWrong()){
           await Global.showAlertDialog(
             context,
-            title:    'Hiba!',
+            title:    '⚠️ Hiba!',
             content:  'A megadott DOT-szám helytelen!'
           );
           thisData[index]['value'] = '';
@@ -1486,7 +1614,7 @@ class DataFormState extends State<DataForm> {//-- ---------- ---------- --------
     }
   }
 
-  Future _checkDouble(dynamic thisData, String? value, dynamic input, int index) async{
+  /*Future _checkDouble(dynamic thisData, String? value, dynamic input, int index) async{
     double? valueDouble = double.tryParse((value == null)? '0.00' : value);
     double minValue =    (input['min_value'] != null)? double.tryParse(input['min_value'].toString())! :  0.00;
     double? maxValue =   (input['max_value'] != null)? double.tryParse(input['max_value'].toString()) :   null;
@@ -1509,6 +1637,39 @@ class DataFormState extends State<DataForm> {//-- ---------- ---------- --------
       thisData[index]['value'] = numberFieldString;
     }
     setState((){});
+  }*/
+
+  Future<void> _checkDouble(dynamic thisData, String? value, dynamic input, int index) async {
+    // Treat empty as empty (don’t show alert, just keep it empty)
+    final raw = (value ?? '').trim();
+    if (raw.isEmpty) {
+      controller[index].text = '';
+      thisData[index]['value'] = '';
+      return;
+    }
+    final double? v = double.tryParse(raw);
+    final double minValue = (input['min_value'] != null) ? double.tryParse(input['min_value'].toString()) ?? 0.0 : 0.0;
+    final double? maxValue = (input['max_value'] != null) ? double.tryParse(input['max_value'].toString()) : null;
+    final bool outOfRange = v == null || v < minValue || (maxValue != null && v > maxValue);
+    if (outOfRange) {
+      await Global.showAlertDialog(
+        context,
+        title: '⚠️ Nem megfelelő érték!',
+        content: 'A megadott érték nem esik a megengedett tartományba.',
+      );
+      controller[index].text = '';
+      thisData[index]['value'] = '';
+      setState(() {});
+      return;
+    }
+    // ✅ In range -> keep it (and keep your special-case formatting)
+    final String numberFieldString = switch (thisData[index]['name']) {
+      'Km óra állás' => v.toStringAsFixed(0),
+      _ => raw, // or v.toString() if you prefer normalized output
+    };
+    controller[index].text = _noNullText(numberFieldString);
+    thisData[index]['value'] = numberFieldString;
+    setState(() {});
   }
 
   Future<bool> _handlePop() async{
@@ -1979,6 +2140,57 @@ class DataFormState extends State<DataForm> {//-- ---------- ---------- --------
   }
 
   // ---------- < Methods [4] > ------ ---------- ---------- ---------- ---------- ---------- ---------- ---------- ----------
+  String _applyNumericMaskStrict(String raw, String mask) {
+    // mask examples: "#.#", "##.##", "#", "###"
+    final s0 = raw.trim();
+    if (s0.isEmpty) return '';
+    // Normalize: allow comma or dot as decimal separator
+    final normalized = s0.replaceAll(',', '.');
+    // Keep only digits and ONE dot
+    final buf = StringBuffer();
+    bool dotUsed = false;
+    for (final ch in normalized.split('')) {
+      final isDigit = ch.codeUnitAt(0) >= 48 && ch.codeUnitAt(0) <= 57;
+      if (isDigit) {
+        buf.write(ch);
+      } else if (ch == '.' && !dotUsed) {
+        buf.write('.');
+        dotUsed = true;
+      }
+    }
+    var cleaned = buf.toString();
+    if (cleaned.isEmpty || cleaned == '.') return '';
+    // ---- derive limits from mask ----
+    final dotIndex = mask.indexOf('.');
+    final String intMask = (dotIndex >= 0) ? mask.substring(0, dotIndex) : mask;
+    final String decMask = (dotIndex >= 0) ? mask.substring(dotIndex + 1) : '';
+    final int maxIntDigits = intMask.split('').where((c) => c == '#').length;
+    final int maxDecDigits = decMask.split('').where((c) => c == '#').length;
+    // ---- split input ----
+    String intPart = cleaned;
+    String decPart = '';
+    final inputDot = cleaned.indexOf('.');
+    if (inputDot >= 0) {
+      intPart = cleaned.substring(0, inputDot);
+      decPart = cleaned.substring(inputDot + 1);
+    }
+    // Treat ".5" as "0.5" for parsing, but digit-count should consider "0" as 1 digit
+    if (intPart.isEmpty) intPart = '0';
+    // ---- HARD VALIDATION by mask digits ----
+    // If mask has no decimals, user must not provide decimals at all
+    if (maxDecDigits == 0 && inputDot >= 0 && decPart.isNotEmpty) {
+      return '__INVALID__';
+    }
+    // Too many whole-number digits => invalid (your main requirement)
+    if (maxIntDigits > 0 && intPart.length > maxIntDigits) {
+      return '__INVALID__';
+    }
+    // Parse and format (round) to allowed decimals
+    final value = double.tryParse(cleaned);
+    if (value == null) return '__INVALID__';
+    return value.toStringAsFixed(maxDecDigits);
+  }
+
   Future<void> _openSignatureScreen() async {
     if(!mounted) return;
     PhotoPreviewState.isSignature = true;

@@ -17,6 +17,11 @@ class Task{
     private function _inizialite(){
         try{
             $this->request =            json_decode(file_get_contents('php://input'), true);
+
+            $mit = array("☀️","❄️","🌦️","🛞");
+            $mire = array("","","","");
+            $this->request['pozicio'] = str_replace($mit, $mire, $this->request['pozicio']);
+
             //$this->request =            json_decode($_REQUEST['params'], true);
             $this->sqlCommand =         new SqlCommand();        
             $this->databaseManager =    new DatabaseManager(

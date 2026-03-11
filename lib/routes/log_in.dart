@@ -1,10 +1,10 @@
-// ignore_for_file: use_build_context_synchronously, deprecated_member_use
-import 'package:ota_update/ota_update.dart';
+import 'package:flutter/services.dart' show rootBundle, MethodChannel;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+// ignore_for_file: use_build_context_synchronously, deprecated_member_use
+import 'package:autogumi_plaza/tools/ota_plugin.dart' if (dart.library.html) 'package:autogumi_plaza/tools/web/ota_plugin.dart' as ota_plugin;
 import 'package:autogumi_plaza/data_manager.dart';
 import 'package:autogumi_plaza/global.dart';
-import 'package:flutter/services.dart' show rootBundle, MethodChannel;
 
 class LogIn extends StatefulWidget {
   const LogIn({super.key});
@@ -23,20 +23,17 @@ class LogInState extends State<LogIn>{
 
   // ---------- < Methods [Static] > ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ----------
   static Future<bool> setWallpaper() async {
+    if (kIsWeb) return false;
     try {
-      // Load the asset into bytes
       final ByteData data = await rootBundle.load('images/wallpaper.png');
       final Uint8List bytes = data.buffer.asUint8List();
-
-      // Call native Android side
       final result = await channel.invokeMethod<bool>(
         'setWallpaper',
         {'bytes': bytes},
       );
-
       return result ?? false;
     } catch (e) {
-      if(kDebugMode) print('Error setting wallpaper: $e');
+      if (kDebugMode) print('Error setting wallpaper: $e');
       return false;
     }
   }
@@ -45,7 +42,8 @@ class LogInState extends State<LogIn>{
   ButtonState buttonLogIn =   ButtonState.default0;
   bool isPasswordHidden =     true;
   bool isMenuItemNotPressed = true;
-  OtaEvent? currentEvent;
+  final ota_plugin.OtaPlugin otaPlugin = ota_plugin.OtaPlugin();
+  int otaProgress = 0;
   late double _width;
   
 
@@ -145,7 +143,7 @@ class LogInState extends State<LogIn>{
         ),
         Text(
           (){return switch(buttonLogIn){
-            ButtonState.disabled => (currentEvent?.value != null && currentEvent!.value!.isNotEmpty)? 'Új verzió érhető el.     Letöltés: ${currentEvent?.value}%' : 'Új verzió érhető el.',
+            ButtonState.disabled => otaProgress > 0 ? 'Új verzió érhető el.     Letöltés: $otaProgress%' : 'Új verzió érhető el.',
             ButtonState.loading =>  'Betöltés...',
             _ =>                    'Bejelentkezés'
           };}(),
@@ -250,7 +248,7 @@ class LogInState extends State<LogIn>{
       if (mounted) setState(() => buttonLogIn = ButtonState.default0);
       return;
     }
-    if (logInNamePassword[0]['jelszo_ok'].toString() == '1') {await DataManager.saveLastUserNameSQLite(result['userName']);}
+    await DataManager.saveLastUserNameSQLite(result['userName']);
 
     // 5) Continue flow
     await DataManager(input: {'number': 1, 'login': 'service'}).beginProcess;
@@ -266,96 +264,15 @@ class LogInState extends State<LogIn>{
     //if (mounted) setState(() => buttonLogIn = ButtonState.default0);
     if (!mounted) return;
     await Navigator.pushNamed(context, '/panel');
-  }
-
-  /*Future get _buttonLogInPressed async{
-    DataManager.customer =      'mosaic';
-    DataManager.data =          List<dynamic>.empty(growable: true);
-    DataManager.quickData =     List<dynamic>.empty(growable: true);
-    errorMessage =              '';
-    forgottenPasswordMessage =  '';
-    setState(() => buttonLogIn =  ButtonState.loading);
-    await DataManager(quickCall: QuickCall.verzio).beginQuickCall;
-    await DataManager(quickCall: QuickCall.logIn).beginQuickCall;
-    if(forgottenPasswordMessage.isNotEmpty){
-      await Global.showAlertDialog(context, title: 'Hiba!', content: forgottenPasswordMessage);
-      setState(() => buttonLogIn = ButtonState.default0);
-      return;
-    }
-    dynamic result = await Global.logInDialog(context, userNameInput: (logInNamePassword != null && logInNamePassword.isNotEmpty)? logInNamePassword[0]['nev'].toString() : null);
-    if(result == null){
-      setState(() => buttonLogIn =  ButtonState.default0);
-      return;
-    }
-    DataManager.customer =        'mosaic';
-    if(!updateNeeded){
-      if(result['buttonState'] == ButtonState.loading){
-        await DataManager(quickCall: QuickCall.forgottenPassword, input: {'user_name': result['userName']}).beginQuickCall;
-        await Global.showAlertDialog(context, title: 'Elfelejtett jelszó', content: forgottenPasswordMessage);
-        setState(() => buttonLogIn =  ButtonState.default0);
-        return;
-      }
-      await DataManager(
-        quickCall:  QuickCall.logInNamePassword,
-        input:      {'user_name': result['userName'], 'user_password': result['userPassword']}
-      ).beginQuickCall;
-      if(logInNamePassword == null || logInNamePassword.isEmpty) {
-        if(DataManager.isServerAvailable) {await Global.showAlertDialog(context, title: 'Ismeretlen felhasználónév!', content: 'A megadott felhasználónév: ${result['userName']}\nismeretlen!');}
-        setState(() => buttonLogIn =  ButtonState.default0);
-        return;
-      }
-      if(logInNamePassword[0]['jelszo_ok'].toString() == '0'){
-        await Global.showAlertDialog(context, title: 'Helytelen jelszó!', content: 'A megadott jelszó helytelen!');
-        setState(() => buttonLogIn =  ButtonState.default0);
-        return;
-      }
-      await DataManager(quickCall: QuickCall.tabletBelep).beginQuickCall;
-      await DataManager(input: {'number': 0, 'login': 'customer'}).beginProcess;
-      if(errorMessage.isNotEmpty){
-        await Global.showAlertDialog(context, title: 'Hiba!', content: errorMessage);
-        setState(() => buttonLogIn = ButtonState.default0);
-        return;
-      }
-      await DataManager(input: {'number': 1, 'login': 'service'}).beginProcess;
-      if(errorMessage.isNotEmpty){
-        await Global.showAlertDialog(context, title: 'Hiba!', content: errorMessage);
-        setState(() => buttonLogIn = ButtonState.default0);
-        return;
-      }
-      //Global.routeNext = NextRoute.calendar;
-      Global.routeNext = NextRoute.panel;
-      //await DataManager().beginProcess;
-      buttonLogIn =             ButtonState.default0;
-      if(errorMessage.isEmpty){
-        //await DataManager(quickCall: QuickCall.askIncompleteDays).beginQuickCall;
-        //await Navigator.pushNamed(context, '/calendar');
-        await DataManager(quickCall: QuickCall.panel).beginQuickCall;
-        await Navigator.pushNamed(context, '/panel');
-      }
-      else{
-        await Global.showAlertDialog(context, title: 'Hiba', content: errorMessage);
-        Global.routeBack;
-      }
-      setState((){});
-    }    
-    else{
-      setState(() => buttonLogIn = ButtonState.disabled);
-      await tryOtaUpdate();
-    }
-  }*/
+  }  
 
   // ---------- < Methods [2] > ---- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ----------
   Future<void> tryOtaUpdate() async {
-    try {
-      if(kDebugMode)print('ABI Platform: ${await OtaUpdate().getAbi()}');
-      OtaUpdate().execute(
-        'https://app.mosaic.hu/ota/szerviz_mezandmol/${DataManager.actualVersion}/app-release.apk',
-        destinationFilename: 'app-release.apk',
-      ).listen(
-        (OtaEvent event) {setState(() => currentEvent = event);}
-      );
-    } catch (e) {
-      if(kDebugMode)print('Failed to make OTA update. Details: $e');
-    }
+    await otaPlugin.tryOtaUpdate(
+      onProgress: (progress) {
+        if (!mounted) return;
+        setState(() => otaProgress = progress);
+      },
+    );
   }
 }

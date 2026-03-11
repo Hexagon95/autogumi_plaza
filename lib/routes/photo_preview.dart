@@ -1,10 +1,9 @@
 // ignore_for_file: use_build_context_synchronously, deprecated_member_use
-
-import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:autogumi_plaza/global.dart';
-import 'package:autogumi_plaza/data_manager.dart';
+import 'package:autogumi_plaza/tools/photo_preview_plugin.dart' if (dart.library.html) 'package:autogumi_plaza/tools/web/photo_preview_plugin.dart';
 import 'package:autogumi_plaza/routes/data_form.dart';
+import 'package:autogumi_plaza/data_manager.dart';
+import 'package:autogumi_plaza/global.dart';
 
 
 class PhotoPreview extends StatefulWidget{
@@ -88,15 +87,12 @@ class PhotoPreviewState extends State<PhotoPreview>{
     }))
   ]);
 
-  Widget get _photoPreview {switch(Global.currentRoute){
-    case NextRoute.photoCheck:
-      return Center(child: Image.network('${DataManager.rootPath}${DataManager.dataQuickCall[2][selectedIndex]['filename']}'));
-
-    default: return Center(child: (imagePath == null)
-      ? const Text('Még nincs készítve fotó ehhez', style: TextStyle(color: Color.fromARGB(255, 200, 200, 200)))
-      : Image.file(File(imagePath!))
-    );
-  }}
+  Widget get _photoPreview => PhotoPreviewPlugin.buildPhotoPreview(
+    context:        context,
+    currentRoute:   Global.currentRoute,
+    selectedIndex:  selectedIndex,
+    imagePath:      imagePath,
+  );
 
   // ---------- < Widget[Buttons] > ------ ---------- ---------- ----------
   Widget get _drawButtonComment => Padding(padding: const EdgeInsets.symmetric(horizontal: 10), child: 

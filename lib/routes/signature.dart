@@ -1,15 +1,15 @@
 // ignore_for_file: use_build_context_synchronously, deprecated_member_use
 
-import 'dart:convert';
-import 'package:autogumi_plaza/routes/calendar.dart';
-import 'package:autogumi_plaza/routes/data_form.dart';
-import 'package:autogumi_plaza/routes/photo_preview.dart';
-import 'package:flutter/cupertino.dart';
-import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart';
 import 'package:signature/signature.dart';
-import '../data_manager.dart';
-import '../global.dart';
+import 'package:flutter/foundation.dart';
+import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
+import 'dart:convert';
+import 'package:autogumi_plaza/routes/photo_preview.dart';
+import 'package:autogumi_plaza/routes/data_form.dart';
+import 'package:autogumi_plaza/routes/calendar.dart';
+import 'package:autogumi_plaza/data_manager.dart';
+import 'package:autogumi_plaza/global.dart';
 
 class SignatureForm extends StatefulWidget {
   const SignatureForm({super.key});
@@ -191,7 +191,7 @@ class SignatureFormState extends State<SignatureForm> {
     ]);
 
   Widget get _drawButtonCamera => TextButton(
-    onPressed:  () async => (buttonCamera == ButtonState.default0)? _buttonCameraPressed : null,
+    onPressed:  () async => !kIsWeb? (buttonCamera == ButtonState.default0)? _buttonCameraPressed : null : null,
     style:      ButtonStyle(backgroundColor: MaterialStateProperty.all(Colors.transparent)),
     child:      Padding(padding: const EdgeInsets.all(5), child: Row(children:[
       (buttonCamera == ButtonState.loading)? _progressIndicator(Global.getColorOfIcon(buttonCamera)) : Container(),
@@ -203,7 +203,7 @@ class SignatureFormState extends State<SignatureForm> {
     List<Widget> listButtons = List<Widget>.empty(growable: true);
 
     for(int i = 0; i < DataFormState.buttonListPictures.length; i++) {listButtons.add(TextButton(
-      onPressed:  () async => (DataFormState.buttonListPictures[i] == ButtonState.default0)? _buttonListPicturesPressed(i) : null,
+      onPressed:  () async => !kIsWeb? (DataFormState.buttonListPictures[i] == ButtonState.default0)? _buttonListPicturesPressed(i) : null : null,
       style:      ButtonStyle(backgroundColor: MaterialStateProperty.all(Colors.transparent)),
       child:      Padding(padding: const EdgeInsets.all(5), child: Row(children:[
         (DataFormState.buttonListPictures[i] == ButtonState.loading)? _progressIndicator(Global.getColorOfIcon(DataFormState.buttonListPictures[i])) : Container(), 

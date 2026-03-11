@@ -240,7 +240,7 @@ class CalendarState extends State<Calendar> {
 
   Future _dayPicked(selectedDay, focusedDay) async{
     await DataManager(quickCall: QuickCall.verzio).beginQuickCall;
-    if(LogInState.updateNeeded) Restart.restartApp();
+    if(!kIsWeb && LogInState.updateNeeded) Restart.restartApp();
 
     if (!isSameDay(_selectedDay, selectedDay)) {
       _selectedDay =            selectedDay;
@@ -259,7 +259,7 @@ class CalendarState extends State<Calendar> {
     errorMessagePopUpTitle =                '';
     DataFormState.selectedIndexInCalendar = selectedIndexList;
     await DataManager(quickCall: QuickCall.verzio).beginQuickCall;
-    if(LogInState.updateNeeded) Restart.restartApp();
+    if(!kIsWeb && LogInState.updateNeeded) Restart.restartApp();
     Global.routeNext =        NextRoute.tabForm;
     await DataManager(input: {'jelleg': jelleg[index]}).beginProcess;
     if(errorMessagePopUp.isNotEmpty){

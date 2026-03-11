@@ -1,12 +1,11 @@
 // ignore_for_file: use_build_context_synchronously, deprecated_member_use
-
-import 'dart:convert';
-
-import 'package:autogumi_plaza/data_manager.dart';
-import 'package:autogumi_plaza/global.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:restart_app/restart_app.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'dart:convert';
+import 'package:autogumi_plaza/data_manager.dart';
+import 'package:autogumi_plaza/global.dart';
 
 class Panel extends StatefulWidget {//------------ ---------- ---------- ---------- ---------- ---------- ---------- ---------- <Panel>
   const Panel({super.key});
@@ -152,7 +151,7 @@ class PanelState extends State<Panel> {//-------- ---------- ---------- --------
   }
 
   Future<bool> _handlePop() async{
-    if(await Global.yesNoDialog(context, title: 'Kijelentkezés', content: 'Biztosan ki szeretne jelentkezni az alkalmazásból?')) {await Restart.restartApp();}
+    if(!kIsWeb && await Global.yesNoDialog(context, title: 'Kijelentkezés', content: 'Biztosan ki szeretne jelentkezni az alkalmazásból?')) {await Restart.restartApp();}
     return false;
   }
 

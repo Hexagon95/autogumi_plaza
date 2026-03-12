@@ -128,7 +128,10 @@ class LogInState extends State<LogIn>{
 
   // ---------- < Widget Build [2] > ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ----------
   Widget get _drawVerzio => Column(children: [
-    Text('v${DataManager.thisVersion}${(DataManager.verzioTest == 0)? '' : '   [Teszt: ${DataManager.verzioTest.toString()}]'}', style: const TextStyle(color: Colors.white, fontSize: 30, fontWeight: FontWeight.bold)),
+    Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+      Text('v${DataManager.thisVersion}${(DataManager.verzioTest == 0)? '' : '   [Teszt: ${DataManager.verzioTest.toString()}]'}', style: const TextStyle(color: Colors.white, fontSize: 30, fontWeight: FontWeight.bold)),
+      Text((DataManager.appIs == AppIs.web)? '  🌐 web     ' : '', style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.normal))
+    ])
   ]);
 
   Widget get _drawButtonLogIn =>  Padding(

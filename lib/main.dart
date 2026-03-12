@@ -5,6 +5,7 @@ import 'package:autogumi_plaza/tools/probe_measuring.dart'  if(dart.library.html
 import 'package:autogumi_plaza/tools/photo_take.dart'       if(dart.library.html) 'package:autogumi_plaza/tools/web/photo_take.dart' as photo_take;
 import 'package:autogumi_plaza/routes/pdf_signature.dart'   if(dart.library.html) 'package:autogumi_plaza/routes/web/pdf_signature.dart';
 import 'package:autogumi_plaza/routes/photo_preview.dart';
+import 'package:autogumi_plaza/tools/image_picker.dart';
 import 'package:autogumi_plaza/routes/data_form.dart';
 import 'package:autogumi_plaza/routes/signature.dart';
 import 'package:autogumi_plaza/routes/calendar.dart';
@@ -25,7 +26,8 @@ void main() async{
     '/photo/preview':   (context) => const PhotoPreview(),
     '/signature':       (context) => const SignatureForm(),
     '/pdfSignature':    (context) => const PdfSignaturePage(),
-    '/panel':           (context) => const Panel()
+    '/panel':           (context) => const Panel(),
+    '/imagePicker':     (context) => const ImagePicker(),
   };
   if(!kIsWeb){
     routes['/probeMeasuring'] = (content) => const probe_measuring.ProbeMeasuring();

@@ -10,6 +10,7 @@ enum NextRoute    {logIn,   calendar,       tabForm,        photoPreview, photoT
 enum ButtonState  {hidden,  loading,        disabled,       error,        default0}
 enum QuickCall    {tabForm, giveDatas,      chainGiveDatas, verzio,       askPhotos,  default0, cancelWork, tabletBelep, saveEsetiMunkalapFelvitele, saveAbroncsIgenyles, chainGiveDatasFormOpen, saveSzezonalisMunkalapFelvitele, askIncompleteDays, askPlateNumber, askEsetiMunkalapMeghiusulasOkai, logIn, forgottenPassword, logInNamePassword, panel, callButtonPhp, callButtonWebLink, redrawDataForm, uploadSignature}
 enum Probe        {bluetoothCheck, deviceSearch, measureCommand, default0}
+enum AppIs        {android, web, default0}
 
 class Global{
   // ---------- < Variables [Static] > -------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ----------

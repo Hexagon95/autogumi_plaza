@@ -21,10 +21,11 @@ class DataManager{
   // ---------- < Variables [Static] > - ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ----------
   static String thisVersion =                       '1.40a';
   static int verzioTest =                           0;      // anything other than 0 will draw "[Teszt #]" at the LogIn screen.
+
   
-  static String openAiPassword =                    'qifqik-sedpuf-rejKu6';
- 
-  static bool isIgenylesDisabled =                  false;  // true will disable all buttons of "📄 Igénylés".
+  // 🤖 OR 🛜 Edit here!!!! ⬇️
+  static const AppIs constAppIs =                   AppIs.default0;  // <--- Set to default0 or manually enforce behaviour of the app.
+  static bool isIgenylesDisabled =                  false;  // <--- true will disable all buttons of "📄 Igénylés".
 
   static bool test =                                false;  // <--- Set the root of the Php files here: true = test, false = live Php file directory. This is the same with the directory of the photos!
   static String urlPath =                           test? 'https://developer.mosaic.hu/android/szerviz_mezandmol/' : 'https://app.mosaic.hu/android/szerviz_mezandmol/';
@@ -50,6 +51,8 @@ class DataManager{
   static Future<void> get identitySQLite async {await SqflitePlugin.identitySQLite();}
   static Future<String?> get lastUserNameSQLite async {return await SqflitePlugin.lastUserNameSQLite();}
   static Future<void> saveLastUserNameSQLite(String userName) async {await SqflitePlugin.saveLastUserNameSQLite(userName);}
+
+  static String openAiPassword = 'qifqik-sedpuf-rejKu6';
  
   // ---------- < Variables [1] > ------ ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ----------
   final Map<String,String> headers = {'Content-Type': 'application/json'};
@@ -60,6 +63,7 @@ class DataManager{
   DataManager({this.quickCall, this.input});
 
   // ---------- < Methods [Static] > --- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ----------
+  static AppIs get appIs{if(constAppIs == AppIs.default0) return kIsWeb? AppIs.web : AppIs.android; return constAppIs;}
   static final RegExp _reHasFrom = RegExp(r'\bFROM\b', caseSensitive: false);
 
   static bool _isSelectNoFrom(String sql) {

@@ -377,29 +377,6 @@ class DataFormState extends State<DataForm> {//-- ---------- ---------- --------
     : Container();
   }
 
-  /*Widget get _drawButtonCamera => TextButton(
-    onPressed:  () async => (buttonCamera == ButtonState.default0)? _buttonCameraPressed() : null,
-    style:      ButtonStyle(backgroundColor: MaterialStateProperty.all(Colors.transparent)),
-    child:      Padding(padding: const EdgeInsets.all(5), child: Row(children:[
-      (buttonCamera == ButtonState.loading)? _progressIndicator(Global.getColorOfIcon(buttonCamera)) : Container(),
-      Icon(Icons.camera_alt, color: Global.getColorOfIcon(buttonCamera), size: 30)
-    ]))
-  );*/
-
-  /*Widget get _drawButtonListPictures{
-    List<Widget> listButtons = List<Widget>.empty(growable: true);
-    
-    for(int i = 0; i < buttonListPictures.length; i++) {listButtons.add(TextButton(
-      onPressed:  () async => (buttonListPictures[i] == ButtonState.default0)? _buttonListPicturesPressed(i) : null,
-      style:      ButtonStyle(backgroundColor: MaterialStateProperty.all(Colors.transparent)),
-      child:      Padding(padding: const EdgeInsets.all(5), child: Row(children:[ 
-        (buttonListPictures[i] == ButtonState.loading)? _progressIndicator(Global.getColorOfIcon(buttonListPictures[i])) : Container(),
-        Icon(Icons.image_outlined, color: Global.getColorOfIcon(buttonListPictures[i]), size: 30)
-      ]))
-    ));}
-    return Row(children: listButtons);
-  }*/
-
   Widget _drawProgressIndicator(ButtonState inputButton) => (inputButton == ButtonState.loading)
   ? Padding(padding: const EdgeInsets.fromLTRB(0, 0, 10, 0), child: SizedBox(width: 22, height: 22, child: CircularProgressIndicator(color: Global.getColorOfButton(inputButton))))
   : Container();
@@ -461,36 +438,7 @@ class DataFormState extends State<DataForm> {//-- ---------- ---------- --------
     /*if (!mounted) return;
     // 3) Return to calendar screen (don’t refresh here; Calendar will do it after pop)
     Navigator.popUntil(context, ModalRoute.withName('/calendar'));*/
-  }
-
-  /*Future _quickSave() async{
-    if(!enableInteraction) return;
-    if(quickSaveLock) return;
-    quickSaveLock = true;
-    setState(() => buttonSaveProgress = ButtonState.loading);
-    switch(currentProgress){
-      case 0:
-        DataManager.dataQuickCall[0]['foglalas'] =  rawData;
-        DataManager.dataQuickCall[1][0] =           listOfLookupDatas;
-        break;
-
-      default:
-        DataManager.dataQuickCall[0]['poziciok'][currentProgress - 1]['adatok'] = rawData;
-        DataManager.dataQuickCall[1][currentProgress] =                           listOfLookupDatas;
-      break;
-    }
-    switch(workType){
-      case 'Eseti':       await DataManager(quickCall: QuickCall.saveEsetiMunkalapFelvitele,      input: {'lezart': 0, 'quickSave': true}).beginQuickCall; break;
-      case 'Szezonális':  await DataManager(quickCall: QuickCall.saveSzezonalisMunkalapFelvitele, input: {'lezart': 0, 'quickSave': true}).beginQuickCall; break;
-      default: break;
-    }
-    CalendarState.selectedIndexList = null;
-    Global.routeBack; Global.currentRoute;
-    await DataManager().beginProcess;
-    quickSaveLock = false;
-    buttonSaveProgress = ButtonState.default0;
-    Navigator.pop(context);
-  }*/
+  }  
 
   Widget _getWidget(List<dynamic> thisData, dynamic input, int index){
     bool editable =          (Global.trueString.contains(input['editable'].toString()));
@@ -503,47 +451,6 @@ class DataFormState extends State<DataForm> {//-- ---------- ---------- --------
     }}
 
     switch(input['input_field']){
-
-      /*case 'search':
-        List<String> items =    List<String>.empty(growable: true);
-        for(var item in listOfLookupDatas[input['id']]) {items.add(item['megnevezes'].toString());}
-        return (items.isNotEmpty && !isClosed)
-        ? Stack(alignment: AlignmentDirectional.centerStart, children: [
-            Visibility(visible: (thisData[index]['value'] == null), child: Padding(padding: const EdgeInsets.all(5), child: Text(
-              thisData[index]['name'],
-              style: const TextStyle(color: Colors.grey, fontSize: 16),
-            ))),
-            SizedBox(height: 55, width: getWidth(index), child: DropdownSearch<String>(
-              items:                  items,
-              selectedItem:           controller[index].text,
-              popupProps:             const PopupProps.menu(showSearchBox: true, searchFieldProps: TextFieldProps(autofocus: true)),
-              onChanged:              (String? newValue) => _handleSelectChange(thisData, newValue, index),
-              dropdownButtonProps:    const DropdownButtonProps(
-                icon:                     Row(mainAxisSize: MainAxisSize.min, children:[Icon(Icons.search), Icon(Icons.arrow_downward)]),
-                padding:                  EdgeInsets.symmetric(vertical: 16),
-              ),
-              dropdownDecoratorProps: DropDownDecoratorProps(
-                baseStyle:                const TextStyle(color: Colors.black),
-                textAlign:                TextAlign.start,
-                textAlignVertical:        TextAlignVertical.center,
-                dropdownSearchDecoration: InputDecoration(
-                  contentPadding: const EdgeInsets.all(10),
-                  labelText:      thisData[index]['name'],
-                  border:         InputBorder.none,
-                )
-              ),
-            ))
-          ])
-        : SizedBox(height: 55, width: getWidth(index), child: TextFormField(
-          enabled:      false,          
-          controller:   controller[index],
-          decoration:   InputDecoration(
-            contentPadding: const EdgeInsets.all(10),
-            labelText:      thisData[index]['name'],
-            border:         InputBorder.none,
-          ),
-          onChanged:  null,
-        ));*/
 
       case 'search': {
         final List<dynamic>? lookupData = listOfLookupDatas[input['id']];
@@ -585,53 +492,6 @@ class DataFormState extends State<DataForm> {//-- ---------- ---------- --------
           ),
         );
       }
-
-      /*case 'select':
-        bool isInLookupData(String input, List<dynamic>? list) {if(list != null)for(var item in list) {if(item['id'].toString() == input) return true;} return false;}
-        String getItem(dynamic varList, String id) {for(dynamic item in varList) {if(item['id'] == id) return item['megnevezes'];} return '';}
-
-        input;
-        List<DropdownMenuItem<String>> items =  List<DropdownMenuItem<String>>.empty(growable: true);
-        List<dynamic>? lookupData =             listOfLookupDatas[input['id']];
-        if(lookupData != null) for(var item in lookupData) {items.add(DropdownMenuItem(value: item['id'].toString(), child: Text(item['megnevezes'], textAlign: TextAlign.start)));}
-        String? selectedItem =    (isInLookupData(thisData[index]['value'].toString(), lookupData))? thisData[index]['value'].toString() : null;
-        return (lookupData != null && (lookupData.isNotEmpty || input['buttons'] != null) && editable && !isClosed)
-        ? Stack(children: [
-          SizedBox(height: 55, width: getWidth(index), child: Padding(padding: const EdgeInsets.all(15), child: DropdownButtonHideUnderline(child: DropdownButton<String>(
-            value:            selectedItem,
-            hint:             Text(thisData[index]['name'].toString(), textAlign: TextAlign.start),
-            icon:             Icon(Icons.arrow_downward, color: Global.getColorOfButton((items.isNotEmpty)? ButtonState.default0 : ButtonState.disabled)),
-            iconSize:         24,
-            elevation:        16,
-            isExpanded:       true,
-            alignment:        AlignmentDirectional.centerStart,
-            dropdownColor:    const Color.fromRGBO(230, 230, 230, 1),
-            menuMaxHeight:    MediaQuery.of(context).size.height / 1.5,
-            onChanged:        (String? newValue) async => await _handleSelectChange(thisData, newValue, index),
-            items:            items
-          )))),
-          (selectedItem != null)
-          ? Text(thisData[index]['name'].toString(), style: const TextStyle(color: Colors.grey))
-          : Container(),
-          (input['buttons'] != null)? SizedBox(height: 55, width: getWidth(index) - 60, child: Row(
-            mainAxisAlignment:  MainAxisAlignment.end,
-            children:           [Padding(padding: const EdgeInsets.fromLTRB(0, 0, 30, 0), child: IconButton(
-              onPressed:          () => _selectAddPressed(index: index),
-              icon:               Icon(Icons.add, size: 30, color: Global.getColorOfButton((items.isEmpty)? ButtonState.default0 : ButtonState.loading))
-            ))]
-          )) : Container(),
-        ])
-        : SizedBox(height: 55, width: getWidth(index), child: TextFormField(
-          enabled:      false,
-          initialValue: (selectedItem != null)? getItem(lookupData, selectedItem) : null,
-          controller:   (selectedItem != null)? null : controller[index],
-          decoration:   InputDecoration(
-            contentPadding: const EdgeInsets.all(10),
-            labelText:      thisData[index]['name'],
-            border:         InputBorder.none,
-          ),
-          onChanged:  null,
-        ));*/
 
       case 'select': {
         bool isInLookupData(String input, List<dynamic>? list) {if(list != null) {for(var item in list) {if(item['id'].toString() == input) return true;}}return false;}
@@ -888,52 +748,6 @@ class DataFormState extends State<DataForm> {//-- ---------- ---------- --------
         : Container()
       ]);
 
-      /*case 'photo_tray':
-        final listButtons = <Widget>[];
-        for (int i = 0; i < buttonListPictures.length; i++) {
-          listButtons.add(
-            TextButton(
-              onPressed: (buttonListPictures[i] == ButtonState.default0)
-                  ? () => _buttonListPicturesPressed(i)
-                  : null,
-              style: ButtonStyle(
-                backgroundColor: MaterialStateProperty.all(Colors.transparent),
-                padding: MaterialStateProperty.all(const EdgeInsets.symmetric(horizontal: 6, vertical: 4)),
-                minimumSize: MaterialStateProperty.all(const Size(0, 0)),  // ✅ don't expand
-                tapTargetSize: MaterialTapTargetSize.shrinkWrap,           // ✅ compact
-                visualDensity: VisualDensity.compact,                      // ✅ compact
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min, // ✅ <— important
-                children: [
-                  if (buttonListPictures[i] == ButtonState.loading)
-                    _progressIndicator(Global.getColorOfIcon(buttonListPictures[i])),
-                  Icon(
-                    Icons.image_outlined,
-                    color: Global.getColorOfButton(buttonListPictures[i]),
-                    size: 30,
-                  ),
-                ],
-              ),
-            ),
-          );
-        }
-        return SizedBox(
-          width: getWidth(index),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(input['name']),
-              const SizedBox(height: 6),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: listButtons,
-              ),
-            ],
-          ),
-        );*/
-
       case 'photo_tray': {
         if(input['pictures'] is String) input['pictures'] = jsonDecode((input['pictures']?.isEmpty ?? '[]')? '[]' : input['pictures']);
         // how many slots this field should show
@@ -954,10 +768,10 @@ class DataFormState extends State<DataForm> {//-- ---------- ---------- --------
         // 📸 camera button on the left
         rowButtons.add(
           TextButton(
-            onPressed:  !kIsWeb? (editable && !isClosed && taken < maxImgs) ? () async => _buttonCameraPressed(data: thisData, index: index) : null : null,
+            onPressed:  (editable && !isClosed && taken < maxImgs) ? () async => _buttonCameraPressed(data: thisData, index: index) : null,
             style:      compactBtnStyle(Colors.transparent),
             child:      Icon(
-              Icons.camera_alt,
+              (DataManager.appIs == AppIs.android)? Icons.camera_alt : Icons.folder_open,
               size:   26,
               color:  Global.getColorOfButton((editable && !isClosed && taken < maxImgs) ? ButtonState.default0 : ButtonState.disabled),
             ),
@@ -1413,10 +1227,11 @@ class DataFormState extends State<DataForm> {//-- ---------- ---------- --------
     setState(() {});
   }
 
-  Future<void> _buttonCameraPressed({List? data, int? index}) async{    
-    Global.routeNext =              NextRoute.photoTake;
+  Future<void> _buttonCameraPressed({List? data, int? index}) async {
+    final String route = (DataManager.appIs == AppIs.android) ? '/photo/take' : '/imagePicker';
+    Global.routeNext = (DataManager.appIs == AppIs.android) ? NextRoute.photoTake : NextRoute.photoPreview;
     PhotoPreviewState.isSignature = false;
-    final r =                       await Navigator.pushNamed(context, '/photo/take');
+    final r = await Navigator.pushNamed(context, route);
     if (r != null && data != null && index != null) {
       data[index]['pictures'] = (data[index]['pictures'] is String)
         ? (jsonDecode(data[index]['pictures']) as List? ?? <dynamic>[])
@@ -1424,7 +1239,7 @@ class DataFormState extends State<DataForm> {//-- ---------- ---------- --------
       ;
       (data[index]['pictures'] as List).add(r);
     }
-    setState((){});
+    if (mounted) setState(() {});
   }
 
   Future<void> _buttonBackPressed() async{

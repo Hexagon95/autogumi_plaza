@@ -730,7 +730,7 @@ class DataFormState extends State<DataForm> {//-- ---------- ---------- --------
         (editable && !isClosed)
         ? SizedBox(height: 55, width: getWidth(index), child: Row(mainAxisAlignment: MainAxisAlignment.end, children: [
           IconButton(
-            onPressed: (){
+            onPressed: (){ // NextRoute.esetiMunkalapFelvitele
               picker.DatePicker.showDateTimePicker(context,
                 showTitleActions: true,
                 onChanged:        (date) {},
@@ -738,8 +738,9 @@ class DataFormState extends State<DataForm> {//-- ---------- ---------- --------
                   thisData[index]['value'] =    '${date.year}.${(date.month < 10)? '0' : ''}${date.month}.${(date.day < 10)? '0' : ''}${date.day} ${(date.hour < 10)? '0' : ''}${date.hour}:${(date.minute < 10)? '0' : ''}${date.minute}';
                   thisData[index]['variable'] = date.toString();
                 }),
-                currentTime:      (thisData[index]['variable'] != null)? DateTime.parse(thisData[index]['variable']) : DateTime.now(),
-                locale:           picker.LocaleType.hu
+                currentTime:  ( thisData[index]['variable'] != null)? DateTime.parse(thisData[index]['variable']) : DateTime.now(),
+                maxTime:      (Global.currentRoute == NextRoute.esetiMunkalapFelvitele)? DateTime.now() : null,
+                locale:       picker.LocaleType.hu
               );
             },
             icon: const Icon(Icons.calendar_month, size: 30)

@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:typed_data';
+import 'package:image/image.dart' as img;
 
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
@@ -42,14 +43,21 @@ class _ImagePickerState extends State<ImagePicker> {
       return;
     }
 
+    final decoded = img.decodeImage(bytes);
+    if (decoded == null) {
+      Navigator.of(context).pop(null);
+      return;
+    }
+
+    final resized = img.copyResize(decoded, width: 1920);
+    final pngBytes = Uint8List.fromList(img.encodePng(resized));
+
     try {
-      // same shared state used by camera/preview flow
       PhotoPreviewState.imagePath = null;
-      PhotoPreviewState.imageBase64 = base64Encode(bytes);
+      PhotoPreviewState.imageBase64 = base64Encode(pngBytes);
       PhotoPreviewState.editingController.text = '';
       PhotoPreviewState.isSignature = false;
 
-      // same save sequence as preview's save button
       await DataManager().beginProcess;
       PhotoPreviewState.editingController.text = '';
       await DataManager(quickCall: QuickCall.askPhotos).beginQuickCall;

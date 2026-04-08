@@ -19,9 +19,8 @@ import 'package:autogumi_plaza/utils.dart';
 
 class DataManager{
   // ---------- < Variables [Static] > - ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ----------
-  static String thisVersion =                       '1.40b'; // <--- 🛜 A WEB-es verziót is firssíteni kell!!!!!!
+  static String thisVersion =                       '1.40c'; // <--- 🛜 A WEB-es verziót is firssíteni kell!!!!!!
   static int verzioTest =                           0; // <--- anything other than 0 will draw "[Teszt #]" at the LogIn screen.
-
   
   // 🤖 OR 🛜 Edit here!!!! ⬇️                      ⬇️ And here!!!
   static const AppIs constAppIs =                   AppIs.default0; // <--- Set to default0 or manually enforce behaviour of the app.

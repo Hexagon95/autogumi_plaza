@@ -46,6 +46,7 @@ class SignatureFormState extends State<SignatureForm> {
     borderRadius: const BorderRadius.all(Radius.circular(8))
   );
   bool get isClosed => (DataFormState.option('Lezárt')?['value']?.toString() == '1');
+  final ScrollController imageScrollController = ScrollController();
 
   // ---------- < Widget [Build] > ------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ----------
   @override
@@ -130,17 +131,17 @@ class SignatureFormState extends State<SignatureForm> {
       onChanged:    (String? newValue) => setState(() => buttonCheck = (editingController.text.isEmpty || _controller.isEmpty)? ButtonState.disabled : ButtonState.default0),
     )
   ));
-
-  Widget get _drawBottomBar => Container( //OK AND CLEAR BUTTONS
-    decoration: BoxDecoration(color: Global.getColorOfButton(ButtonState.default0)),
-    child:      Row(
-      mainAxisAlignment:  MainAxisAlignment.spaceEvenly,
-      mainAxisSize:       MainAxisSize.max,
-      children:           <Widget>[ //CLEAR CANVAS                
+  
+  Widget get _drawBottomBar => Container(
+    decoration: BoxDecoration(
+      color: Global.getColorOfButton(ButtonState.default0),
+    ),
+    child: Row(
+      children: <Widget>[
         _drawButtonClear,
         _drawButtonCamera,
         _drawButtonListPictures,
-        _drawButtonCheck
+        _drawButtonCheck,
       ],
     ),
   );
@@ -199,7 +200,7 @@ class SignatureFormState extends State<SignatureForm> {
     ]))
   );
 
-  Widget get _drawButtonListPictures{
+  /*Widget get _drawButtonListPictures{
     List<Widget> listButtons = List<Widget>.empty(growable: true);
 
     for(int i = 0; i < DataFormState.buttonListPictures.length; i++) {listButtons.add(TextButton(
@@ -211,6 +212,57 @@ class SignatureFormState extends State<SignatureForm> {
       ]))
     ));}
     return Row(children: listButtons);
+  }*/
+  Widget get _drawButtonListPictures {
+    List<Widget> listButtons = List<Widget>.empty(growable: true);
+    for (int i = 0; i < DataFormState.buttonListPictures.length; i++) {
+      listButtons.add(
+        TextButton(
+          onPressed: () async => !kIsWeb
+              ? (DataFormState.buttonListPictures[i] == ButtonState.default0)
+                  ? _buttonListPicturesPressed(i)
+                  : null
+              : null,
+          style: ButtonStyle(
+            backgroundColor: MaterialStateProperty.all(Colors.transparent),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(5),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                (DataFormState.buttonListPictures[i] == ButtonState.loading)
+                    ? _progressIndicator(
+                        Global.getColorOfIcon(DataFormState.buttonListPictures[i]),
+                      )
+                    : const SizedBox.shrink(),
+                Icon(
+                  Icons.image_outlined,
+                  color: Global.getColorOfIcon(DataFormState.buttonListPictures[i]),
+                  size: 30,
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+    return Expanded(
+      child: Scrollbar(
+        controller: imageScrollController,
+        thumbVisibility: true,
+        trackVisibility: true,
+        scrollbarOrientation: ScrollbarOrientation.bottom,
+        child: SingleChildScrollView(
+          controller: imageScrollController,
+          scrollDirection: Axis.horizontal,
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: listButtons,
+          ),
+        ),
+      ),
+    );
   }
 
   // ---------- < Widget [3] > ----------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ----------
@@ -221,9 +273,9 @@ class SignatureFormState extends State<SignatureForm> {
   ));
 
   // ---------- < Methods [1] > ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ----------
-  @override
-  void initState() {
+  @override void initState() {
     super.initState();
+    refreshImages;
     _controller.addListener((){
       buttonClear = (_controller.isNotEmpty) ? ButtonState.default0 : ButtonState.disabled;
       if(DataFormState.buttonListPictures.isEmpty){
@@ -232,6 +284,14 @@ class SignatureFormState extends State<SignatureForm> {
       }
       setState((){});
     });
+    setState((){});
+  }
+
+  @override void dispose() {
+    imageScrollController.dispose();
+    _controller.dispose();
+    editingController.dispose();
+    super.dispose();
   }
 
   Future get _checkPressed async{
@@ -267,6 +327,7 @@ class SignatureFormState extends State<SignatureForm> {
         await Navigator.pushReplacementNamed(context, '/calendar');
       }
       else{
+        if(message is List) message = message[0];
         await Global.showAlertDialog(context, content: message['message'], title: message['name']);
         setState(() => buttonCheck = ButtonState.default0);
       }
@@ -311,11 +372,12 @@ class SignatureFormState extends State<SignatureForm> {
   }
 
   // ---------- < Methods [2] > ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ----------
-  void get refreshImages async{
+  void get refreshImages{
     DataFormState.buttonListPictures = List<ButtonState>.empty(growable: true);
     for(int i = 0; i < DataFormState.numberOfPictures[DataFormState.currentProgress]; i++) {DataFormState.buttonListPictures.add(ButtonState.default0);}
   }
+
   int getIndexFromOptions(String input) {for(int i = 0; i < DataManager.dataQuickCall[0]['beallitasok'].length; i++){
     if(DataManager.dataQuickCall[0]['beallitasok'][i]['name'] == input) return i;
   } throw Exception('Nincs ilyen Beállítás!');}
-}
+} 

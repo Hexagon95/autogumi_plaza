@@ -386,7 +386,10 @@ class DataFormState extends State<DataForm> {//-- ---------- ---------- --------
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) async{
       await _initOpenForm();
-      if(mounted && !['Igénylés'].contains(workType)) setState(() => _jumpToLastPageIfClosed());
+      if(mounted && !['Igénylés'].contains(workType)){
+        await _jumpToLastPageIfClosed();
+        setState((){});
+      }
     });
   }
 
@@ -1945,7 +1948,7 @@ class DataFormState extends State<DataForm> {//-- ---------- ---------- --------
     Navigator.of(context, rootNavigator: true).pop();
   }
 
-  void _jumpToLastPageIfClosed() async {
+  Future _jumpToLastPageIfClosed() async {
     final lezart = (option('Lezárt')?['value']?.toString() == '1');
     if (!lezart) return;
     isClosed = true;

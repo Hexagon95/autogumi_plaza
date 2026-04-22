@@ -158,8 +158,9 @@ class DataManager{
               var queryParameters = {
                 'customer':     customer,
                 'eszkoz_id':    identity.toString(),
-                'datum':        CalendarState.selectedDate,
-                'foglalas_id':  data[2][DataFormState.selectedIndexInCalendar!]['id'].toString(),
+                'datum':        (input['datum'] != null)? input['datum'].toString().split(' ')[0] : CalendarState.selectedDate,
+                'foglalas_id':  input['foglalas_id'] ?? data[2][DataFormState.selectedIndexInCalendar!]['id'].toString(),
+                'parent_id':    input['parent_id'],
                 'user_id':      userId
               };
               Uri uriUrl =              Uri.parse('${urlPath}worksheetFormEseti.php');
@@ -867,7 +868,7 @@ class DataManager{
           break;
 
         case NextRoute.tabForm:
-          foglalasId =          data[2][DataFormState.selectedIndexInCalendar!]['id'].toString();
+          foglalasId =          input['foglalasId'] ?? data[2][DataFormState.selectedIndexInCalendar!]['id'].toString();
           data[check(3)] =      [];
           if(['Eseti', 'Igénylés'].contains(input['jelleg'])) break;
           var queryParameters = {
@@ -945,8 +946,9 @@ class DataManager{
             'user_id':      userId
           };
           Uri uriUrl =              Uri.parse('${urlPath}eseti_munkalap.php');
-          http.Response response =  await http.post(uriUrl, body: json.encode(queryParameters), headers: headers);
+          http.Response response =  await http.post(uriUrl, body: json.encode(queryParameters), headers: headers);          
           dataQuickCall[check(0)] = await jsonDecode(await jsonDecode(response.body));
+          if(kDebugMode) dev.log(dataQuickCall[0].toString());
           break;
 
         case NextRoute.szezonalisMunkalapFelvitele:

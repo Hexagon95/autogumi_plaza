@@ -117,12 +117,23 @@ class PanelState extends State<Panel> {//-------- ---------- ---------- --------
       case 'php':   await DataManager(quickCall: QuickCall.callButtonPhp, input: {'callback': item['callback']}).beginQuickCall;                            break;
 
       case 'esetimunkalap':
-        Global.routeNext = NextRoute.esetiMunkalapFelvitele;
-        await DataManager(input: {
-          'datum':        DateTime.now(),
-          'foglalas_id':  (item['parameters'] is String)? jsonDecode(item['parameters'])['id'] : item['parameters']['id'],
-          'parent_id':    (item['parameters'] is String)? jsonDecode(item['parameters'])['parent_id'] : item['parameters']['parent_id']
-        }).beginProcess;
+        int foglalasId = int.parse(((item['parameters'] is String)? jsonDecode(item['parameters'])['id'] : item['parameters']['id']).toString());
+        Global.routeNext = (foglalasId == 0)? NextRoute.esetiMunkalapFelvitele : NextRoute.tabForm;
+        if(foglalasId == 0){
+          await DataManager(input: {
+            'datum':        DateTime.now(),
+            'foglalas_id':  foglalasId,
+            'parent_id':    (item['parameters'] is String)? jsonDecode(item['parameters'])['parent_id'] : item['parameters']['parent_id']
+          }).beginProcess;
+        }
+        else{
+          await DataManager(quickCall: QuickCall.tabForm, input: {
+            'jelleg':       'Eseti',
+            'datum':        DateTime.now(),
+            'foglalas_id':  foglalasId,
+            'parent_id':    (item['parameters'] is String)? jsonDecode(item['parameters'])['parent_id'] : item['parameters']['parent_id']
+          }).beginQuickCall;
+        }
         await DataManager(quickCall: QuickCall.giveDatas).beginQuickCall;
         var result = await Navigator.pushNamed(context, '/dataForm');
         if((result is bool) && result) await _calendarButtonPressed();

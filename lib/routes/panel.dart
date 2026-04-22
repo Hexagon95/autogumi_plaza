@@ -119,12 +119,13 @@ class PanelState extends State<Panel> {//-------- ---------- ---------- --------
       case 'esetimunkalap':
         Global.routeNext = NextRoute.esetiMunkalapFelvitele;
         await DataManager(input: {
-          'datum':      DateTime.now(),
-          'parent_id':  (item['parameters'] is String)? jsonDecode(item['parameters'])['parent_id'] : item['parameters']['parent_id']
+          'datum':        DateTime.now(),
+          'foglalas_id':  (item['parameters'] is String)? jsonDecode(item['parameters'])['id'] : item['parameters']['id'],
+          'parent_id':    (item['parameters'] is String)? jsonDecode(item['parameters'])['parent_id'] : item['parameters']['parent_id']
         }).beginProcess;
         await DataManager(quickCall: QuickCall.giveDatas).beginQuickCall;
-        await Navigator.pushNamed(context, '/dataForm');
-        await _calendarButtonPressed();
+        var result = await Navigator.pushNamed(context, '/dataForm');
+        if((result is bool) && result) await _calendarButtonPressed();
         break;
 
       case 'alairas':

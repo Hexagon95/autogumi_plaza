@@ -19,8 +19,9 @@ import 'package:autogumi_plaza/utils.dart';
 
 class DataManager{
   // ---------- < Variables [Static] > - ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ----------
-  static String thisVersion =                       '1.40c'; // <--- 🛜 A WEB-es verziót is firssíteni kell!!!!!!
+  static String thisVersion =                       '1.40f'; // <--- 🛜 A WEB-es verziót is firssíteni kell!!!!!!
   static int verzioTest =                           0; // <--- anything other than 0 will draw "[Teszt #]" at the LogIn screen.
+  static String webAppLink =                        'https://app.mosaic.hu/flutter_web/szerviz_mezandmol/index.html';
   
   // 🤖 OR 🛜 Edit here!!!! ⬇️                      ⬇️ And here!!!
   static const AppIs constAppIs =                   AppIs.default0; // <--- Set to default0 or manually enforce behaviour of the app.
@@ -94,7 +95,7 @@ class DataManager{
           Uri uriUrl =              Uri.parse('${urlPath}verzio.php');
           http.Response response =  await http.post(uriUrl, body: json.encode(queryParameters), headers: headers);
           actualVersion =           jsonDecode(response.body)[0]['verzio_autogumi_plaza'].toString();
-          LogInState.updateNeeded = (thisVersion != actualVersion);
+          LogInState.updateNeeded = (kIsWeb)? false : (thisVersion != actualVersion);
           break;
 
         case QuickCall.logIn:
@@ -158,7 +159,8 @@ class DataManager{
                 'customer':     customer,
                 'eszkoz_id':    identity.toString(),
                 'datum':        CalendarState.selectedDate,
-                'foglalas_id':  data[2][DataFormState.selectedIndexInCalendar!]['id'].toString()
+                'foglalas_id':  data[2][DataFormState.selectedIndexInCalendar!]['id'].toString(),
+                'user_id':      userId
               };
               Uri uriUrl =              Uri.parse('${urlPath}worksheetFormEseti.php');
               http.Response response =  await http.post(uriUrl, body: json.encode(queryParameters), headers: headers);
@@ -714,8 +716,8 @@ class DataManager{
 
         case QuickCall.uploadSignature:
           var queryParameters = {
-            'customer':       (foglalasId != null && int.parse(foglalasId!) < 0)? 'mercarius' : customer,
-            'bizonylat_id':   input['bizonylat_id']?.replaceFirst(RegExp(r'^-+'), ''),
+            'customer':       customer,
+            'bizonylat_id':   input['bizonylat_id'],
             'alairo':         input['alairo'],
             'alairas':        input['alairas'],
           };
@@ -938,7 +940,9 @@ class DataManager{
             'customer':     customer,
             'eszkoz_id':    identity.toString(),
             'datum':        input['datum'].toString().split(' ')[0],
-            'parent_id':    input['parent_id']
+            'foglalas_id':  input['foglalas_id'],
+            'parent_id':    input['parent_id'],
+            'user_id':      userId
           };
           Uri uriUrl =              Uri.parse('${urlPath}eseti_munkalap.php');
           http.Response response =  await http.post(uriUrl, body: json.encode(queryParameters), headers: headers);
@@ -1006,6 +1010,7 @@ class DataManager{
       'input':        input,
       'parameter':    jsonEncode(parameter)
     };
+    if(kDebugMode) dev.log(queryParameters['parameter'] ?? '');
     Uri uriUrl =              Uri.parse('${urlPath}execute_sql_from_input.php');          
     http.Response response =  await http.post(uriUrl, body: json.encode(queryParameters), headers: headers);
     if(kDebugMode){

@@ -1134,7 +1134,7 @@ class DataFormState extends State<DataForm> {//-- ---------- ---------- --------
         buttonContinue =    ButtonState.disabled;
         Global.routeBack;
         Global.currentRoute;
-        Navigator.pop(context);
+        Navigator.pop(context, true);
       }
       break;
 
@@ -1498,15 +1498,19 @@ class DataFormState extends State<DataForm> {//-- ---------- ---------- --------
         if(isClosed || await Global.yesNoDialog(context,
           title:    'Adatlap elhagyása',
           content:  'Elveti módosításait és visszatér a Naptárhoz?'
-        )){
-          Global.routeBack;
-          Global.currentRoute;
-          CalendarState.selectedIndexList = null;
-          isClosed =                        false;
-          Navigator.popUntil(context, ModalRoute.withName('/calendar'));
-          await Navigator.pushReplacementNamed(context, '/calendar');
-          return false;
-        }
+        )){switch(Global.currentRoute){
+          case NextRoute.esetiMunkalapFelvitele:
+            return true;
+
+          default:
+            Global.routeBack;
+            Global.currentRoute;
+            CalendarState.selectedIndexList = null;
+            isClosed =                        false;
+            Navigator.popUntil(context, ModalRoute.withName('/calendar'));
+            await Navigator.pushReplacementNamed(context, '/calendar');
+            return false;
+        }}
         else {return false;}
 
       default:

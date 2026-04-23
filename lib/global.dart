@@ -11,6 +11,7 @@ enum ButtonState  {hidden,  loading,        disabled,       error,        defaul
 enum QuickCall    {tabForm, giveDatas,      chainGiveDatas, verzio,       askPhotos,  default0, cancelWork, tabletBelep, saveEsetiMunkalapFelvitele, saveAbroncsIgenyles, chainGiveDatasFormOpen, saveSzezonalisMunkalapFelvitele, askIncompleteDays, askPlateNumber, askEsetiMunkalapMeghiusulasOkai, logIn, forgottenPassword, logInNamePassword, panel, callButtonPhp, callButtonWebLink, redrawDataForm, uploadSignature}
 enum Probe        {bluetoothCheck, deviceSearch, measureCommand, default0}
 enum AppIs        {android, web, default0}
+enum Resolve      {pop, forward, alertDialog}
 
 class Global{
   // ---------- < Variables [Static] > -------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ----------

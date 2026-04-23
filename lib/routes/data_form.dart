@@ -402,7 +402,7 @@ class DataFormState extends State<DataForm> {//-- ---------- ---------- --------
   Future<void> _quickSave() async {
     if (quickSaveLock) return;
     quickSaveLock = true;
-    setState(() => buttonSaveProgress = ButtonState.loading);
+    setState(() {buttonSaveProgress = ButtonState.loading;});
     try {
       // 1) Persist current page's edits into the working payload
       if (currentProgress == 0) {
@@ -435,7 +435,7 @@ class DataFormState extends State<DataForm> {//-- ---------- ---------- --------
     } finally {
       quickSaveLock = false;
       if (mounted) {
-        setState(() => buttonSaveProgress = ButtonState.default0);
+        setState(() {buttonSaveProgress = ButtonState.default0;});
       }
     }
     /*if (!mounted) return;
@@ -1141,43 +1141,59 @@ class DataFormState extends State<DataForm> {//-- ---------- ---------- --------
     default: return;
   }}
 
-  Future get _buttonSignaturePressed async {switch(workType){
+  Future get _buttonSignaturePressed async {
+    Resolve? resolve;
+    try{showLoadingDialog(context); await _quickSave(); switch(workType){
 
-    case 'Igénylés':
-      if(await Global.yesNoDialog(context,
-        title: 'Igénylés lezárása',
-        content: 'Kívánja lezárni és elmenteni a munkát?'
-      )){
-        await DataManager(quickCall: QuickCall.saveAbroncsIgenyles, input: {'lezart': 1}).beginQuickCall;
-        if(SignatureFormState.message == null || SignatureFormState.message.isEmpty){
-          Global.routeBack;
-          skipWillPopScopeSequences = true;
-          Navigator.pop(context);
+      case 'Igénylés':
+        if(await Global.yesNoDialog(context,
+          title: 'Igénylés lezárása',
+          content: 'Kívánja lezárni és elmenteni a munkát?'
+        )){
+          await DataManager(quickCall: QuickCall.saveAbroncsIgenyles, input: {'lezart': 1}).beginQuickCall;
+          if(SignatureFormState.message == null || SignatureFormState.message.isEmpty){
+            Global.routeBack;
+            skipWillPopScopeSequences = true;
+            resolve = Resolve.pop;
+          }
+          else {resolve = Resolve.alertDialog;}
         }
-        else{
-          await Global.showAlertDialog(context,
-            title:    'ℹ️ ${SignatureFormState.message['name']}',
-            content:  SignatureFormState.message['message'] ?? ''
-          );
-        }
-      }
-      break;
+        break;
 
-    default:
-      if (!enableInteraction['buttonSignature']!) return;
-      setState(() {
-        buttonContinue = ButtonState.loading;
-        enableInteraction['buttonSignature'] = false;
-      });
-      DataManager.dataQuickCall[0]['poziciok'][currentProgress - 1]['adatok'] = rawData;
-      DataManager.dataQuickCall[1][currentProgress] = listOfLookupDatas;
-      await _openSignatureScreen();
-      setState(() {
-        buttonContinue = ButtonState.default0;
-        enableInteraction['buttonSignature'] = true;
-      });
-      break;
-  }}
+      default:
+        if (!enableInteraction['buttonSignature']!) return;
+        setState(() {
+          buttonContinue = ButtonState.loading;
+          enableInteraction['buttonSignature'] = false;
+        });
+        DataManager.dataQuickCall[0]['poziciok'][currentProgress - 1]['adatok'] = rawData;
+        DataManager.dataQuickCall[1][currentProgress] = listOfLookupDatas;
+        resolve = Resolve.forward;
+        break;
+    }}
+    catch(_){}
+    finally {hideLoadingDialog(context); switch(resolve){
+      case Resolve.pop:
+        Navigator.pop(context);
+        break;
+
+      case Resolve.alertDialog: await Global.showAlertDialog(context,
+          title:    'ℹ️ ${SignatureFormState.message['name']}',
+          content:  SignatureFormState.message['message'] ?? ''
+        );
+        break;
+
+      case Resolve.forward:
+        await _openSignatureScreen();
+        setState(() {
+          buttonContinue = ButtonState.default0;
+          enableInteraction['buttonSignature'] = true;
+        });
+        break;
+
+      default: throw Exception('Not implemented resolution: ${resolve ?? ''}');
+    }}
+  }
 
   Future get _buttonCopyPressed async{
     if(!enableInteraction['buttonCopy']!) return;

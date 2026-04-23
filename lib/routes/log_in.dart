@@ -72,54 +72,108 @@ class LogInState extends State<LogIn>{
             ]
           ))
         ),
-        floatingActionButton: FloatingActionButton(
-          onPressed: () {}, // required but unused
-          backgroundColor: Global.getColorOfButton(ButtonState.default0),
-          foregroundColor: Global.getColorOfIcon(ButtonState.default0),
-          child: PopupMenuButton<String>(
-            icon: const Icon(Icons.menu, color: Colors.white),
-            onSelected: (value) async {
-              switch (value) {
-                case 'wallpaper':
-                  final ok = await LogInState.setWallpaper();
-                  if (!ok && mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Hiba: nem sikerült a háttérkép beállítása')),
+        floatingActionButton: Stack(
+          clipBehavior: Clip.none,
+          children: [
+            PopupMenuButton<String>(
+              onSelected: (value) async {
+                setState(() => DataManager.logInNotification = 0);
+                switch (value) {
+                  case 'info':
+                    await Global.showAlertDialog(
+                      context,
+                      title: 'Frissítés Információ',
+                      content: DataManager.infoUpdate,
                     );
-                  }
-                  break;
-                case 'deviceId':
-                  await Global.showAlertDialog(
-                    context,
-                    content: DataManager.identity.toString(),
-                    title: 'Eszköz id',
-                  );
-                  break;
-              }
-            },
-            itemBuilder: (context) => const [
-              PopupMenuItem(
-                value: 'wallpaper',
-                child: Row(
-                  children: [
-                    Icon(Icons.wallpaper, color: Colors.black54),
-                    SizedBox(width: 8),
-                    Text('Háttérkép beállítása'),
-                  ],
+                    break;
+
+                  case 'wallpaper':
+                    final ok = await LogInState.setWallpaper();
+                    if (!ok && mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Hiba: nem sikerült a háttérkép beállítása'),
+                        ),
+                      );
+                    }
+                    break;
+
+                  case 'deviceId':
+                    await Global.showAlertDialog(
+                      context,
+                      content: DataManager.identity.toString(),
+                      title: 'Eszköz id',
+                    );
+                    break;
+                }
+              },
+              itemBuilder: (context) => const [
+                PopupMenuItem(
+                  value: 'info',
+                  child: Row(
+                    children: [
+                      Icon(Icons.info, color: Colors.black54),
+                      SizedBox(width: 8),
+                      Text('Frissítés információ'),
+                    ],
+                  ),
+                ),
+                PopupMenuItem(
+                  value: 'wallpaper',
+                  child: Row(
+                    children: [
+                      Icon(Icons.wallpaper, color: Colors.black54),
+                      SizedBox(width: 8),
+                      Text('Háttérkép beállítása'),
+                    ],
+                  ),
+                ),
+                PopupMenuItem(
+                  value: 'deviceId',
+                  child: Row(
+                    children: [
+                      Icon(Icons.perm_device_information, color: Colors.black54),
+                      SizedBox(width: 8),
+                      Text('Eszköz ID'),
+                    ],
+                  ),
+                ),
+              ],
+              child: FloatingActionButton(
+                onPressed: null,
+                backgroundColor: Global.getColorOfButton(ButtonState.default0),
+                foregroundColor: Global.getColorOfIcon(ButtonState.default0),
+                child: const Icon(Icons.menu, color: Colors.white),
+              ),
+            ),
+
+            if (DataManager.logInNotification > 0)
+              Positioned(
+                right: -5,
+                top: -10,
+                child: Container(
+                  padding: const EdgeInsets.all(4),
+                  decoration: const BoxDecoration(
+                    color: Colors.red,
+                    shape: BoxShape.circle,
+                  ),
+                  constraints: const BoxConstraints(
+                    minWidth: 18,
+                    minHeight: 18,
+                  ),
+                  child: Center(
+                    child: Text(
+                      '${DataManager.logInNotification}',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
                 ),
               ),
-              PopupMenuItem(
-                value: 'deviceId',
-                child: Row(
-                  children: [
-                    Icon(Icons.perm_device_information, color: Colors.black54),
-                    SizedBox(width: 8),
-                    Text('Eszköz ID'),
-                  ],
-                ),
-              ),
-            ],
-          ),
+          ],
         ),
         floatingActionButtonLocation: FloatingActionButtonLocation.startFloat,
       )
@@ -127,7 +181,7 @@ class LogInState extends State<LogIn>{
   }
 
   // ---------- < Widget Build [2] > ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ----------
-  Widget get _drawVerzio => Column(children: [
+    Widget get _drawVerzio => Column(children: [
     Row(mainAxisAlignment: MainAxisAlignment.center, children: [
       Text('v${DataManager.thisVersion}${(DataManager.verzioTest == 0)? '' : '   [Teszt: ${DataManager.verzioTest.toString()}]'}', style: const TextStyle(color: Colors.white, fontSize: 30, fontWeight: FontWeight.bold)),
       Text((DataManager.appIs == AppIs.web)? '  🌐 web     ' : '', style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.normal))

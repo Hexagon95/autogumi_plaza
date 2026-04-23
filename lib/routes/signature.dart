@@ -20,16 +20,16 @@ class SignatureForm extends StatefulWidget {
 
 class SignatureFormState extends State<SignatureForm> {
   // ---------- < Variables [Static] > --- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ----------
-  static List<dynamic> rawData =                    List<dynamic>.empty();
-  static TextEditingController editingController =  TextEditingController();
-  static String signatureBase64 =                   '';
+  static List<dynamic> rawData = List<dynamic>.empty();
   static dynamic message;
 
   // ---------- < Variables [1] > -------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ----------
-  ButtonState buttonClear =   ButtonState.disabled;
-  ButtonState buttonCamera =  ButtonState.default0;
-  ButtonState buttonCheck =   ButtonState.disabled;
-  final SignatureController _controller = SignatureController(
+  TextEditingController editingController =   TextEditingController();
+  String signatureBase64 =                    '';
+  ButtonState buttonClear =                   ButtonState.disabled;
+  ButtonState buttonCamera =                  ButtonState.default0;
+  ButtonState buttonCheck =                   ButtonState.disabled;
+  final SignatureController _controller =     SignatureController(
     penStrokeWidth:         1,
     disabled:               DataFormState.buttonListPictures.isNotEmpty || (DataFormState.option('Lezárt')?['value']?.toString() == '1'),
     penColor:               Colors.black,

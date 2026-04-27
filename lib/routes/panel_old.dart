@@ -36,8 +36,6 @@ class PanelState extends State<Panel> {//-------- ---------- ---------- --------
     'success' =>    Colors.green,
     'secondary' =>  Colors.grey,
     'danger' =>     Colors.red,
-    'warning' =>    Colors.orange,
-    'primary' =>    Colors.blue,
     _ =>            Colors.blue
   };
 
@@ -56,124 +54,54 @@ class PanelState extends State<Panel> {//-------- ---------- ---------- --------
   }
 
   // ---------- < Widget [2] > ------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ----------
-  Widget get _drawPanel {
-    return ListView.builder(
-      padding: const EdgeInsets.all(12),
-      itemCount: data.length,
-      itemBuilder: (context, sectionIndex) {
-        final section = Map<String, dynamic>.from(data[sectionIndex] as Map);
-        final items = normalizeItems(section['items']);
-        return Card(
-          elevation: 2,
-          margin: const EdgeInsets.only(bottom: 16),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-          child: Padding(
-            padding: const EdgeInsets.all(12),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  section['title']?.toString() ?? '',
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
+  Widget get _drawPanel{
+    final size = MediaQuery.of(context).size;
+    const padding = 12.0;
+    const spacing = 12.0;
+    const crossAxisCount = 2;
+    // ignore: prefer_const_declarations
+    final totalHorizontalPadding = padding * 2 + spacing * (crossAxisCount - 1);
+    final cardWidth = (size.width - totalHorizontalPadding) / crossAxisCount; // heuristic: allow card height to scale with screen height
+    final cardHeight = size.height * 0.28;
+    final aspectRatio = cardWidth / cardHeight;
+    return Padding( padding: const EdgeInsets.all(12.0), child: GridView.count(
+      crossAxisCount:   crossAxisCount,
+      mainAxisSpacing:  spacing,
+      crossAxisSpacing: spacing,
+      childAspectRatio: aspectRatio.clamp(0.9, 2.4),
+      children:         data.map((item) {item['buttons'] = normalizeButtons(item['buttons']); return Card(
+        elevation:  3,
+        shape:      RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        child:      Padding(padding: const EdgeInsets.all(12), child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Align(alignment: Alignment.topRight, child: Icon(getIcon(item['icon']), color: Colors.blue)),
+            const SizedBox(height: 8),
+            Text(item['value'], style: const TextStyle(fontWeight: FontWeight.bold)),
+            const SizedBox(height: 4),
+            Text(item['title'], style: const TextStyle(color: Colors.black54)),
+            const Spacer(),
+            Wrap(spacing: 6, runSpacing: 4, children: List.generate(item['buttons'].length, (i) {
+              final btn = (item['buttons'] is String)? jsonDecode(item['buttons'])[i] : item['buttons'][i];
+              return ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor:  getColor(btn['color']),
+                  padding:          const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                  visualDensity:    VisualDensity.compact,
                 ),
-                const SizedBox(height: 8),
-                ...items.map(_drawListItem),
-              ],
-            ),
-          ),
-        );
-      },
-    );
-  }
-
-  // ---------- < Widget [3] > ------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ----------  
-  Widget _drawListItem(Map<String, dynamic> item) {
-    final buttons = normalizeButtons(item['buttons']);
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
-      decoration: const BoxDecoration(
-        border: Border(
-          bottom: BorderSide(color: Color(0xFFE0E0E0)),
-        ),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Icon(
-            getIcon(item['icon']?.toString() ?? ''),
-            color: Colors.blue,
-            size: 22,
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  item['value']?.toString() ?? '',
-                  style: const TextStyle(fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 3),
-                Text(
-                  item['title']?.toString() ?? '',
-                  style: const TextStyle(color: Colors.black54),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 8),
-          Wrap(
-            spacing: 6,
-            runSpacing: 6,
-            alignment: WrapAlignment.end,
-            children: buttons.map((btn) {
-              return IconButton(
-                tooltip: btn['name']?.toString(),
-                style: IconButton.styleFrom(
-                  backgroundColor: getColor(btn['color']?.toString() ?? ''),
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.all(10),
-                  minimumSize: const Size(42, 42),
-                ),
-                onPressed: () => buttonPressed(btn),
-                icon: Icon(
-                  getIcon(btn['icon']?.toString() ?? ''),
-                  size: 18,
-                ),
+                onPressed:  () => buttonPressed(btn),
+                icon:       Icon(getIcon(btn['icon']), size: 14),
+                label:      Text(btn['name'], style: const TextStyle(fontSize: 12)),
               );
-            }).toList(),
-          ),
-        ],
-      ),
-    );
+            }))
+          ],
+        ))
+      );}).toList()
+    ));
   }
 
   // ---------- < Methods [1] > ------ ---------- ---------- ---------- ---------- ---------- ---------- ---------- ----------
-  List<Map<String, dynamic>> normalizeItems(dynamic v) {
-    if (v == null) return const [];
-    try {
-      if (v is String) {
-        final decoded = jsonDecode(v);
-        return normalizeItems(decoded);
-      }
-      if (v is List) {
-        return v
-            .where((e) => e != null)
-            .map<Map<String, dynamic>>((e) => Map<String, dynamic>.from(e as Map))
-            .toList();
-      }
-      if (v is Map) {
-        return [Map<String, dynamic>.from(v)];
-      }
-    } catch (_) {}
-    return const [];
-  }
-
   Future _calendarButtonPressed() async {
-    setState(() => isCalendarPressed = true);
+    setState(() => isCalendarPressed);
     Global.routeNext = NextRoute.calendar;
     await DataManager(quickCall: QuickCall.askIncompleteDays).beginQuickCall;
     isCalendarPressed = false;

@@ -40,6 +40,7 @@ class Global{
     }
     _printRoutes;
   }
+  static final GlobalKey<ScaffoldMessengerState> scaffoldMessengerKey = GlobalKey<ScaffoldMessengerState>();
 
   static BoxDecoration customBoxDecoration = BoxDecoration(
     border:       Border.all(color: Colors.green, width: 1),

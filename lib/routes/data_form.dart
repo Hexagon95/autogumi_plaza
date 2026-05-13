@@ -37,6 +37,7 @@ class DataFormState extends State<DataForm> {//-- ---------- ---------- --------
   static Map<String, dynamic> listOfLookupDatas =     <String, dynamic>{};
   static ButtonState buttonCamera =                   ButtonState.disabled;
   static String workType =                            '';
+  static String bizonylatId =                         '';
   static int indexOfShot =                            0;
   static int indexOfExtraForm =                       0;
   static bool isFoglalas =                            true;
@@ -560,7 +561,22 @@ class DataFormState extends State<DataForm> {//-- ---------- ---------- --------
           );
         }
         // Fallback: non-editable mode (keep your original behavior)
+        final String displayText = (selectedItem != null && lookupData != null)? getItem(lookupData, selectedItem) : '';
+        if (controller[index].text != displayText) {controller[index].text = displayText;}
         return SizedBox(
+          height: 70,
+          width: getWidth(index),
+          child: TextFormField(
+            enabled: false,
+            controller: controller[index],
+            decoration: InputDecoration(
+              contentPadding: const EdgeInsets.all(10),
+              labelText: Global.parse(thisData[index]['name']),
+              border: InputBorder.none,
+            ),
+          ),
+        );
+        /*return SizedBox(
           height: 70,
           width: getWidth(index),
           child: TextFormField(
@@ -575,7 +591,7 @@ class DataFormState extends State<DataForm> {//-- ---------- ---------- --------
               border: InputBorder.none,
             ),
           ),
-        );
+        );*/
       }
 
       case 'number':
@@ -1142,6 +1158,7 @@ class DataFormState extends State<DataForm> {//-- ---------- ---------- --------
   }}
 
   Future get _buttonSignaturePressed async {
+    Global.currentRoute;
     Resolve? resolve;
     try{showLoadingDialog(context); await _quickSave(); switch(workType){
 
@@ -1523,9 +1540,9 @@ class DataFormState extends State<DataForm> {//-- ---------- ---------- --------
             Global.currentRoute;
             CalendarState.selectedIndexList = null;
             isClosed =                        false;
-            Navigator.popUntil(context, ModalRoute.withName('/calendar'));
-            await Navigator.pushReplacementNamed(context, '/calendar');
-            return false;
+            //Navigator.popUntil(context, ModalRoute.withName('/calendar'));
+            //await Navigator.pushReplacementNamed(context, '/calendar');
+            return true;
         }}
         else {return false;}
 
@@ -2035,11 +2052,19 @@ class DataFormState extends State<DataForm> {//-- ---------- ---------- --------
     PhotoPreviewState.isSignature = true;
     await DataManager(quickCall: QuickCall.askPhotos).beginQuickCall;
     if(DataManager.dataQuickCall[0]['osszesites'] != null) SignatureFormState.rawData = DataManager.dataQuickCall[0]['osszesites'];
-    if(!isClosed) {await Navigator.pushNamed(context, '/signature');}
+    if(!isClosed) {
+      dynamic result = await Navigator.pushNamed(context, '/signature');
+      options =   [];
+      isClosed =  false;
+      if(result != null && result['result'] != null){
+        Global.routeBack;
+        Navigator.pop(context);
+      }
+    }
     else {
       await Navigator.pushNamed(context, '/pdfSignature', arguments: {
         'pdfUrl':       option('PDF')?['value'] ?? '',
-        'bizonylatId':  DataManager.data[2][selectedIndexInCalendar!]['id'].toString(),
+        'bizonylatId':  (DataManager.data.length > 2)? DataManager.data[2][selectedIndexInCalendar!]['id'].toString() : bizonylatId,
         'title':        'Összesítés',
         'isClosed':     true
       });
@@ -2047,7 +2072,7 @@ class DataFormState extends State<DataForm> {//-- ---------- ---------- --------
       isClosed =  false;
       Global.routeBack;
       Navigator.pop(context);
-    }
+    }    
   }
   
   // ---------- < Method wrappers > -- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ----------

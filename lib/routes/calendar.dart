@@ -50,10 +50,11 @@ class CalendarState extends State<Calendar> {
 
   // ---------- < Variables > ------------ ---------- ---------- ---------- ---------- ---------- ----------
   CalendarFormat _calendarFormat =  CalendarFormat.month;
-  static DateTime _focusedDay =            DateTime.now();
+  static DateTime _focusedDay =     DateTime.now();
   ButtonState buttonAddWork =       ButtonState.default0;
   ButtonState buttonListInquries =  ButtonState.default0;
   bool isListStockInfoOpen =        false;
+  bool isRefreshingPanel =          false;
   DateTime? _selectedDay;
 
   // ---------- < Widget Build > --------- ---------- ---------- ---------- ---------- ---------- ----------
@@ -68,6 +69,12 @@ class CalendarState extends State<Calendar> {
       floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
       body: Stack(children: [
         Column(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [_calendar, Expanded(child: _listOfTasks)]),
+        if (isRefreshingPanel) Container(
+          color: Colors.black.withOpacity(0.1),
+          child: const Center(
+            child: CircularProgressIndicator(),
+          ),
+        ),
       ])
     ));
   }
@@ -337,14 +344,73 @@ class CalendarState extends State<Calendar> {
     );
     buttonAddWork = ButtonState.default0;
     if(varString != null) {switch(varString){
+      /*case 'Eseti Munkalap':
+        Global.routeNext = NextRoute.esetiMunkalapFelvitele;
+        await DataManager(input: {'datum': _focusedDay}).beginProcess;
+        await DataManager(quickCall: QuickCall.giveDatas).beginQuickCall;
+        await Navigator.pushNamed(context, '/dataForm');
+        if(DataManager.dataQuickCall[5] != null && DataManager.dataQuickCall[5].length > 1){
+          Global.currentRoute;
+          setState(() => isRefreshingPanel = true);
+          await DataManager().beginProcess;
+          await DataManager(quickCall: QuickCall.askIncompleteDays).beginQuickCall;
+          setState((){});
+          await DataManager(quickCall: QuickCall.tabForm, input: {
+            'jelleg':       'Eseti',
+            'datum':        DateTime.now(),
+            'foglalas_id':  DataManager.dataQuickCall[5][1],
+            'parent_id':    DataManager.dataQuickCall[5][2]
+          }).beginQuickCall;
+          await DataManager(quickCall: QuickCall.giveDatas).beginQuickCall;
+          await DataManager().formOpen;
+          DataFormState.workType = 'Eseti';
+          DataFormState.isClosed = false;
+          selectedIndexList =      null;
+          setState(() => isRefreshingPanel = false);
+          Global.routeNext = NextRoute.tabForm;
+          await Navigator.pushNamed(context, '/dataForm');
+          await DataManager().beginProcess;
+          await DataManager(quickCall: QuickCall.askIncompleteDays).beginQuickCall;
+          setState((){});
+        }
+        await DataManager().beginProcess;
+        await DataManager(quickCall: QuickCall.askIncompleteDays).beginQuickCall;
+        setState((){});
+        break;*/
+
       case 'Eseti Munkalap':
         Global.routeNext = NextRoute.esetiMunkalapFelvitele;
         await DataManager(input: {'datum': _focusedDay}).beginProcess;
         await DataManager(quickCall: QuickCall.giveDatas).beginQuickCall;
         await Navigator.pushNamed(context, '/dataForm');
+        if (DataManager.dataQuickCall[5] != null &&
+            DataManager.dataQuickCall[5].length > 1) {
+          final foglalasId = DataManager.dataQuickCall[5][1];
+          final parentId = DataManager.dataQuickCall[5][2];
+          setState(() => isRefreshingPanel = true);
+          // IMPORTANT: switch route BEFORE loading full munkalap form
+          Global.routeNext = NextRoute.tabForm;
+          await DataManager(input: {
+            'jelleg': 'Eseti',
+            'foglalasId': foglalasId,
+          }).beginProcess;
+          await DataManager(quickCall: QuickCall.tabForm, input: {
+            'jelleg':       'Eseti',
+            'datum':        DateTime.now(),
+            'foglalas_id':  foglalasId,
+            'parent_id':    parentId,
+          }).beginQuickCall;
+          await DataManager(quickCall: QuickCall.giveDatas).beginQuickCall;
+          await DataManager().formOpen;
+          DataFormState.workType = 'Eseti';
+          DataFormState.isClosed = false;
+          selectedIndexList = null;
+          setState(() => isRefreshingPanel = false);
+          await Navigator.pushNamed(context, '/dataForm');
+        }
         await DataManager().beginProcess;
         await DataManager(quickCall: QuickCall.askIncompleteDays).beginQuickCall;
-        setState((){});
+        setState(() {});
         break;
 
       case 'Szezonális Munkalap':

@@ -319,12 +319,11 @@ class SignatureFormState extends State<SignatureForm> {
           (message is Map && [null, '', ' ', 'null'].contains(message['message']))
         ){
         resetVariables;
-        Global.routeBack; Global.routes;
         if(kDebugMode)print(Global.currentRoute);
         CalendarState.selectedIndexList = null;
         await DataManager().beginProcess;
-        Navigator.popUntil(context, ModalRoute.withName('/calendar'));
-        await Navigator.pushReplacementNamed(context, '/calendar');
+        Navigator.pop(context, {'result': true});
+        
       }
       else{
         if(message is List) message = message[0];
@@ -355,10 +354,10 @@ class SignatureFormState extends State<SignatureForm> {
   Future<bool> _handlePop() async{ if(buttonCheck != ButtonState.loading){
     DataFormState.buttonContinue =  ButtonState.default0;
     PhotoPreviewState.isSignature = false;
-    await DataManager(quickCall: QuickCall.askPhotos).beginQuickCall;
+    await DataManager(quickCall: QuickCall.askPhotos, input: {'foglalas_id': DataManager.foglalasId}).beginQuickCall;
     refreshImages;
     setState((){});
-    Global.routeBack;
+    //Global.routeBack; Global.currentRoute;
     return true;
     //Navigator.popUntil(context, ModalRoute.withName('/dataForm'));
    //await Navigator.pushReplacementNamed(context, '/dataForm');

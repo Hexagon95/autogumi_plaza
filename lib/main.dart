@@ -35,8 +35,9 @@ void main() async{
   }
   runApp(
     MaterialApp(      
-      initialRoute: '/',
-      routes:       routes
+      initialRoute:         '/',
+      routes:               routes,
+      scaffoldMessengerKey: Global.scaffoldMessengerKey
     )
   );
 }

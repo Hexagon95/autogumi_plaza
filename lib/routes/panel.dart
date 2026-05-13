@@ -4,6 +4,8 @@ import 'package:restart_app/restart_app.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'dart:convert';
+import 'dart:async';
+import 'package:autogumi_plaza/routes/data_form.dart';
 import 'package:autogumi_plaza/data_manager.dart';
 import 'package:autogumi_plaza/global.dart';
 
@@ -18,18 +20,23 @@ class PanelState extends State<Panel> {//-------- ---------- ---------- --------
   // ---------- < Wariables [Static] > ---------- ---------- ---------- ---------- ---------- ---------- ---------- ----------
   static List<dynamic> data = [];
   static String? errorMessageDialog;
-  bool isCalendarPressed = false;
 
   // ---------- < Wariables [1] > ---- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ----------
+  bool isCalendarPressed =  false;
+  bool isRefreshingPanel =  false;
+  Timer? refreshTimer;
   IconData getIcon(String iconName) => switch(iconName){
-    'truck' =>      FontAwesomeIcons.truck,
-    'check' =>      Icons.check,
-    'printer' =>    Icons.print,
-    'package' =>    FontAwesomeIcons.box,
-    'x' =>          Icons.close,
-    'file' =>       FontAwesomeIcons.file,
-    'signature' =>  Icons.edit_document,
-    _ =>            Icons.help_outline
+    'truck' =>          FontAwesomeIcons.truck,
+    'check' =>          Icons.check,
+    'printer' =>        Icons.print,
+    'package' =>        FontAwesomeIcons.box,
+    'x' =>              Icons.close,
+    'file' =>           FontAwesomeIcons.file,
+    'signature' =>      Icons.edit_document,
+    'esetimunkalap' =>  Icons.content_paste_search,
+    'igenyles' =>       Icons.request_page_outlined,
+    'szezonalis' =>     Icons.calendar_month_outlined,
+    _ =>                Icons.help_outline
   };
 
   Color getColor(String colorName) => switch(colorName){
@@ -46,7 +53,17 @@ class PanelState extends State<Panel> {//-------- ---------- ---------- --------
   Widget build(BuildContext context) {
     return WillPopScope(onWillPop: _handlePop, child: Scaffold(
       appBar: AppBar(title: const Text("Dashboard")),
-      body:   _drawPanel,
+      body: Stack(
+        children: [
+          _drawPanel,
+          if (isRefreshingPanel) Container(
+            color: Colors.black.withOpacity(0.1),
+            child: const Center(
+              child: CircularProgressIndicator(),
+            ),
+          ),
+        ],
+      ),
       floatingActionButton: FloatingActionButton(
         onPressed:        (!isCalendarPressed)? _calendarButtonPressed : null,
         child:            const Icon(Icons.calendar_month),
@@ -72,13 +89,16 @@ class PanelState extends State<Panel> {//-------- ---------- ---------- --------
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  section['title']?.toString() ?? '',
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
+                Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+                  Padding(padding: const EdgeInsets.all(5), child: Text(
+                    section['title']?.toString() ?? '',
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  )),
+                  _getButtonFor(section['title'])
+                ]),
                 const SizedBox(height: 8),
                 ...items.map(_drawListItem),
               ],
@@ -104,8 +124,8 @@ class PanelState extends State<Panel> {//-------- ---------- ---------- --------
         children: [
           Icon(
             getIcon(item['icon']?.toString() ?? ''),
-            color: Colors.blue,
-            size: 22,
+            color:  (buttons.isNotEmpty)? Colors.blue : Colors.grey,
+            size:   22,
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -121,6 +141,10 @@ class PanelState extends State<Panel> {//-------- ---------- ---------- --------
                   item['title']?.toString() ?? '',
                   style: const TextStyle(color: Colors.black54),
                 ),
+                if(item['message']?.toString().isNotEmpty ?? false) Text(
+                  item['message'].toString(),
+                  style: const TextStyle(color: Colors.black54, fontStyle: FontStyle.italic),
+                )
               ],
             ),
           ),
@@ -140,8 +164,8 @@ class PanelState extends State<Panel> {//-------- ---------- ---------- --------
                 ),
                 onPressed: () => buttonPressed(btn),
                 icon: Icon(
-                  getIcon(btn['icon']?.toString() ?? ''),
-                  size: 18,
+                  _getIconForButton(btn),
+                  size: (['esetimunkalap', 'igenyles', 'szezonalis'].contains(btn['type']))? 24 : 18,
                 ),
               );
             }).toList(),
@@ -151,7 +175,26 @@ class PanelState extends State<Panel> {//-------- ---------- ---------- --------
     );
   }
 
+  Widget _getButtonFor(String input){
+    if(input != 'Igénylések') return Container();
+    return ElevatedButton(
+      onPressed:  _addIgenyles,
+      child:      const Row(children: [Padding(padding: EdgeInsets.all(5), child: Icon(Icons.add)), Text('Hozzáadás')])
+    );
+  }
+
   // ---------- < Methods [1] > ------ ---------- ---------- ---------- ---------- ---------- ---------- ---------- ----------
+  IconData _getIconForButton(Map<String, dynamic> btn) => getIcon((['esetimunkalap', 'igenyles', 'szezonalis'].contains(btn['type']))? btn['type'] : btn['icon']?.toString() ?? '');
+
+  @override
+  void initState() {
+    super.initState();
+    refreshPanel();
+    refreshTimer = Timer.periodic(const Duration(seconds: 30), (_) {
+      refreshPanel();
+    });
+  }
+
   List<Map<String, dynamic>> normalizeItems(dynamic v) {
     if (v == null) return const [];
     try {
@@ -183,14 +226,29 @@ class PanelState extends State<Panel> {//-------- ---------- ---------- --------
   }
 
   Future<void> buttonPressed(dynamic item) async{
+    String workTypeString(String input) {return switch(input){
+      'szezonalis' =>     'Szezonális',
+      'esetimunkalap' =>  'Eseti',
+      'igenyles' =>       'Igénylés',
+      _ =>                ''
+    };}
+    NextRoute getNextRoute(String input) {return switch(input){
+      'szezonalis' =>     NextRoute.szezonalisMunkalapFelvitele,
+      'esetimunkalap' =>  NextRoute.esetiMunkalapFelvitele,
+      'igenyles' =>       NextRoute.abroncsIgenyles,
+      _ =>                NextRoute.tabForm
+    };}
     if((item['question']?.isNotEmpty ?? false) && !await Global.yesNoDialog(context, title: item['name'], content: item['question'])) return;
     switch(item['type'].toString()){
       case 'link':  await DataManager(quickCall: QuickCall.callButtonWebLink, input: {'callback': item['callback'], 'name': item['name']}).beginQuickCall;  break;
       case 'php':   await DataManager(quickCall: QuickCall.callButtonPhp, input: {'callback': item['callback']}).beginQuickCall;                            break;
 
+      case 'igenyles':
+      case 'szezonalis':
       case 'esetimunkalap':
-        int foglalasId = int.parse(((item['parameters'] is String)? jsonDecode(item['parameters'])['id'] : item['parameters']['id']).toString());
-        Global.routeNext = (foglalasId == 0)? NextRoute.esetiMunkalapFelvitele : NextRoute.tabForm;
+        int foglalasId =          int.parse(((item['parameters'] is String)? jsonDecode(item['parameters'])['id'] : item['parameters']['id']).toString());
+        DataManager.foglalasId =  foglalasId.toString();
+        Global.routeNext =        (foglalasId == 0)? getNextRoute(item['type'].toString()) : NextRoute.tabForm;
         if(foglalasId == 0){
           await DataManager(input: {
             'datum':        DateTime.now(),
@@ -200,15 +258,16 @@ class PanelState extends State<Panel> {//-------- ---------- ---------- --------
         }
         else{
           await DataManager(quickCall: QuickCall.tabForm, input: {
-            'jelleg':       'Eseti',
+            'jelleg':       workTypeString(item['type'].toString()),
             'datum':        DateTime.now(),
             'foglalas_id':  foglalasId,
             'parent_id':    (item['parameters'] is String)? jsonDecode(item['parameters'])['parent_id'] : item['parameters']['parent_id']
           }).beginQuickCall;
         }
+        DataFormState.workType = workTypeString(item['type'].toString());
         await DataManager(quickCall: QuickCall.giveDatas).beginQuickCall;
-        var result = await Navigator.pushNamed(context, '/dataForm');
-        if((result is bool) && result) await _calendarButtonPressed();
+        DataFormState.bizonylatId = ((item['parameters'] is String)? jsonDecode(item['parameters'])['id'] : item['parameters']['id']).toString();
+        await Navigator.pushNamed(context, '/dataForm');
         break;
 
       case 'alairas':
@@ -262,5 +321,36 @@ class PanelState extends State<Panel> {//-------- ---------- ---------- --------
       // Bad JSON or unexpected shape → just return empty for safety
     }
     return const [];
-  }  
+  }
+
+  Future<void> _addIgenyles() async{
+    Global.routeNext = NextRoute.abroncsIgenyles;
+    await DataManager(input: {'datum': DateTime.now()}).beginProcess;
+    await DataManager(quickCall: QuickCall.giveDatas).beginQuickCall;
+    await Navigator.pushNamed(context, '/dataForm');
+    await DataManager().beginProcess;
+    await DataManager(quickCall: QuickCall.askIncompleteDays).beginQuickCall;
+    setState((){});
+  }
+
+  @override
+  void dispose() {
+    refreshTimer?.cancel();
+    super.dispose();
+  }
+
+  // ---------- < Methods [2] > ------ ---------- ---------- ---------- ---------- ---------- ---------- ---------- ----------
+  Future<void> refreshPanel() async {
+    if (isRefreshingPanel || !mounted) return;
+    setState(() => isRefreshingPanel = true);
+    try {
+      await DataManager(quickCall: QuickCall.panel).beginQuickCall;
+      if (!mounted) return;
+      setState(() {}); // data updated
+    } catch (e) {
+      if (kDebugMode) print('Panel refresh error: $e');
+    } finally {
+      if (mounted) setState(() => isRefreshingPanel = false);
+    }
+  }
 }

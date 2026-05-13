@@ -1,5 +1,8 @@
 // ignore_for_file: depend_on_referenced_packages
 
+import 'dart:async';
+
+import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
@@ -19,11 +22,11 @@ import 'package:autogumi_plaza/utils.dart';
 
 class DataManager{
   // ---------- < Variables [Static] > - ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ----------
-  static String thisVersion =                       '1.41'; // <--- 🛜 A WEB-es verziót is firssíteni kell!!!!!!
+  static String thisVersion =                       '1.43'; // <--- 🛜 A WEB-es verziót is firssíteni kell!!!!!!
   static int verzioTest =                           0; // <--- anything other than 0 will draw "[Teszt #]" at the LogIn screen.
   static int logInNotification =                    1; // <--- 0 will have no notification, other than 0 will draw a red stamp on the menu options' top right corner.
   static String webAppLink =                        'https://app.mosaic.hu/flutter_web/szerviz_mezandmol/index.html';
-  static String infoUpdate =                        '◆ A Dashboard új verziót / külsőt kapott.';
+  static String infoUpdate =                        '◆ Internet kapcsolati hibák kijavítása.\n◆ Fényképpel történő lezárással kapcsolatos hibák kijavítása.';
   
   // 🤖 OR 🛜 Edit here!!!! ⬇️                      ⬇️ And here!!!
   static const AppIs constAppIs =                   AppIs.default0; // <--- Set to default0 or manually enforce behaviour of the app.
@@ -40,6 +43,8 @@ class DataManager{
   static List<dynamic> quickData =                  List<dynamic>.empty(growable: true);
   static List<dynamic> comboboxQueriesDefault =     List<dynamic>.empty();
   static List<dynamic> comboboxQueriesAdditional =  List<dynamic>.empty();
+  static bool connectionSnackBarVisible =           false;
+  static int activeRetryCalls =                     0;
   static bool isServerAvailable =                   true;
   static String actualVersion =                     thisVersion;
   static String customer =                          'mosaic';
@@ -95,7 +100,7 @@ class DataManager{
             'customer':   'mosaic',
           };
           Uri uriUrl =              Uri.parse('${urlPath}verzio.php');
-          http.Response response =  await http.post(uriUrl, body: json.encode(queryParameters), headers: headers);
+          http.Response response =  await safePost(uriUrl, body: json.encode(queryParameters), headers: headers);
           actualVersion =           jsonDecode(response.body)[0]['verzio_autogumi_plaza'].toString();
           LogInState.updateNeeded = (kIsWeb)? false : (thisVersion != actualVersion);
           break;
@@ -107,7 +112,7 @@ class DataManager{
           };
           if(kDebugMode)print(queryParameters);
           Uri uriUrl =              Uri.parse('${urlPath}login.php');
-          http.Response response =  await http.post(uriUrl, body: json.encode(queryParameters), headers: headers);
+          http.Response response =  await safePost(uriUrl, body: json.encode(queryParameters), headers: headers);
           dataQuickCall[check(34)] =         await jsonDecode(response.body);
           if(kDebugMode){
             dev.log(dataQuickCall[34].toString());
@@ -123,7 +128,7 @@ class DataManager{
           };
           if(kDebugMode)print(queryParameters);
           Uri uriUrl =                Uri.parse('${urlPath}login_name_password.php');
-          http.Response response =    await http.post(uriUrl, body: json.encode(queryParameters), headers: headers);
+          http.Response response =    await safePost(uriUrl, body: json.encode(queryParameters), headers: headers);
           dataQuickCall[check(31)] =  (response.body != 'null')? await jsonDecode(response.body) : [];
           if(kDebugMode){
             String varString = dataQuickCall[31].toString();
@@ -133,7 +138,7 @@ class DataManager{
 
         case QuickCall.forgottenPassword:
           Uri uriUrl =                Uri.parse(Uri.encodeFull('https://app.mosaic.hu/sql/ForgottenPasswordSQL.php?name=${input['user_name']}'));
-          http.Response response =    await http.post(uriUrl);
+          http.Response response =    await safePost(uriUrl);
           dataQuickCall[check(32)] =  (response.body != 'null')? [await jsonDecode(response.body)] : [];
           if(kDebugMode){
             String varString = dataQuickCall[32].toString();
@@ -148,11 +153,11 @@ class DataManager{
               var queryParameters = {
                 'customer':     customer,
                 'eszkoz_id':    identity.toString(),
-                'datum':        CalendarState.selectedDate,
-                'foglalas_id':  data[2][DataFormState.selectedIndexInCalendar!]['id'].toString()
+                'datum':        (input['datum'] != null)? input['datum'].toString().split(' ')[0] : CalendarState.selectedDate,
+                'foglalas_id':  input?['foglalas_id'] ?? data[2][DataFormState.selectedIndexInCalendar!]['id'].toString()
               };
-              Uri uriUrl =              Uri.parse('${urlPath}abroncs_igenyles.php');
-              http.Response response =  await http.post(uriUrl, body: json.encode(queryParameters), headers: headers);
+              Uri uriUrl =                Uri.parse('${urlPath}abroncs_igenyles.php');
+              http.Response response =    await safePost(uriUrl, body: json.encode(queryParameters), headers: headers);
                 dataQuickCall[check(0)] = await jsonDecode(await jsonDecode(response.body));
               break;
 
@@ -166,7 +171,7 @@ class DataManager{
                 'user_id':      userId
               };
               Uri uriUrl =              Uri.parse('${urlPath}worksheetFormEseti.php');
-              http.Response response =  await http.post(uriUrl, body: json.encode(queryParameters), headers: headers);
+              http.Response response =  await safePost(uriUrl, body: json.encode(queryParameters), headers: headers);
               dataQuickCall[check(0)] = await jsonDecode(await jsonDecode(response.body));
               break;
 
@@ -178,7 +183,7 @@ class DataManager{
                 'foglalas_id':  data[2][DataFormState.selectedIndexInCalendar!]['id'].toString()
               };
               Uri uriUrl =              Uri.parse('${urlPath}worksheetForm.php');          
-              http.Response response =  await http.post(uriUrl, body: json.encode(queryParameters), headers: headers);
+              http.Response response =  await safePost(uriUrl, body: json.encode(queryParameters), headers: headers);
             dataQuickCall[check(0)] = await jsonDecode(await jsonDecode(response.body));
             break;
           }
@@ -642,7 +647,8 @@ class DataManager{
           break;
 
         case QuickCall.askPhotos:
-          foglalasId = data[2][DataFormState.selectedIndexInCalendar!]['id'].toString();
+          try {foglalasId = data[2][DataFormState.selectedIndexInCalendar!]['id']?.toString() ?? foglalasId;}
+          catch(_) {}
           var queryParameters = {
             'customer':     (foglalasId != null && int.parse(foglalasId!) < 0)? 'mercarius' : customer,
             'foglalas_id':  foglalasId?.replaceFirst(RegExp(r'^-+'), ''),
@@ -653,7 +659,7 @@ class DataManager{
             ,
           };
           Uri uriUrl =              Uri.parse('${urlPath}ask_pictures.php');
-          http.Response response =  await http.post(uriUrl, body: json.encode(queryParameters), headers: headers);
+          http.Response response =  await safePost(uriUrl, body: json.encode(queryParameters), headers: headers);
           dynamic varDynamic =      await jsonDecode(response.body)[0][''];
           dataQuickCall[check(2)] = await jsonDecode(varDynamic.toString());
           if(kDebugMode){
@@ -672,7 +678,7 @@ class DataManager{
               'user_id':      userId,
             };
             Uri uriUrl =              Uri.parse('${urlPath}cancel_igenyles.php');          
-            http.Response response =  await http.post(uriUrl, body: json.encode(queryParameters), headers: headers);
+            http.Response response =  await safePost(uriUrl, body: json.encode(queryParameters), headers: headers);
             dataQuickCall[check(3)] = await jsonDecode(await jsonDecode(response.body));
             if(kDebugMode)print(dataQuickCall[3].toString());
             break;
@@ -686,7 +692,7 @@ class DataManager{
               'jelleg':       input['jelleg']
             };
             Uri uriUrl =              Uri.parse('${urlPath}cancel_work.php');          
-            http.Response response =  await http.post(uriUrl, body: json.encode(queryParameters), headers: headers);
+            http.Response response =  await safePost(uriUrl, body: json.encode(queryParameters), headers: headers);
             dataQuickCall[check(3)] = await jsonDecode(await jsonDecode(response.body));
             if(kDebugMode)print(dataQuickCall[3].toString());
             break;
@@ -699,7 +705,7 @@ class DataManager{
             'verzio':     thisVersion
           };
           Uri uriUrl = Uri.parse('${urlPath}tablet_belep.php');
-          http.Response response =  await http.post(uriUrl, body: json.encode(queryParameters), headers: headers);
+          http.Response response =  await safePost(uriUrl, body: json.encode(queryParameters), headers: headers);
           dataQuickCall[check(4)] = [response.reasonPhrase];
           break;
 
@@ -711,7 +717,8 @@ class DataManager{
             'lezart':     input['lezart']
           };
           Uri uriUrl = Uri.parse('${urlPath}save_eseti_munkalap.php');
-          http.Response response =      await http.post(uriUrl, body: json.encode(queryParameters), headers: headers);
+          http.Response response =      await safePost(uriUrl, body: json.encode(queryParameters), headers: headers);
+          if(kDebugMode) dev.log(response.body);
           dataQuickCall[check(5)] =     (['[]', '"[]"', '""[]""'].contains(response.body))? [] : json.decode(json.decode(response.body));
           if(kDebugMode) dev.log(dataQuickCall[5].toString());
           SignatureFormState.message =  (dataQuickCall[5].isNotEmpty)? dataQuickCall[5][0] : null;
@@ -725,7 +732,7 @@ class DataManager{
             'alairas':        input['alairas'],
           };
           Uri uriUrl = Uri.parse('${urlPath}upload_signature.php');
-          http.Response response =      await http.post(uriUrl, body: json.encode(queryParameters), headers: headers);
+          http.Response response =      await safePost(uriUrl, body: json.encode(queryParameters), headers: headers);
           if(kDebugMode) dev.log(response.body);
           dataQuickCall[check(10)] =     (['[]', '"[]"', '""[]""'].contains(response.body))? [] : json.decode(json.decode(response.body));
           if(kDebugMode) dev.log(dataQuickCall[10].toString());
@@ -740,7 +747,7 @@ class DataManager{
             'lezart':     input['lezart']
           };
           Uri uriUrl =              Uri.parse('${urlPath}finish_worksheet.php');
-          http.Response response =  await http.post(uriUrl, body: json.encode(queryParameters), headers: headers);
+          http.Response response =  await safePost(uriUrl, body: json.encode(queryParameters), headers: headers);
           dataQuickCall[check(5)] = (['[]', '"[]"', '""[]""'].contains(response.body))? [] : json.decode(json.decode(response.body));
           if(kDebugMode) dev.log(dataQuickCall[5].toString());
           SignatureFormState.message =  (dataQuickCall[5].isNotEmpty)? dataQuickCall[5][0] : null;
@@ -754,7 +761,7 @@ class DataManager{
             'lezart':     input['lezart']
           };
           Uri uriUrl = Uri.parse('${urlPath}save_abroncs_igenyles.php');
-          http.Response response =      await http.post(uriUrl, body: json.encode(queryParameters), headers: headers);
+          http.Response response =      await safePost(uriUrl, body: json.encode(queryParameters), headers: headers);
           dataQuickCall[check(5)] =     (['[]', '"[]"', '""[]""'].contains(response.body))? [] : json.decode(json.decode(response.body));
           if(kDebugMode) dev.log(dataQuickCall[5].toString());
           if(kDebugMode) dev.log(queryParameters['parameter'].toString());
@@ -769,7 +776,7 @@ class DataManager{
             'datum_ig':   DateFormat('yyyy.MM.dd').format(kLastDay).toString()
           };
           Uri uriUrl = Uri.parse('${urlPath}ask_incomplete_days.php');
-          http.Response response =      await http.post(uriUrl, body: json.encode(queryParameters), headers: headers);
+          http.Response response =      await safePost(uriUrl, body: json.encode(queryParameters), headers: headers);
           if(kDebugMode) dev.log(response.body.toString());
           dataQuickCall[check(6)] =     json.decode(json.decode(response.body));
           break;
@@ -782,7 +789,7 @@ class DataManager{
             'plate_number': input['plate_number']
           };
           Uri uriUrl = Uri.parse('${urlPath}ask_plate_number.php');
-          http.Response response =      await http.post(uriUrl, body: json.encode(queryParameters), headers: headers);
+          http.Response response =      await safePost(uriUrl, body: json.encode(queryParameters), headers: headers);
           if(kDebugMode) dev.log(response.body.toString());
           dataQuickCall[check(6)] =     json.decode(json.decode(response.body));
           break;
@@ -792,7 +799,7 @@ class DataManager{
             'customer':     customer,
           };
           Uri uriUrl = Uri.parse('${urlPath}ask_eseti_munkalap_meghiusulas_okai.php');
-          http.Response response =      await http.post(uriUrl, body: json.encode(queryParameters), headers: headers);
+          http.Response response =      await safePost(uriUrl, body: json.encode(queryParameters), headers: headers);
           if(kDebugMode) dev.log(response.body.toString());
           dataQuickCall[check(7)] =    json.decode(json.decode(response.body));
           break;
@@ -803,7 +810,7 @@ class DataManager{
             'user_id':  userId,
           };
           Uri uriUrl = Uri.parse('${urlPath}ask_panel.php');
-          http.Response response =    await http.post(uriUrl, body: json.encode(queryParameters), headers: headers);
+          http.Response response =    await safePost(uriUrl, body: json.encode(queryParameters), headers: headers);
           if(kDebugMode) dev.log(response.body.toString());
           dataQuickCall[check(8)] =   json.decode(json.decode(response.body));
           break;
@@ -846,7 +853,7 @@ class DataManager{
           };
           if(kDebugMode)print(queryParameters);
           Uri uriUrl =                    Uri.parse('${urlPath}login.php');
-          http.Response response =        await http.post(uriUrl, body: json.encode(queryParameters), headers: headers);
+          http.Response response =        await safePost(uriUrl, body: json.encode(queryParameters), headers: headers);
           data[check(input['number'])] =  await jsonDecode(response.body);
           if(kDebugMode){
             String varString = data[input['number']].toString();
@@ -861,7 +868,7 @@ class DataManager{
             'datum':      CalendarState.selectedDate,
           };
           Uri uriUrl =              Uri.parse('${urlPath}tasks.php');          
-          http.Response response =  await http.post(uriUrl, body: json.encode(queryParameters), headers: headers);
+          http.Response response =  await safePost(uriUrl, body: json.encode(queryParameters), headers: headers);
           data[check(2)] =          await jsonDecode(response.body);
           if(kDebugMode){
             String varString = data[2].toString();
@@ -879,7 +886,7 @@ class DataManager{
             'user_id':      userId
           };
           Uri uriUrl =              Uri.parse('${urlPath}worksheet.php');
-          http.Response response =  await http.post(uriUrl, body: json.encode(queryParameters), headers: headers);
+          http.Response response =  await safePost(uriUrl, body: json.encode(queryParameters), headers: headers);
           if(kDebugMode) print(response.body);
           String varString = (response.body.substring(0,1) == '"')? response.body.substring(1, response.body.length - 1) : response.body;
           dynamic varJson = await jsonDecode(varString);
@@ -911,7 +918,7 @@ class DataManager{
             _=>           'photo_save.php'
           };
           Uri uriUrl =              Uri.parse('$urlPath$phpFileName');
-          http.Response response =  await http.post(uriUrl, body: json.encode(queryParameters), headers: headers);
+          http.Response response =  await safePost(uriUrl, body: json.encode(queryParameters), headers: headers);
           if(kDebugMode) print(response.body);
           data[check(4)] =          [response.reasonPhrase];
           if(kDebugMode){
@@ -928,7 +935,7 @@ class DataManager{
           };
           if(kDebugMode)dev.log(queryParameters.toString());
           Uri uriUrl =              Uri.parse('${urlPath}finish_worksheet.php');
-          http.Response response =  await http.post(uriUrl, body: json.encode(queryParameters), headers: headers);
+          http.Response response =  await safePost(uriUrl, body: json.encode(queryParameters), headers: headers);
           if(kDebugMode) dev.log(response.body);
           data[check(5)] =     (['[]', '"[]"', '""[]""'].contains(response.body))? [] : json.decode(json.decode(response.body));
           SignatureFormState.message =  (data[5].isNotEmpty)? data[5][0] : null;
@@ -948,7 +955,7 @@ class DataManager{
             'user_id':      userId
           };
           Uri uriUrl =              Uri.parse('${urlPath}eseti_munkalap.php');
-          http.Response response =  await http.post(uriUrl, body: json.encode(queryParameters), headers: headers);          
+          http.Response response =  await safePost(uriUrl, body: json.encode(queryParameters), headers: headers);          
           dataQuickCall[check(0)] = await jsonDecode(await jsonDecode(response.body));
           if(kDebugMode) dev.log(dataQuickCall[0].toString());
           break;
@@ -961,7 +968,7 @@ class DataManager{
               'foglalas_id':  0
             };
             Uri uriUrl =              Uri.parse('${urlPath}worksheetForm.php');          
-            http.Response response =  await http.post(uriUrl, body: json.encode(queryParameters), headers: headers);
+            http.Response response =  await safePost(uriUrl, body: json.encode(queryParameters), headers: headers);
             dataQuickCall[check(0)] = await jsonDecode(await jsonDecode(response.body));
           break;
 
@@ -974,7 +981,7 @@ class DataManager{
             'foglalas_id':  0
           };
           Uri uriUrl =              Uri.parse('${urlPath}abroncs_igenyles.php');          
-          http.Response response =  await http.post(uriUrl, body: json.encode(queryParameters), headers: headers);
+          http.Response response =  await safePost(uriUrl, body: json.encode(queryParameters), headers: headers);
           dataQuickCall[check(0)] = await jsonDecode(await jsonDecode(response.body));
           break;
 
@@ -998,7 +1005,7 @@ class DataManager{
         'sql':      input
       };
       Uri uriUrl =              Uri.parse('${urlPath}select_sql.php');          
-      http.Response response =  await http.post(uriUrl, body: json.encode(queryParameters), headers: headers);
+      http.Response response =  await safePost(uriUrl, body: json.encode(queryParameters), headers: headers);
       dynamic result =          await jsonDecode(await jsonDecode(response.body)[0]['result'][0]['b'])['adatok'];
       return result;
     }
@@ -1016,7 +1023,7 @@ class DataManager{
     };
     if(kDebugMode) dev.log(queryParameters['parameter'] ?? '');
     Uri uriUrl =              Uri.parse('${urlPath}execute_sql_from_input.php');          
-    http.Response response =  await http.post(uriUrl, body: json.encode(queryParameters), headers: headers);
+    http.Response response =  await safePost(uriUrl, body: json.encode(queryParameters), headers: headers);
     if(kDebugMode){
       dev.log(response.body);
     }
@@ -1202,7 +1209,7 @@ class DataManager{
     try {if(isPhp){
       Uri uriUrl =              Uri.parse(Uri.encodeFull('$sqlUrlLink$sqlCommand').replaceAll('+', '%2b'));
       //uriUrl =                  Uri.parse(Uri.encodeFull('$sqlUrlLink$sqlCommand').replaceAll('&', '%26'));
-      http.Response response =  await http.post(uriUrl);
+      http.Response response =  await safePost(uriUrl);
       dynamic result =          await jsonDecode(response.body);
       return result;
     }
@@ -1213,7 +1220,7 @@ class DataManager{
         'sql':      sqlCommand
       };
       Uri uriUrl =              Uri.parse('${urlPath}select_sql.php');          
-      http.Response response =  await http.post(uriUrl, body: json.encode(queryParameters), headers: headers);
+      http.Response response =  await safePost(uriUrl, body: json.encode(queryParameters), headers: headers);
       dynamic result =          await jsonDecode(response.body)[0]['result'];
       return result;
     }}
@@ -1242,7 +1249,7 @@ class DataManager{
     try {if(isPhp){
       Uri uriUrl =              Uri.parse(Uri.encodeFull('$sqlUrlLink$sqlCommand').replaceAll('+', '%2b'));
       //uriUrl =                  Uri.parse(Uri.encodeFull('$sqlUrlLink$sqlCommand').replaceAll('&', '%26'));
-      http.Response response =  await http.post(uriUrl);
+      http.Response response =  await safePost(uriUrl);
       dynamic result =          await jsonDecode(response.body);
       return result;
     } 
@@ -1268,7 +1275,7 @@ class DataManager{
         'sql':      sqlCommand,
       };
       final uriUrl = Uri.parse('${urlPath}select_sql.php');
-      final response = await http.post(
+      final response = await safePost(
         uriUrl,
         body: json.encode(queryParameters),
         headers: headers,
@@ -1302,12 +1309,84 @@ class DataManager{
     );
   }
 
-  // ---------- < Methods [4] > ------ ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ----------
+  // ---------- < Methods [5] > ------ ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ----------
   bool _isItEmpty(dynamic input) {
     if (input == null) return true;
     if (input is num) return input == 0; // handle numeric 0
     final s = input.toString().trim().toLowerCase();
     return s.isEmpty || s == 'null' || s == '0';
+  }
+
+  Future<http.Response> safePost(
+    Uri uriUrl, {
+    dynamic body,
+    int maxRetries = 5,
+    Duration timeout = const Duration(seconds: 12),
+    Map<String, String>? headers,
+  }) async {
+    int attempt = 0;
+    while (attempt < maxRetries) {
+      try {
+        attempt++;
+        final response = await http
+            .post(
+              uriUrl,
+              body: body,
+              headers: headers ?? this.headers,
+            )
+            .timeout(timeout);
+        isServerAvailable = true;
+        errorMessage = '';
+        activeRetryCalls = 0;
+        connectionSnackBarVisible = false;
+        Global.scaffoldMessengerKey.currentState?.hideCurrentSnackBar();
+        return response;
+      } on TimeoutException {
+        isServerAvailable = false;
+        errorMessage = 'A kapcsolat a szerverrel megszakadt!';
+      } on http.ClientException {
+        isServerAvailable = false;
+        errorMessage = 'Nincs internet kapcsolat!';
+      } catch (e) {
+        isServerAvailable = false;
+        if (e.toString().contains('SocketException')) {
+          errorMessage = 'Nincs internet kapcsolat!';
+        } else {
+          errorMessage = 'Kapcsolati hiba történt!';
+        }
+        if (kDebugMode) {
+          dev.log(e.toString());
+        }
+      }
+      activeRetryCalls++;
+      if (!connectionSnackBarVisible) {
+        connectionSnackBarVisible = true;
+        Global.scaffoldMessengerKey.currentState?.hideCurrentSnackBar();
+        Global.scaffoldMessengerKey.currentState
+            ?.showSnackBar(
+              SnackBar(
+                duration: const Duration(seconds: 3),
+                content: Text(
+                  '$errorMessage ⏳ Újra próbálkozás...',
+                ),
+              ),
+            )
+            .closed
+            .then((_) {
+          connectionSnackBarVisible = false;
+        });
+      }
+      if (attempt >= maxRetries) {
+        activeRetryCalls = activeRetryCalls > 0 ? activeRetryCalls - 1 : 0;
+        if (activeRetryCalls == 0) {
+          connectionSnackBarVisible = false;
+          Global.scaffoldMessengerKey.currentState?.hideCurrentSnackBar();
+        }
+        throw Exception(errorMessage);
+      }
+      await Future.delayed(Duration(seconds: attempt * 2));
+    }
+    throw Exception(errorMessage);
   }
 }
 

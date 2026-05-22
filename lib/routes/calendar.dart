@@ -128,6 +128,14 @@ class CalendarState extends State<Calendar> {
                       child:    SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.lightBlueAccent))
                     ))
                   ]))),
+                  Visibility(visible:(closedInList[index] && ['Eseti'].contains(jelleg[index])), child: Padding(padding: const EdgeInsets.all(5), child: TextButton(
+                    onPressed:  () => _buttonIgenylesPressed(index),
+                    style:      ButtonStyle(
+                      backgroundColor:  WidgetStatePropertyAll(Global.getColorOfButton(buttonIgenyles[index])),
+                      foregroundColor:  WidgetStatePropertyAll(Global.getColorOfIcon(buttonIgenyles[index]))
+                    ),
+                    child:      Row(children: [(buttonIgenyles[index] == ButtonState.default0)? const Icon(Icons.add) : _progressIndicator(Global.getColorOfIcon(ButtonState.loading)), const Text(' Igénylés')])
+                  ))),
                   Visibility(visible: closedInList[index], child: const Padding(
                     padding: EdgeInsets.symmetric(horizontal: 10, vertical: 10),
                     child: Icon(Icons.done, color: Color.fromRGBO(0, 100, 0, 1), size: 40)
@@ -137,7 +145,7 @@ class CalendarState extends State<Calendar> {
               tileColor:  (selectedIndexList == index)? const Color.fromARGB(255, 200, 255, 200) : (closedInList[index])? const Color.fromRGBO(230, 255, 230, 1) : null,
               onTap:      () => (selectedIndexList == null)? setState(() {selectedIndexList = index; _functionPress(index);}) : null
             )),
-            SizedBox(height: 90, child: Align(alignment: Alignment.bottomCenter, child: _drawButtonIgenyles(index)))
+            //SizedBox(height: 90, child: Align(alignment: Alignment.bottomCenter, child: _drawButtonIgenyles(index)))
           ]);
         }
       ))
@@ -206,7 +214,7 @@ class CalendarState extends State<Calendar> {
     )
   ));
 
-  Widget _drawButtonIgenyles(int index){
+  /*Widget _drawButtonIgenyles(int index){
     if(DataManager.isIgenylesDisabled) buttonIgenyles[index] = ButtonState.disabled;
     return (DataManager.data[2][index]['igenyles'].toString() == '1')
     //return (closedInList[index] && ['Eseti'].contains(jelleg[index]))
@@ -219,7 +227,7 @@ class CalendarState extends State<Calendar> {
       ])
     ))
     : Container();
-  }
+  }*/
 
   // ---------- < Methods [1] > ---------- ---------- ---------- ---------- ---------- ---------- ----------
   @override
@@ -268,8 +276,9 @@ class CalendarState extends State<Calendar> {
     await DataManager(quickCall: QuickCall.verzio).beginQuickCall;
     if(!kIsWeb && LogInState.updateNeeded) Restart.restartApp();
     Global.routeNext =        NextRoute.tabForm;
-    await DataManager(input: {'jelleg': jelleg[index]}).beginProcess;
-    if(errorMessagePopUp.isNotEmpty){
+    bool isClosedSzezonalis = (['Szezonális'].contains(jelleg[index]) && closedInList[index]);    
+    if(!isClosedSzezonalis) await DataManager(input: {'jelleg': jelleg[index]}).beginProcess;
+    if(!isClosedSzezonalis && errorMessagePopUp.isNotEmpty){
       await Global.showAlertDialog(context, title: (errorMessagePopUpTitle.isNotEmpty)? errorMessagePopUpTitle : 'Hiba', content: errorMessagePopUp);
       Global.routeBack;
       setState(() => selectedIndexList = null);

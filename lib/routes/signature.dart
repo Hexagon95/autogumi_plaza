@@ -165,7 +165,7 @@ class SignatureFormState extends State<SignatureForm> {
 
       default: return SizedBox(height: 22, width: getWidth(), child: Row(mainAxisAlignment: MainAxisAlignment.start, children: [
         SizedBox(width: getWidth() / 2.1, child: Text('${input['name']}:',   style: const TextStyle(color: Color.fromARGB(255, 153, 153, 153), fontSize: 16))),
-        Text(input['value'],  style: const TextStyle(color: Color.fromARGB(255, 120, 120, 120), fontSize: 16))
+        Text(input['value']?.toString() ?? '', style: const TextStyle(color: Color.fromARGB(255, 120, 120, 120), fontSize: 16))
       ]));
     }
   }
@@ -294,7 +294,7 @@ class SignatureFormState extends State<SignatureForm> {
     super.dispose();
   }
 
-  Future get _checkPressed async{
+  /*Future get _checkPressed async{
     String title =    'Adatlap elmentése';
     String content =  'Menteni kívánja a változtatásokat és lezárja az adatlapot?';
     if ((_controller.isNotEmpty || DataFormState.buttonListPictures.isNotEmpty) && await Global.yesNoDialog(context, title: title, content: content)) {
@@ -328,6 +328,64 @@ class SignatureFormState extends State<SignatureForm> {
       else{
         if(message is List) message = message[0];
         await Global.showAlertDialog(context, content: message['message'], title: message['name']);
+        setState(() => buttonCheck = ButtonState.default0);
+      }
+    }
+  }*/
+
+  Future get _checkPressed async {
+    try {
+      String title = 'Adatlap elmentése';
+      String content = 'Menteni kívánja a változtatásokat és lezárja az adatlapot?';
+      if (!((_controller.isNotEmpty || DataFormState.buttonListPictures.isNotEmpty) &&
+          await Global.yesNoDialog(context, title: title, content: content))) {
+        return;
+      }
+      _controller.disabled = true;
+      setState(() => buttonCheck = ButtonState.loading);
+      final Uint8List? data = await _controller.toPngBytes();
+      if (data != null) signatureBase64 = base64.encode(data);
+      DataManager.dataQuickCall[0]['beallitasok'][getIndexFromOptions('Átvevő aláírása')]['value'] = signatureBase64;
+      DataManager.dataQuickCall[0]['beallitasok'][getIndexFromOptions('Átvevő neve')]['value'] = editingController.text;
+      switch (DataFormState.workType) {
+        case 'Igénylés':
+          await DataManager(
+            quickCall: QuickCall.saveAbroncsIgenyles,
+            input: {'lezart': 1},
+          ).beginQuickCall;
+          break;
+        case 'Eseti':
+          await DataManager(
+            quickCall: QuickCall.saveEsetiMunkalapFelvitele,
+            input: {'lezart': 1},
+          ).beginQuickCall;
+          break;
+        default:
+          Global.routeNext = NextRoute.signature;
+          await DataManager().beginProcess;
+          Global.routeBack;
+          break;
+      }
+      if (message == null ||
+          ['NULL', 'Null', 'null', '', ' ', '[]', '[ ]', '{}', '{ }'].contains(message.toString()) ||
+          (message is Map && [null, '', ' ', 'null'].contains(message['message']))) {
+        resetVariables;
+        CalendarState.selectedIndexList = null;
+        if (mounted) {
+          Navigator.pop(context, {'result': true});
+        }
+      } else {
+        if (message is List) message = message[0];
+        await Global.showAlertDialog(context, content: message['message'], title: message['name']);
+        if (mounted) setState(() => buttonCheck = ButtonState.default0);
+      }
+    } catch (e) {
+      if (mounted) {
+        await Global.showAlertDialog(
+          context,
+          title: 'Hiba',
+          content: e.toString(),
+        );
         setState(() => buttonCheck = ButtonState.default0);
       }
     }

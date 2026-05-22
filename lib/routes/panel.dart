@@ -245,7 +245,6 @@ class PanelState extends State<Panel> {//-------- ---------- ---------- --------
 
       case 'igenyles':
       case 'szezonalis':
-      case 'esetimunkalap':
         int foglalasId =          int.parse(((item['parameters'] is String)? jsonDecode(item['parameters'])['id'] : item['parameters']['id']).toString());
         DataManager.foglalasId =  foglalasId.toString();
         Global.routeNext =        (foglalasId == 0)? getNextRoute(item['type'].toString()) : NextRoute.tabForm;
@@ -268,6 +267,61 @@ class PanelState extends State<Panel> {//-------- ---------- ---------- --------
         await DataManager(quickCall: QuickCall.giveDatas).beginQuickCall;
         DataFormState.bizonylatId = ((item['parameters'] is String)? jsonDecode(item['parameters'])['id'] : item['parameters']['id']).toString();
         await Navigator.pushNamed(context, '/dataForm');
+        break;
+
+      case 'esetimunkalap':
+        final params = (item['parameters'] is String)? jsonDecode(item['parameters']) : item['parameters'];
+        int foglalasId = int.parse(params['id'].toString());
+        DataManager.foglalasId = foglalasId.toString();
+        final type = item['type'].toString();
+        final workType = workTypeString(type);
+        Global.routeNext = (foglalasId == 0)? getNextRoute(type) : NextRoute.tabForm;
+        if (foglalasId == 0) {
+          await DataManager(input: {
+            'datum': DateTime.now(),
+            'foglalas_id': foglalasId,
+            'parent_id': params['parent_id'],
+          }).beginProcess;
+          await DataManager(quickCall: QuickCall.giveDatas).beginQuickCall;
+          DataFormState.workType = workType;
+          await Navigator.pushNamed(context, '/dataForm');
+          // ✅ after creation, immediately open the created Eseti munkalap
+          if (type == 'esetimunkalap' && DataManager.dataQuickCall.length > 5 && DataManager.dataQuickCall[5] != null && DataManager.dataQuickCall[5].length > 2){
+            final newFoglalasId = DataManager.dataQuickCall[5][1];
+            final newParentId = DataManager.dataQuickCall[5][2];
+            if (!mounted) return;
+            setState(() => isRefreshingPanel = true);
+            Global.routeNext = NextRoute.tabForm;
+            DataManager.foglalasId = newFoglalasId.toString();
+            await DataManager(input: {'jelleg': 'Eseti', 'foglalasId': newFoglalasId}).beginProcess;
+            await DataManager(quickCall: QuickCall.tabForm, input: {
+              'jelleg': 'Eseti',
+              'datum': DateTime.now(),
+              'foglalas_id': newFoglalasId,
+              'parent_id': newParentId,
+            }).beginQuickCall;
+            await DataManager(quickCall: QuickCall.giveDatas).beginQuickCall;
+            await DataManager().formOpen;
+            DataFormState.workType = 'Eseti';
+            DataFormState.isClosed = false;
+            DataFormState.bizonylatId = newFoglalasId.toString();
+            if (!mounted) return;
+            setState(() => isRefreshingPanel = false);
+            await Navigator.pushNamed(context, '/dataForm');
+          }
+        }
+        else{
+          await DataManager(quickCall: QuickCall.tabForm, input: {
+            'jelleg':       workType,
+            'datum':        DateTime.now(),
+            'foglalas_id':  foglalasId,
+            'parent_id':    params['parent_id'],
+          }).beginQuickCall;
+          DataFormState.workType = workType;
+          await DataManager(quickCall: QuickCall.giveDatas).beginQuickCall;
+          DataFormState.bizonylatId = foglalasId.toString();
+          await Navigator.pushNamed(context, '/dataForm');
+        }
         break;
 
       case 'alairas':

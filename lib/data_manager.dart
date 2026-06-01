@@ -22,11 +22,12 @@ import 'package:autogumi_plaza/utils.dart';
 
 class DataManager{
   // ---------- < Variables [Static] > - ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ----------
-  static String thisVersion =                       '1.46a'; // <--- 🛜 A WEB-es verziót is firssíteni kell!!!!!!
+  static String thisVersion =                       '1.47a'; // <--- 🛜 A WEB-es verziót is firssíteni kell!!!!!!
   static int verzioTest =                           0; // <--- anything other than 0 will draw "[Teszt #]" at the LogIn screen.
-  static int logInNotification =                    0; // <--- 0 will have no notification, other than 0 will draw a red stamp on the menu options' top right corner.
+  static int logInNotification =                    1; // <--- 0 will have no notification, other than 0 will draw a red stamp on the menu options' top right corner.
   static String webAppLink =                        'https://app.mosaic.hu/flutter_web/szerviz_mezandmol/index.html';
-  static String infoUpdate =                        '◆ Űrlap lezárásánál történő lefagyás kijavítása.\n◆ Éjfélkor az app kilépteti a felhasználót.';
+  static String qrCodeGeneratorLink =               'https://app.mosaic.hu/flutter_web/qr_code_generator/index.html';
+  static String infoUpdate =                        '◆ Eseti munkalap létrehozását követő, fényképes lezárás hibáinak kijavítása.\n◆ Panel csak a Dashboard-on frissít, más oldalon nem.';
   
   // 🤖 OR 🛜 Edit here!!!! ⬇️                      ⬇️ And here!!!
   static const AppIs constAppIs =                   AppIs.default0; // <--- Set to default0 or manually enforce behaviour of the app.
@@ -762,6 +763,8 @@ class DataManager{
           };
           Uri uriUrl = Uri.parse('${urlPath}save_abroncs_igenyles.php');
           http.Response response =      await safePost(uriUrl, body: json.encode(queryParameters), headers: headers);
+          if(kDebugMode) dev.log(queryParameters['parameter'].toString());
+          if(kDebugMode) dev.log(response.body);
           dataQuickCall[check(5)] =     (['[]', '"[]"', '""[]""'].contains(response.body))? [] : json.decode(json.decode(response.body));
           if(kDebugMode) dev.log(dataQuickCall[5].toString());
           if(kDebugMode) dev.log(queryParameters['parameter'].toString());
@@ -1142,7 +1145,7 @@ class DataManager{
           data[2] = varData;
           for (var item in varData) {
             CalendarState.buttonDelete.add(ButtonState.default0);
-            CalendarState.buttonIgenyles.add(ButtonState.default0);
+            CalendarState.buttonIgenyles.add(Global.trueString.contains(item['add_igenyles'].toString())? ButtonState.default0 : ButtonState.hidden);
             CalendarState.itemsInList.add("${item['rendszam']}\n${item['partner']}\n${item['jelleg']}\n${item['idopont']}");
             CalendarState.jelleg.add(item['jelleg']);
             CalendarState.closedInList.add((item['lezart'].toString() == '1'));

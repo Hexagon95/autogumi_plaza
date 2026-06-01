@@ -1,10 +1,12 @@
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'dart:async';
 import 'package:autogumi_plaza/tools/probe_measuring.dart'  if(dart.library.html) 'package:autogumi_plaza/tools/web/probe_measuring.dart' as probe_measuring;
 import 'package:autogumi_plaza/tools/photo_take.dart'       if(dart.library.html) 'package:autogumi_plaza/tools/web/photo_take.dart' as photo_take;
 import 'package:autogumi_plaza/routes/pdf_signature.dart'   if(dart.library.html) 'package:autogumi_plaza/routes/web/pdf_signature.dart';
+import 'package:autogumi_plaza/tools/android_safe_area.dart';
 import 'package:autogumi_plaza/routes/photo_preview.dart';
 import 'package:autogumi_plaza/tools/image_picker.dart';
 import 'package:autogumi_plaza/routes/data_form.dart';
@@ -81,6 +83,7 @@ class _MidnightLogoutGuardState extends State<MidnightLogoutGuard>
 
 void main() async{
   WidgetsFlutterBinding.ensureInitialized();
+  if(!kIsWeb) {SystemChrome.setEnabledSystemUIMode(SystemUiMode.manual, overlays: SystemUiOverlay.values);}
   await initializeDateFormatting('hu_HU', null);
   await DataManager.identitySQLite;
   Global.routeNext = NextRoute.logIn;
@@ -101,10 +104,15 @@ void main() async{
   runApp(
     MidnightLogoutGuard(
       child: MaterialApp(
-        navigatorKey: navigatorKey,
-        initialRoute: '/',
-        routes: routes,
+        navigatorKey:         navigatorKey,
+        initialRoute:         '/',
+        routes:               routes,
         scaffoldMessengerKey: Global.scaffoldMessengerKey,
+        builder:              (context, child) {
+          return AndroidSafeArea(
+            child: child ?? const SizedBox.shrink(),
+          );
+        },
       ),
     ),
   );

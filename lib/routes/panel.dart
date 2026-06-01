@@ -190,9 +190,18 @@ class PanelState extends State<Panel> {//-------- ---------- ---------- --------
   void initState() {
     super.initState();
     refreshPanel();
-    refreshTimer = Timer.periodic(const Duration(seconds: 30), (_) {
-      refreshPanel();
-    });
+    refreshTimer = Timer.periodic(
+      const Duration(seconds: 30),
+      (_) async {
+        if (
+          mounted &&
+          Global.currentRoute == NextRoute.panel &&
+          !isRefreshingPanel
+        ) {
+          await refreshPanel();
+        }
+      },
+    );
   }
 
   List<Map<String, dynamic>> normalizeItems(dynamic v) {

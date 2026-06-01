@@ -128,8 +128,9 @@ class CalendarState extends State<Calendar> {
                       child:    SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.lightBlueAccent))
                     ))
                   ]))),
-                  Visibility(visible:(closedInList[index] && ['Eseti'].contains(jelleg[index])), child: Padding(padding: const EdgeInsets.all(5), child: TextButton(
-                    onPressed:  () => _buttonIgenylesPressed(index),
+                  //Visibility(visible:(closedInList[index] && ['Eseti'].contains(jelleg[index])), child: Padding(padding: const EdgeInsets.all(5), child: TextButton(
+                  Visibility(visible:(buttonIgenyles[index] != ButtonState.hidden), child: Padding(padding: const EdgeInsets.all(5), child: TextButton(
+                    onPressed:  () => (buttonIgenyles[index] == ButtonState.default0)? _buttonIgenylesPressed(index) : null,
                     style:      ButtonStyle(
                       backgroundColor:  WidgetStatePropertyAll(Global.getColorOfButton(buttonIgenyles[index])),
                       foregroundColor:  WidgetStatePropertyAll(Global.getColorOfIcon(buttonIgenyles[index]))
@@ -213,21 +214,6 @@ class CalendarState extends State<Calendar> {
       )
     )
   ));
-
-  /*Widget _drawButtonIgenyles(int index){
-    if(DataManager.isIgenylesDisabled) buttonIgenyles[index] = ButtonState.disabled;
-    return (DataManager.data[2][index]['igenyles'].toString() == '1')
-    //return (closedInList[index] && ['Eseti'].contains(jelleg[index]))
-    ? SizedBox(height: 40, child: TextButton(
-      style:      ButtonStyle(backgroundColor: MaterialStateProperty.all(Global.getColorOfButton(buttonIgenyles[index]))),
-      onPressed:  () => (buttonIgenyles[index] == ButtonState.default0) ? _buttonIgenylesPressed(index) : null,
-      child:      Row(mainAxisSize: MainAxisSize.min, mainAxisAlignment: MainAxisAlignment.center, children: [
-        Visibility(visible: (buttonIgenyles[index] == ButtonState.loading), child: _progressIndicator(Global.getColorOfIcon(buttonIgenyles[index]))),
-        Text('📄 Igénylés', style: TextStyle(fontSize: 18, color: Global.getColorOfIcon(buttonIgenyles[index])))
-      ])
-    ))
-    : Container();
-  }*/
 
   // ---------- < Methods [1] > ---------- ---------- ---------- ---------- ---------- ---------- ----------
   @override
@@ -352,40 +338,7 @@ class CalendarState extends State<Calendar> {
       title:      'Új Bizonylat Felvitele'
     );
     buttonAddWork = ButtonState.default0;
-    if(varString != null) {switch(varString){
-      /*case 'Eseti Munkalap':
-        Global.routeNext = NextRoute.esetiMunkalapFelvitele;
-        await DataManager(input: {'datum': _focusedDay}).beginProcess;
-        await DataManager(quickCall: QuickCall.giveDatas).beginQuickCall;
-        await Navigator.pushNamed(context, '/dataForm');
-        if(DataManager.dataQuickCall[5] != null && DataManager.dataQuickCall[5].length > 1){
-          Global.currentRoute;
-          setState(() => isRefreshingPanel = true);
-          await DataManager().beginProcess;
-          await DataManager(quickCall: QuickCall.askIncompleteDays).beginQuickCall;
-          setState((){});
-          await DataManager(quickCall: QuickCall.tabForm, input: {
-            'jelleg':       'Eseti',
-            'datum':        DateTime.now(),
-            'foglalas_id':  DataManager.dataQuickCall[5][1],
-            'parent_id':    DataManager.dataQuickCall[5][2]
-          }).beginQuickCall;
-          await DataManager(quickCall: QuickCall.giveDatas).beginQuickCall;
-          await DataManager().formOpen;
-          DataFormState.workType = 'Eseti';
-          DataFormState.isClosed = false;
-          selectedIndexList =      null;
-          setState(() => isRefreshingPanel = false);
-          Global.routeNext = NextRoute.tabForm;
-          await Navigator.pushNamed(context, '/dataForm');
-          await DataManager().beginProcess;
-          await DataManager(quickCall: QuickCall.askIncompleteDays).beginQuickCall;
-          setState((){});
-        }
-        await DataManager().beginProcess;
-        await DataManager(quickCall: QuickCall.askIncompleteDays).beginQuickCall;
-        setState((){});
-        break;*/
+    if(varString != null) {switch(varString){      
 
       case 'Eseti Munkalap':
         Global.routeNext = NextRoute.esetiMunkalapFelvitele;
@@ -411,6 +364,7 @@ class CalendarState extends State<Calendar> {
           }).beginQuickCall;
           await DataManager(quickCall: QuickCall.giveDatas).beginQuickCall;
           await DataManager().formOpen;
+          DataManager.foglalasId = foglalasId;
           DataFormState.workType = 'Eseti';
           DataFormState.isClosed = false;
           selectedIndexList = null;
@@ -480,7 +434,7 @@ class CalendarState extends State<Calendar> {
     setState((){});
   }
 
-  Future _buttonIgenylesPressed(int index) async{
+  Future _buttonIgenylesPressed(int index) async {if(await Global.yesNoDialog(context, title: 'Igénylés létrehozása', content: 'Kíván új igénylést létrehozni a lezárt munkalap adataival?')){
     setState(() => buttonIgenyles[index] = ButtonState.loading);
     Global.routeNext = NextRoute.abroncsIgenyles;
     await DataManager(input: {
@@ -489,11 +443,34 @@ class CalendarState extends State<Calendar> {
     }).beginProcess;
     await DataManager(quickCall: QuickCall.giveDatas).beginQuickCall;
     buttonIgenyles[index] = ButtonState.default0;
-    await Navigator.pushNamed(context, '/dataForm');
+    dynamic result = await Navigator.pushNamed(context, '/dataForm');
+    DataManager.dataQuickCall[5];
+    if([true].contains(result)){ try{
+      errorMessage =                          '';
+      errorMessagePopUp =                     '';
+      errorMessagePopUpTitle =                '';
+      Global.routeNext =        NextRoute.tabForm;      
+      await DataManager(quickCall: QuickCall.tabForm, input: {
+        'jelleg':       'Igénylés',
+        'foglalas_id':  DataManager.dataQuickCall[5][1],
+        'datum':        DateTime.now()
+      }).beginQuickCall;
+      await DataManager(quickCall: QuickCall.giveDatas).beginQuickCall;
+      await DataManager().formOpen;      
+      DataFormState.workType = 'Igénylés';
+      DataFormState.isClosed = false;
+      selectedIndexList =      null;
+      setState((){});
+      await Navigator.pushNamed(context, '/dataForm');
+      await DataManager().beginProcess;
+      await DataManager(quickCall: QuickCall.askIncompleteDays).beginQuickCall;
+      setState((){});
+
+    } catch(_){}}
     await DataManager().beginProcess;
     await DataManager(quickCall: QuickCall.askIncompleteDays).beginQuickCall;
     setState((){});
-  }
+  }}
 
   List<Event> _getEventsForDay(DateTime day){
     List<Event> listEvent = List<Event>.empty(growable: true);

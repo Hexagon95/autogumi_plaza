@@ -155,7 +155,7 @@ class DataManager{
                 'customer':     customer,
                 'eszkoz_id':    identity.toString(),
                 'datum':        (input['datum'] != null)? input['datum'].toString().split(' ')[0] : CalendarState.selectedDate,
-                'foglalas_id':  input?['foglalas_id'] ?? data[2][DataFormState.selectedIndexInCalendar!]['id'].toString()
+                'foglalas_id':  (input['foglalas_id'] ?? data[2][DataFormState.selectedIndexInCalendar!]['id'].toString()).toString()
               };
               Uri uriUrl =                Uri.parse('${urlPath}abroncs_igenyles.php');
               http.Response response =    await safePost(uriUrl, body: json.encode(queryParameters), headers: headers);
@@ -167,8 +167,8 @@ class DataManager{
                 'customer':     customer,
                 'eszkoz_id':    identity.toString(),
                 'datum':        (input['datum'] != null)? input['datum'].toString().split(' ')[0] : CalendarState.selectedDate,
-                'foglalas_id':  input['foglalas_id'] ?? data[2][DataFormState.selectedIndexInCalendar!]['id'].toString(),
-                'parent_id':    input['parent_id'],
+                'foglalas_id':  (input['foglalas_id'] ?? data[2][DataFormState.selectedIndexInCalendar!]['id'].toString()).toString(),
+                'parent_id':    input['parent_id'].toString(),
                 'user_id':      userId
               };
               Uri uriUrl =              Uri.parse('${urlPath}worksheetFormEseti.php');
@@ -880,7 +880,7 @@ class DataManager{
           break;
 
         case NextRoute.tabForm:
-          foglalasId =          input['foglalasId'] ?? data[2][DataFormState.selectedIndexInCalendar!]['id'].toString();
+          foglalasId =          (input['foglalasId'] ?? data[2][DataFormState.selectedIndexInCalendar!]['id'].toString()).toString();
           data[check(3)] =      [];
           if(['Eseti', 'Igénylés'].contains(input['jelleg'])) break;
           var queryParameters = {

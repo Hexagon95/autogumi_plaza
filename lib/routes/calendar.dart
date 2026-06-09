@@ -364,7 +364,7 @@ class CalendarState extends State<Calendar> {
           }).beginQuickCall;
           await DataManager(quickCall: QuickCall.giveDatas).beginQuickCall;
           await DataManager().formOpen;
-          DataManager.foglalasId = foglalasId;
+          DataManager.foglalasId = foglalasId.toString();
           DataFormState.workType = 'Eseti';
           DataFormState.isClosed = false;
           selectedIndexList = null;

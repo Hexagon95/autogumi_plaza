@@ -759,7 +759,7 @@ class DataFormState extends State<DataForm> {//-- ---------- ---------- --------
                 }),
                 currentTime:  ( thisData[index]['variable'] != null)? DateTime.parse(thisData[index]['variable']) : DateTime.now(),
                 maxTime:      (Global.currentRoute == NextRoute.esetiMunkalapFelvitele)? DateTime.now() : null,
-                locale:       picker.LocaleType.hu
+                locale:       picker.LocaleType.en
               );
             },
             icon: const Icon(Icons.calendar_month, size: 30)

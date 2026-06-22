@@ -31,7 +31,6 @@ class CalendarState extends State<Calendar> {
   static List<String> jelleg =              List<String>.empty(growable: true);
   static List<bool>   closedInList =        List<bool>.empty(growable: true);
   static String selectedDate =              DateFormat('yyyy.MM.dd').format(DateTime.now()).toString();
-  static String title =                     '';
   static String errorMessage =              '';
   static String errorMessagePopUp =         '';
   static String errorMessagePopUpTitle =    '';
@@ -62,7 +61,7 @@ class CalendarState extends State<Calendar> {
   Widget build(BuildContext context) {    
     return WillPopScope(onWillPop: () => _handlePop, child: Scaffold(
       appBar: AppBar(
-        title:            Text('$title  >  ${(isListStockInfoOpen)? 'Készlet infó' : 'Feladatok'}'),
+        title:            Text('${DataManager.szervizMegnevezes}  >  ${(isListStockInfoOpen)? 'Készlet infó' : 'Feladatok'}'),
         backgroundColor:  Global.getColorOfButton(ButtonState.default0),
       ),
       floatingActionButton:         Column(mainAxisSize: MainAxisSize.min, children: [_drawButtonInquiries, _drawButtonAddWork]),

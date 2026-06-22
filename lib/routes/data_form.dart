@@ -447,7 +447,7 @@ class DataFormState extends State<DataForm> {//-- ---------- ---------- --------
   Widget _getWidget(List<dynamic> thisData, dynamic input, int index){
     bool editable =          (Global.trueString.contains(input['editable'].toString()));
     final newText = _noNullText(Global.parse(thisData[index]['value']?.toString()));
-    if (controller[index].text != newText && !focusNode[index].hasFocus) {controller[index].text = newText;}
+    if (controller [index].text != newText && !focusNode[index].hasFocus) {controller[index].text = newText;}
     double getWidth(int index) {int sorDB = 0; for(var item in thisData) {if(item['sor'] == thisData[index]['sor']) sorDB++;} return MediaQuery.of(context).size.width / sorDB - 22;}
     TextInputType? getKeyboard(String? keyboardType) {if(keyboardType == null) return null; switch(keyboardType){
       case 'number':  return TextInputType.number;

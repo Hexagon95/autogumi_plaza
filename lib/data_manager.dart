@@ -22,12 +22,12 @@ import 'package:autogumi_plaza/utils.dart';
 
 class DataManager{
   // ---------- < Variables [Static] > - ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ----------
-  static String thisVersion =                       '1.47a'; // <--- 🛜 A WEB-es verziót is firssíteni kell!!!!!!
+  static String thisVersion =                       '1.48'; // <--- 🛜 A WEB-es verziót is firssíteni kell!!!!!!
   static int verzioTest =                           0; // <--- anything other than 0 will draw "[Teszt #]" at the LogIn screen.
-  static int logInNotification =                    1; // <--- 0 will have no notification, other than 0 will draw a red stamp on the menu options' top right corner.
+  static int logInNotification =                    0; // <--- 0 will have no notification, other than 0 will draw a red stamp on the menu options' top right corner.
   static String webAppLink =                        'https://app.mosaic.hu/flutter_web/szerviz_mezandmol/index.html';
   static String qrCodeGeneratorLink =               'https://app.mosaic.hu/flutter_web/qr_code_generator/index.html';
-  static String infoUpdate =                        '◆ Eseti munkalap létrehozását követő, fényképes lezárás hibáinak kijavítása.\n◆ Panel csak a Dashboard-on frissít, más oldalon nem.';
+  static String infoUpdate =                        '◆ Több apróbb módosítás.';
   
   // 🤖 OR 🛜 Edit here!!!! ⬇️                      ⬇️ And here!!!
   static const AppIs constAppIs =                   AppIs.default0; // <--- Set to default0 or manually enforce behaviour of the app.
@@ -47,6 +47,7 @@ class DataManager{
   static bool connectionSnackBarVisible =           false;
   static int activeRetryCalls =                     0;
   static bool isServerAvailable =                   true;
+  static String szervizMegnevezes =                 '';
   static String actualVersion =                     thisVersion;
   static String customer =                          'mosaic';
   static const String nameOfApp =                   'MezandMol Szervíz';
@@ -168,7 +169,7 @@ class DataManager{
                 'eszkoz_id':    identity.toString(),
                 'datum':        (input['datum'] != null)? input['datum'].toString().split(' ')[0] : CalendarState.selectedDate,
                 'foglalas_id':  (input['foglalas_id'] ?? data[2][DataFormState.selectedIndexInCalendar!]['id'].toString()).toString(),
-                'parent_id':    input['parent_id'].toString(),
+                'parent_id':    input['parent_id']?.toString(),
                 'user_id':      userId
               };
               Uri uriUrl =              Uri.parse('${urlPath}worksheetFormEseti.php');
@@ -1128,8 +1129,8 @@ class DataManager{
       case NextRoute.logIn:
         LogInState.errorMessage = data[input['number']][0]['error'].toString();
         if(LogInState.errorMessage.isEmpty){
-          if(input['number'] == 0) customer = data[0][0]['Ugyfel_id'];
-          if(input['number'] == 1) CalendarState.title = data[1][0]['szerviz_megnevezes'].toString();
+          if(input['number'] == 0) customer =           data[0][0]['Ugyfel_id'];
+          if(input['number'] == 1) szervizMegnevezes =  data[1][0]['szerviz_megnevezes'].toString();
         }
         break;
 

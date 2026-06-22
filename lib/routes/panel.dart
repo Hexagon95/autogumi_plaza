@@ -52,7 +52,7 @@ class PanelState extends State<Panel> {//-------- ---------- ---------- --------
   @override
   Widget build(BuildContext context) {
     return WillPopScope(onWillPop: _handlePop, child: Scaffold(
-      appBar: AppBar(title: const Text("Dashboard")),
+      appBar: AppBar(title: Text("Dashboard - ${DataManager.szervizMegnevezes}")),
       body: Stack(
         children: [
           _drawPanel,

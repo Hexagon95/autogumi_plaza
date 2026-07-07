@@ -22,20 +22,23 @@ class Calendar extends StatefulWidget {
 }
 
 class CalendarState extends State<Calendar> {
-  // ---------- < Constructor > ---------- ---------- ---------- ---------- ---------- ---------- ----------
 
-  // ---------- < Variables [Static] > --- ---------- ---------- ---------- ---------- ---------- ----------
-  static List<ButtonState> buttonDelete =   List<ButtonState>.empty(growable: true);
-  static List<ButtonState> buttonIgenyles = List<ButtonState>.empty(growable: true);
-  static List<String> itemsInList =         List<String>.empty(growable: true);
-  static List<String> jelleg =              List<String>.empty(growable: true);
-  static List<bool>   closedInList =        List<bool>.empty(growable: true);
-  static String selectedDate =              DateFormat('yyyy.MM.dd').format(DateTime.now()).toString();
-  static String errorMessage =              '';
-  static String errorMessagePopUp =         '';
-  static String errorMessagePopUpTitle =    '';
-  static List<dynamic> incompleteDays =     [];
-  static List<String> reasonOfDelete =      [
+  // ---------- [⚡️🌸 static simple variables] ----- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- //
+  static List<ButtonState> buttonDelete = [];
+  static List<dynamic> buttonIgenyles =   [];
+  static List<String> itemsInList =       [];
+  static List<String> jelleg =            [];
+  static List<bool>   closedInList =      [];
+  static String selectedDate =            DateFormat('yyyy.MM.dd').format(DateTime.now()).toString();
+  static String errorMessage =            '';
+  static String errorMessagePopUp =       '';
+  static String errorMessagePopUpTitle =  '';
+  static List<dynamic> incompleteDays =   [];
+  static dynamic plateNumberResponse;
+  static int? selectedIndexList;
+
+  // ---------- [⚡️💎 static complex variables] ---- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- //
+  static List<String> reasonOfDelete = [
     "Az Ügyfél nem jött el a szerelés időpontjára.",
     "Sérülten tárolt abroncs miatt meghiúsult szerelés.",
     "Nincs itt a gumiabroncs.",
@@ -44,10 +47,8 @@ class CalendarState extends State<Calendar> {
     "Kerékő hiányzik",
     "Egyéb..."
   ];
-  static dynamic plateNumberResponse;
-  static int? selectedIndexList;
 
-  // ---------- < Variables > ------------ ---------- ---------- ---------- ---------- ---------- ----------
+  // ---------- [🌸 simple variables] --- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- //
   CalendarFormat _calendarFormat =  CalendarFormat.month;
   static DateTime _focusedDay =     DateTime.now();
   ButtonState buttonAddWork =       ButtonState.default0;
@@ -55,6 +56,8 @@ class CalendarState extends State<Calendar> {
   bool isListStockInfoOpen =        false;
   bool isRefreshingPanel =          false;
   DateTime? _selectedDay;
+
+  // ---------- [💎 complex variables] -- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- //
 
   // ---------- < Widget Build > --------- ---------- ---------- ---------- ---------- ---------- ----------
   @override
@@ -128,13 +131,17 @@ class CalendarState extends State<Calendar> {
                     ))
                   ]))),
                   //Visibility(visible:(closedInList[index] && ['Eseti'].contains(jelleg[index])), child: Padding(padding: const EdgeInsets.all(5), child: TextButton(
-                  Visibility(visible:(buttonIgenyles[index] != ButtonState.hidden), child: Padding(padding: const EdgeInsets.all(5), child: TextButton(
-                    onPressed:  () => (buttonIgenyles[index] == ButtonState.default0)? _buttonIgenylesPressed(index) : null,
+                  Visibility(visible:(buttonIgenyles[index]['state'] != ButtonState.hidden), child: Padding(padding: const EdgeInsets.all(5), child: TextButton(
+                    onPressed:  () => (buttonIgenyles[index]['state'] == ButtonState.default0)? _buttonIgenylesPressed(index) : null,
                     style:      ButtonStyle(
-                      backgroundColor:  WidgetStatePropertyAll(Global.getColorOfButton(buttonIgenyles[index])),
-                      foregroundColor:  WidgetStatePropertyAll(Global.getColorOfIcon(buttonIgenyles[index]))
+                      backgroundColor:  WidgetStatePropertyAll(Global.getColorOfButton(buttonIgenyles[index]['state'])),
+                      foregroundColor:  WidgetStatePropertyAll(Global.getColorOfIcon(buttonIgenyles[index]['state']))
                     ),
-                    child:      Row(children: [(buttonIgenyles[index] == ButtonState.default0)? const Icon(Icons.add) : _progressIndicator(Global.getColorOfIcon(ButtonState.loading)), const Text(' Igénylés')])
+                    child:      Row(children: ((){switch(buttonIgenyles[index]['type']){
+                      case ButtonType.add:  return [(buttonIgenyles[index]['state'] == ButtonState.default0)? const Icon(Icons.add) : _progressIndicator(Global.getColorOfIcon(ButtonState.loading)), const Text(' Új igénylés')];
+                      case ButtonType.edit: return [(buttonIgenyles[index]['state'] == ButtonState.default0)? const Icon(Icons.edit_document) : _progressIndicator(Global.getColorOfIcon(ButtonState.loading)), const Text(' Igénylés szerkesztése')];
+                      default:              return [Container()];
+                    }})())                 
                   ))),
                   Visibility(visible: closedInList[index], child: const Padding(
                     padding: EdgeInsets.symmetric(horizontal: 10, vertical: 10),
@@ -333,8 +340,12 @@ class CalendarState extends State<Calendar> {
   Future get _buttonAddWorkPressed async{
     setState(() => buttonAddWork = ButtonState.loading);
     String? varString = await Global.textButtonListDialog(context,
-      listItems:  const['Eseti Munkalap', 'Szezonális Munkalap', '📄 Igénylés', '🔍 Rendszám keresése', '🗓 Ugrás a mai napra'],
-      title:      'Új Bizonylat Felvitele'
+      listItems:      const['Eseti Munkalap', 'Szezonális Munkalap', '📄 Igénylés', '🔍 Rendszám keresése', '🗓 Ugrás a mai napra'],
+      disabledItems:  [
+        if(DateUtils.dateOnly(_focusedDay).isAfter(DateUtils.dateOnly(DateTime.now())))   'Eseti Munkalap',
+        if(DataManager.isIgenylesDisabled)                                                '📄 Igénylés',
+      ],
+      title:          'Új Bizonylat Felvitele'
     );
     buttonAddWork = ButtonState.default0;
     if(varString != null) {switch(varString){      
@@ -386,7 +397,6 @@ class CalendarState extends State<Calendar> {
         break;
 
       case '📄 Igénylés':
-        if(DataManager.isIgenylesDisabled) break;
         Global.routeNext = NextRoute.abroncsIgenyles;
         await DataManager(input: {'datum': _focusedDay}).beginProcess;
         await DataManager(quickCall: QuickCall.giveDatas).beginQuickCall;
@@ -433,26 +443,59 @@ class CalendarState extends State<Calendar> {
     setState((){});
   }
 
-  Future _buttonIgenylesPressed(int index) async {if(await Global.yesNoDialog(context, title: 'Igénylés létrehozása', content: 'Kíván új igénylést létrehozni a lezárt munkalap adataival?')){
-    setState(() => buttonIgenyles[index] = ButtonState.loading);
-    Global.routeNext = NextRoute.abroncsIgenyles;
-    await DataManager(input: {
-      'datum':        _focusedDay,
-      'munkalap_id':  DataManager.data[2][index]['id'].toString()
-    }).beginProcess;
-    await DataManager(quickCall: QuickCall.giveDatas).beginQuickCall;
-    buttonIgenyles[index] = ButtonState.default0;
-    dynamic result = await Navigator.pushNamed(context, '/dataForm');
-    DataManager.dataQuickCall[5];
-    if([true].contains(result)){ try{
-      errorMessage =                          '';
-      errorMessagePopUp =                     '';
-      errorMessagePopUpTitle =                '';
-      Global.routeNext =        NextRoute.tabForm;      
+  Future _buttonIgenylesPressed(int index) async {switch(buttonIgenyles[index]['type']){
+
+    case ButtonType.add:
+      if(await Global.yesNoDialog(context, title: 'Igénylés létrehozása', content: 'Kíván új igénylést létrehozni a lezárt munkalap adataival?')){
+        setState(() => buttonIgenyles[index]['state'] = ButtonState.loading);
+        Global.routeNext = NextRoute.abroncsIgenyles;
+        await DataManager(input: {
+          'datum':        _focusedDay,
+          'munkalap_id':  DataManager.data[2][index]['id'].toString()
+        }).beginProcess;
+        await DataManager(quickCall: QuickCall.giveDatas).beginQuickCall;
+        buttonIgenyles[index]['state'] = ButtonState.default0;
+        dynamic result = await Navigator.pushNamed(context, '/dataForm');
+        DataManager.dataQuickCall[5];
+        if([true].contains(result)){ try{
+          errorMessage =                          '';
+          errorMessagePopUp =                     '';
+          errorMessagePopUpTitle =                '';
+          Global.routeNext =        NextRoute.tabForm;
+          await DataManager(quickCall: QuickCall.tabForm, input: {
+            'jelleg':       'Igénylés',
+            'foglalas_id':  DataManager.dataQuickCall[5][1],
+            'datum':        DateTime.now(),
+          }).beginQuickCall;
+          await DataManager(quickCall: QuickCall.giveDatas).beginQuickCall;
+          await DataManager().formOpen;      
+          DataFormState.workType = 'Igénylés';
+          DataFormState.isClosed = false;
+          selectedIndexList =      null;
+          setState((){});
+          await Navigator.pushNamed(context, '/dataForm');
+          await DataManager().beginProcess;
+          await DataManager(quickCall: QuickCall.askIncompleteDays).beginQuickCall;
+          setState((){});
+
+        } catch(_){}}
+        await DataManager().beginProcess;
+        await DataManager(quickCall: QuickCall.askIncompleteDays).beginQuickCall;
+        setState((){});
+      }
+      break;
+
+    case ButtonType.edit:
+      setState(() => buttonIgenyles[index]['state'] = ButtonState.loading);
+      errorMessage =            '';
+      errorMessagePopUp =       '';
+      errorMessagePopUpTitle =  '';
+      Global.routeNext =        NextRoute.tabForm;
       await DataManager(quickCall: QuickCall.tabForm, input: {
         'jelleg':       'Igénylés',
-        'foglalas_id':  DataManager.dataQuickCall[5][1],
-        'datum':        DateTime.now()
+        'foglalas_id':  DataManager.data[2][index]['id'],
+        'datum':        DateTime.now(),
+        'munkalap_id':  DataManager.data[2][index]['edit_igenyles'], 
       }).beginQuickCall;
       await DataManager(quickCall: QuickCall.giveDatas).beginQuickCall;
       await DataManager().formOpen;      
@@ -461,14 +504,14 @@ class CalendarState extends State<Calendar> {
       selectedIndexList =      null;
       setState((){});
       await Navigator.pushNamed(context, '/dataForm');
+      buttonIgenyles[index]['state'] = ButtonState.default0;
       await DataManager().beginProcess;
       await DataManager(quickCall: QuickCall.askIncompleteDays).beginQuickCall;
       setState((){});
+      break;
 
-    } catch(_){}}
-    await DataManager().beginProcess;
-    await DataManager(quickCall: QuickCall.askIncompleteDays).beginQuickCall;
-    setState((){});
+    default: break;
+        
   }}
 
   List<Event> _getEventsForDay(DateTime day){

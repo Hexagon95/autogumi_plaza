@@ -3,7 +3,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:autogumi_plaza/data_manager.dart';
 
 // ---------- - < Enums > ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ----------
 enum NextRoute    {logIn,   calendar,       tabForm,        photoPreview, photoTake,  photoCheck, signature,  esetiMunkalapFelvitele, default0, abroncsIgenyles, szezonalisMunkalapFelvitele, probeMeasuring, panel}
@@ -12,6 +11,7 @@ enum QuickCall    {tabForm, giveDatas,      chainGiveDatas, verzio,       askPho
 enum Probe        {bluetoothCheck, deviceSearch, measureCommand, default0}
 enum AppIs        {android, web, default0}
 enum Resolve      {pop, forward, alertDialog}
+enum ButtonType   {add, edit, delete, default0}
 
 class Global{
   // ---------- < Variables [Static] > -------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ----------
@@ -42,6 +42,13 @@ class Global{
   }
   static final GlobalKey<ScaffoldMessengerState> scaffoldMessengerKey = GlobalKey<ScaffoldMessengerState>();
 
+  static getButtonTypeFromIndex(int? input) {switch(input){
+    case 0: return ButtonType.add;
+    case 1: return ButtonType.edit;
+    case 2: return ButtonType.delete;
+    default: return ButtonType.default0;
+  }}
+
   static BoxDecoration customBoxDecoration = BoxDecoration(
     border:       Border.all(color: Colors.green, width: 1),
     color:        Colors.white,
@@ -69,6 +76,17 @@ class Global{
 
   // ---------- < Methods [Static] > - -------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ----------
   static Color invertColor(Color input) => Color.fromRGBO((input.red - 255).abs(), (input.green - 255).abs(), (input.blue - 255).abs(), 1.0);
+  
+  static int? getIndexOfFirstTrue(List<dynamic> input) => (() {
+    final i = input.indexWhere((e) => containsAsTrue(inThis: trueString, contains: e));
+    return i == -1 ? null : i;
+  })();
+
+  static bool containsAsTrue({required List<dynamic> inThis, dynamic contains}) {
+    if(inThis.contains(contains)) return true;
+    if(![null, 0].contains(int.tryParse(contains.toString()))) return true;
+    return false;
+  }
 
   static String parse(String? input) {
     if (input == null) return '';
@@ -455,24 +473,27 @@ class Global{
     );
   }
 
-  static Future<String?> textButtonListDialog(BuildContext context, {String title = '', required List<String> listItems}) async{
+  static Future<String?> textButtonListDialog(BuildContext context, {String title = '', required List<String> listItems, List<String>? disabledItems}) async{
     // --------- < Widgets [1] > -------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- //
     Widget cancel =   TextButton(child: const Text('Mégsem'), onPressed: () => Navigator.pop(context, null));
-    ButtonState getButtonStateFromItem(String input) => (['📄 Igénylés'].contains(input))? DataManager.isIgenylesDisabled? ButtonState.disabled : ButtonState.default0 : ButtonState.default0;
+    ButtonState getButtonStateFromItem(String input) => (disabledItems?.contains(input) ?? false)? ButtonState.disabled : ButtonState.default0;
 
-    Widget drawButton(String input) => Padding(
-      padding:  const EdgeInsets.symmetric(vertical: 10),
-      child:    SizedBox(height: 40, width: 220, child: TextButton(          
-        style:      ButtonStyle(
-          side:            WidgetStateProperty.all(BorderSide(color: Global.getColorOfIcon(getButtonStateFromItem(input)))),
-          backgroundColor: WidgetStateProperty.all(Global.getColorOfButton(getButtonStateFromItem(input)))
-        ),
-        onPressed:  () => Navigator.pop(context, input),
-        child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-          Text(input, style: TextStyle(fontSize: 18, color: Global.getColorOfIcon(getButtonStateFromItem(input))))
-        ])
-      ))
-    );
+    Widget drawButton(String input){ 
+      final state = getButtonStateFromItem(input);
+      return Padding(
+        padding:  const EdgeInsets.symmetric(vertical: 10),
+        child:    SizedBox(height: 40, width: 220, child: TextButton(          
+          style:      ButtonStyle(
+            side:            WidgetStateProperty.all(BorderSide(color: Global.getColorOfIcon(state))),
+            backgroundColor: WidgetStateProperty.all(Global.getColorOfButton(state))
+          ),
+          onPressed:  (state == ButtonState.disabled)? null : () => Navigator.pop(context, input),
+          child:      Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+            Text(input, style: TextStyle(fontSize: 18, color: Global.getColorOfIcon(state)))
+          ])
+        ))
+      );
+    }
 
     // --------- < Methods [1] > -------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- //
     List<Widget> drawButtonList(){

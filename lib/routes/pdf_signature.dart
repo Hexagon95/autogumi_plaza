@@ -2,9 +2,10 @@
 import 'package:flutter_pdfview/flutter_pdfview.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:signature/signature.dart';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
-import 'dart:typed_data';
+import 'dart:developer' as dev;
 import 'dart:convert';
 import 'dart:io';
 import 'package:autogumi_plaza/data_manager.dart';
@@ -26,9 +27,10 @@ class _PdfSignaturePageState extends State<PdfSignaturePage> {
 
   final TextEditingController _nameController = TextEditingController();
 
-  bool _isFinishing =   false;
-  bool _isLoadingPdf =  true;
-  bool isClosed =       false;
+  bool _isFinishing =     false;
+  bool _isLoadingPdf =    true;
+  bool _pdfLoadStarted =  false;
+  bool isClosed =         false;
   String? _pdfPath;
   String? _pdfError;
 
@@ -74,7 +76,8 @@ class _PdfSignaturePageState extends State<PdfSignaturePage> {
     title =       (args['title'] ?? args['name'] ?? 'Aláírás').toString();
     isClosed =    ((args['isClosed'] == true) || (args['isClosed']?.toString() == 'true'));
     // Kick off download once.
-    if (_isLoadingPdf && _pdfPath == null && _pdfError == null) {
+    if (!_pdfLoadStarted && _pdfPath == null && _pdfError == null) {
+      _pdfLoadStarted = true;
       WidgetsBinding.instance.addPostFrameCallback((_) => _loadPdfOnce());
     }
 
@@ -143,6 +146,7 @@ class _PdfSignaturePageState extends State<PdfSignaturePage> {
       if (uri == null || (!uri.isScheme('http') && !uri.isScheme('https'))) {
         throw Exception('Invalid URL: $fixedUrl');
       }
+      if(kDebugMode) dev.log('Downloading: $uri');
       final resp = await http.get(
         uri,
         headers: {
@@ -150,6 +154,7 @@ class _PdfSignaturePageState extends State<PdfSignaturePage> {
           'User-Agent': 'Mozilla/5.0 (Flutter; Android) autogumi_plaza',
         },
       );
+      if(kDebugMode) dev.log('Downloaded: ${resp.statusCode}');
       final ct = (resp.headers['content-type'] ?? '').toLowerCase();
       final bytes = resp.bodyBytes;
       // quick “is this a PDF?” check: PDFs start with "%PDF"

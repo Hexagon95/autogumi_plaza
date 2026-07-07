@@ -22,12 +22,12 @@ import 'package:autogumi_plaza/utils.dart';
 
 class DataManager{
   // ---------- < Variables [Static] > - ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ----------
-  static String thisVersion =                       '1.48'; // <--- 🛜 A WEB-es verziót is firssíteni kell!!!!!!
+  static String thisVersion =                       '1.48c'; // c <--- 🛜 A WEB-es verziót is firssíteni kell!!!!!!
   static int verzioTest =                           0; // <--- anything other than 0 will draw "[Teszt #]" at the LogIn screen.
-  static int logInNotification =                    0; // <--- 0 will have no notification, other than 0 will draw a red stamp on the menu options' top right corner.
+  static int logInNotification =                    1; // <--- 0 will have no notification, other than 0 will draw a red stamp on the menu options' top right corner.
   static String webAppLink =                        'https://app.mosaic.hu/flutter_web/szerviz_mezandmol/index.html';
   static String qrCodeGeneratorLink =               'https://app.mosaic.hu/flutter_web/qr_code_generator/index.html';
-  static String infoUpdate =                        '◆ Több apróbb módosítás.';
+  static String infoUpdate =                        '◆ Zárt munkalapnál PDF jelenik meg, nem readonly munkalap.';
   
   // 🤖 OR 🛜 Edit here!!!! ⬇️                      ⬇️ And here!!!
   static const AppIs constAppIs =                   AppIs.default0; // <--- Set to default0 or manually enforce behaviour of the app.
@@ -155,6 +155,7 @@ class DataManager{
               var queryParameters = {
                 'customer':     customer,
                 'eszkoz_id':    identity.toString(),
+                'munkalap_id':  input['munkalap_id']?.toString(),
                 'datum':        (input['datum'] != null)? input['datum'].toString().split(' ')[0] : CalendarState.selectedDate,
                 'foglalas_id':  (input['foglalas_id'] ?? data[2][DataFormState.selectedIndexInCalendar!]['id'].toString()).toString()
               };
@@ -1136,17 +1137,21 @@ class DataManager{
 
       case NextRoute.calendar:
         CalendarState.errorMessage =    data[2][0]['error'];
-        CalendarState.buttonDelete =    List<ButtonState>.empty(growable: true);
-        CalendarState.buttonIgenyles =  List<ButtonState>.empty(growable: true);
-        CalendarState.itemsInList =     List<String>.empty(growable: true);
-        CalendarState.jelleg =          List<String>.empty(growable: true);
-        CalendarState.closedInList =    List<bool>.empty(growable: true);
+        CalendarState.buttonDelete =    [];
+        CalendarState.buttonIgenyles =  [];
+        CalendarState.itemsInList =     [];
+        CalendarState.jelleg =          [];
+        CalendarState.closedInList =    [];
         if(data[2][0]['error'].isEmpty){
           List<dynamic> varData = jsonDecode(data[2][0]['json']);
           data[2] = varData;
           for (var item in varData) {
             CalendarState.buttonDelete.add(ButtonState.default0);
-            CalendarState.buttonIgenyles.add(Global.trueString.contains(item['add_igenyles'].toString())? ButtonState.default0 : ButtonState.hidden);
+            bool isAnyIgenylesRelatedButtonNeeded = (['add_igenyles', 'edit_igenyles'].any((key) => Global.containsAsTrue(inThis: Global.trueString, contains: item[key])));
+            CalendarState.buttonIgenyles.add({
+              'state':  isAnyIgenylesRelatedButtonNeeded? ButtonState.default0 : ButtonState.hidden,
+              'type':   isAnyIgenylesRelatedButtonNeeded? Global.getButtonTypeFromIndex(Global.getIndexOfFirstTrue([item['add_igenyles'].toString(), item['edit_igenyles'].toString()])) : ButtonType.default0,
+            });
             CalendarState.itemsInList.add("${item['rendszam']}\n${item['partner']}\n${item['jelleg']}\n${item['idopont']}");
             CalendarState.jelleg.add(item['jelleg']);
             CalendarState.closedInList.add((item['lezart'].toString() == '1'));

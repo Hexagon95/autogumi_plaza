@@ -22,7 +22,8 @@ class DataForm extends StatefulWidget {//-------- ---------- ---------- --------
 }
 
 class DataFormState extends State<DataForm> {//-- ---------- ---------- ---------- ---------- ---------- ---------- ---------- <DataFormState>
-  // ---------- < Wariables [Static] > ---------- ---------- ---------- ---------- ---------- ---------- ---------- ----------
+
+  // ---------- [⚡️🌸 static simple variables] ----- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- //
   static List<dynamic> rawData =                      [];
   static List<dynamic> options =                      [];
   static List<dynamic> rawDataExtra =                 [];
@@ -45,17 +46,10 @@ class DataFormState extends State<DataForm> {//-- ---------- ---------- --------
   static bool isClosed =                              false;
   static bool isExtraForm =                           false;
   static bool isScreenLocked =                        false;
-  static Map<String, bool> enableInteraction =        {
-    'buttonContinue'      : true,
-    'buttonSave'          : true,
-    'buttonSignature'     : true,
-    'buttonCopy'          : true,
-    'buttonExtraCopy'     : true,
-    'selectAdd'           : true,
-    'handleSelectChange'  : true,
-  };
-  static int? amount;
   static int? selectedIndexInCalendar;
+  static int? amount;
+  
+  // ---------- [⚡️💎 static complex variables] ---- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- //
   static int get currentProgress{
     if(progress.isNotEmpty) for(int i = 0; i < progress.length; i++) {if(!progress[i]) return i;}
     return 0;
@@ -67,8 +61,17 @@ class DataFormState extends State<DataForm> {//-- ---------- ---------- --------
     _buttonContinue = (isClosed && currentProgress == progress.length - 1)? ButtonState.disabled : input;
   }
   static dynamic option(String input) {for(dynamic item in options) {if(item['name'] == input) return item;} return null;}
+  static Map<String, bool> enableInteraction = {
+    'buttonContinue'      : true,
+    'buttonSave'          : true,
+    'buttonSignature'     : true,
+    'buttonCopy'          : true,
+    'buttonExtraCopy'     : true,
+    'selectAdd'           : true,
+    'handleSelectChange'  : true,
+  };
 
-  // ---------- < Variables [1] > ---- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ----------
+  // ---------- [🌸 simple variables] --- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- //
   List<TextEditingController> controllerCopy =  List<TextEditingController>.empty(growable: true);
   List<TextEditingController> controller =      List<TextEditingController>.empty(growable: true);
   List<FocusNode> focusNode =                   List<FocusNode>.empty(growable: true);
@@ -76,6 +79,10 @@ class DataFormState extends State<DataForm> {//-- ---------- ---------- --------
   ButtonState buttonBack =                      ButtonState.default0;
   ButtonState buttonSave =                      ButtonState.disabled;
   ButtonState buttonSaveProgress =              ButtonState.default0;
+  bool skipWillPopScopeSequences =              false;
+
+  // ---------- [💎 complex variables] -- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- //
+  String _trimRight(String s) => s.replaceFirst(RegExp(r'\s+$'), '');
   BoxDecoration customBoxDecoration =           BoxDecoration(            
     border:       Border.all(color: const Color.fromARGB(130, 184, 184, 184), width: 1),
     color:        Colors.white,
@@ -97,9 +104,6 @@ class DataFormState extends State<DataForm> {//-- ---------- ---------- --------
     }
     return false;
   }
-  bool skipWillPopScopeSequences = false;
-  String _trimRight(String s) => s.replaceFirst(RegExp(r'\s+$'), '');
-
 
   // ---------- < Constructor > ------ ---------- ---------- ---------- ---------- ---------- ---------- ---------- ----------
   DataFormState() {_resetController(rawData);}

@@ -74,35 +74,34 @@ class PanelState extends State<Panel> {//-------- ---------- ---------- --------
 
   // ---------- < Widget [2] > ------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ----------
   Widget get _drawPanel {
-    return ListView.builder(
-      padding: const EdgeInsets.all(12),
-      itemCount: data.length,
-      itemBuilder: (context, sectionIndex) {
-        final section = Map<String, dynamic>.from(data[sectionIndex] as Map);
-        final items = normalizeItems(section['items']);
-        return Card(
-          elevation: 2,
-          margin: const EdgeInsets.only(bottom: 16),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-          child: Padding(
-            padding: const EdgeInsets.all(12),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-                  Padding(padding: const EdgeInsets.all(5), child: Text(
-                    section['title']?.toString() ?? '',
-                    style: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  )),
-                  _getButtonFor(section['title'])
-                ]),
-                const SizedBox(height: 8),
-                ...items.map(_drawListItem),
-              ],
-            ),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final screenSize = MediaQuery.sizeOf(context);
+        final keyboardHeight = MediaQuery.of(context).viewInsets.bottom;
+        final isHorizontal = screenSize.width > screenSize.height;
+        final cardCount = data.length.clamp(1, 999);
+        if (isHorizontal && keyboardHeight == 0) {
+          return Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: List.generate(data.length, (index) {
+              final maxCardWidth = constraints.maxWidth / cardCount;
+              return ConstrainedBox(
+                constraints: BoxConstraints(maxWidth: maxCardWidth),
+                child: _drawSectionCard(data[index]),
+              );
+            }),
+          );
+        }
+        return SingleChildScrollView(
+          padding: EdgeInsets.only(bottom: keyboardHeight + 24),
+          child: Column(
+            children: List.generate(data.length, (index) {
+              final maxCardHeight = constraints.maxHeight / cardCount;
+              return ConstrainedBox(
+                constraints: BoxConstraints(maxHeight: maxCardHeight),
+                child: _drawSectionCard(data[index]),
+              );
+            }),
           ),
         );
       },
@@ -110,15 +109,13 @@ class PanelState extends State<Panel> {//-------- ---------- ---------- --------
   }
 
   // ---------- < Widget [3] > ------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ----------  
-  Widget _drawListItem(Map<String, dynamic> item) {
+  Widget _drawListItem(Map<String, dynamic> item, int index) {
     final buttons = normalizeButtons(item['buttons']);
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
-      decoration: const BoxDecoration(
-        border: Border(
-          bottom: BorderSide(color: Color(0xFFE0E0E0)),
-        ),
-      ),
+      return Container(
+        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
+        decoration: BoxDecoration(
+          color:  index.isEven ? Colors.white : Colors.grey.shade100,
+          border: const Border(bottom: BorderSide(color: Color(0xFFE0E0E0)))),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
@@ -172,6 +169,15 @@ class PanelState extends State<Panel> {//-------- ---------- ---------- --------
           ),
         ],
       ),
+    );
+  }
+
+  Widget _drawSectionCard(dynamic rawSection) {
+    return PanelSectionCard(
+      rawSection: rawSection,
+      normalizeItems: normalizeItems,
+      drawListItem: _drawListItem,
+      getButtonFor: _getButtonFor,
     );
   }
 
@@ -415,5 +421,119 @@ class PanelState extends State<Panel> {//-------- ---------- ---------- --------
     } finally {
       if (mounted) setState(() => isRefreshingPanel = false);
     }
+  }
+}
+
+class PanelSectionCard extends StatefulWidget {
+  final dynamic rawSection;
+  final List<Map<String, dynamic>> Function(dynamic) normalizeItems;
+  final Widget Function(Map<String, dynamic>, int) drawListItem;
+  final Widget Function(String) getButtonFor;
+
+  const PanelSectionCard({
+    super.key,
+    required this.rawSection,
+    required this.normalizeItems,
+    required this.drawListItem,
+    required this.getButtonFor,
+  });
+
+  @override
+  State<PanelSectionCard> createState() => _PanelSectionCardState();
+}
+
+class _PanelSectionCardState extends State<PanelSectionCard> {
+  String searchText = '';
+
+  bool _matchesSearch(Map<String, dynamic> item) {
+    final query = searchText.toLowerCase().trim();
+    if (query.isEmpty) return true;
+
+    return [
+      item['value'],
+      item['title'],
+      item['message'],
+    ].any((v) => v?.toString().toLowerCase().contains(query) ?? false);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final section = Map<String, dynamic>.from(widget.rawSection as Map);
+    final items = widget.normalizeItems(section['items']);
+    final filteredItems = items.where(_matchesSearch).toList();
+    final scrollController = ScrollController();
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final estimatedListHeight = items.length * 72;
+        final needsSearch =         estimatedListHeight > constraints.maxHeight - 80;
+        final border =              OutlineInputBorder(borderRadius: BorderRadius.circular(30));
+
+        return Card(
+          elevation: 2,
+          margin: const EdgeInsets.all(8),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          child: Padding(
+            padding: const EdgeInsets.all(12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: Padding(
+                        padding: const EdgeInsets.all(5),
+                        child: Text(
+                          section['title']?.toString() ?? '',
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
+                    if (needsSearch)
+                      SizedBox(
+                        width: constraints.maxWidth * 0.45,
+                        child: TextField(
+                          decoration: InputDecoration(
+                            isDense:        true,
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                            prefixIcon:     const Icon(Icons.search),
+                            labelText:      'Keresés',
+                            border:         border,
+                            enabledBorder:  border,
+                            focusedBorder:  border,
+                          ),
+                          onChanged: (value) => setState(() => searchText = value),
+                        ),
+                      ),
+                    const SizedBox(width: 8),
+                    widget.getButtonFor(section['title']?.toString() ?? ''),
+                  ],
+                ),
+
+                const SizedBox(height: 8),
+
+                Flexible(
+                  child: Scrollbar(
+                    controller: scrollController,
+                    thumbVisibility: true,
+                    child: ListView(
+                      controller: scrollController,
+                      shrinkWrap: true,
+                      children: filteredItems.asMap().entries.map(
+                        (entry) => widget.drawListItem(entry.value, entry.key),
+                      ).toList(),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
   }
 }

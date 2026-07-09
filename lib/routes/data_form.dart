@@ -1100,6 +1100,7 @@ class DataFormState extends State<DataForm> {//-- ---------- ---------- --------
             progress[currentProgress] = true;
             await DataManager(quickCall: QuickCall.askPhotos).beginQuickCall;
             rawData =                   DataManager.dataQuickCall[0]['poziciok'][currentProgress - 1]['adatok'];
+            listOfLookupDatas; //id_1033_3
             for(String entry in DataManager.dataQuickCall[1][currentProgress - 1].keys){
               if(DataManager.dataQuickCall[1][currentProgress][entry] != null){
                 DataManager.dataQuickCall[1][currentProgress][entry] = DataManager.dataQuickCall[1][currentProgress - 1][entry];
@@ -1408,6 +1409,7 @@ class DataFormState extends State<DataForm> {//-- ---------- ---------- --------
           quickCall:  QuickCall.chainGiveDatas,
           input:      {'rawDataInput': [{'id': 'formopener', 'update_items': DataManager.dataQuickCall[0]['formopen']}], 'isCheckBox': false, 'isExtraForm': false}
         ).beginQuickCall;
+        DataManager.dataQuickCall[1]; // id_1033_3
         setState((){});
       }
     }

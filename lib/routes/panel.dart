@@ -17,36 +17,42 @@ class Panel extends StatefulWidget {//------------ ---------- ---------- -------
 }
 
 class PanelState extends State<Panel> {//-------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- <PanelState>
-  // ---------- < Wariables [Static] > ---------- ---------- ---------- ---------- ---------- ---------- ---------- ----------
-  static List<dynamic> data = [];
-  static String? errorMessageDialog;
+  // ---------- < Variables > ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- //
+    // ---------- [⚡️ static variables] --- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- //
+    static List<dynamic> data = [];
+    static String? errorMessageDialog;
 
-  // ---------- < Wariables [1] > ---- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ----------
-  bool isCalendarPressed =  false;
-  bool isRefreshingPanel =  false;
-  Timer? refreshTimer;
-  IconData getIcon(String iconName) => switch(iconName){
-    'truck' =>          FontAwesomeIcons.truck,
-    'check' =>          Icons.check,
-    'printer' =>        Icons.print,
-    'package' =>        FontAwesomeIcons.box,
-    'x' =>              Icons.close,
-    'file' =>           FontAwesomeIcons.file,
-    'signature' =>      Icons.edit_document,
-    'esetimunkalap' =>  Icons.content_paste_search,
-    'igenyles' =>       Icons.request_page_outlined,
-    'szezonalis' =>     Icons.calendar_month_outlined,
-    _ =>                Icons.help_outline
-  };
+    // ---------- [🌸 simple variables] --- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- //
+    ButtonState buttonAddIgenyles = ButtonState.default0;
+    bool isCalendarPressed =        false;
+    bool isRefreshingPanel =        false;
+    bool isDashboardLocked =        false;
+    String? loadingDashboardButtonId;
+    Timer? refreshTimer;
 
-  Color getColor(String colorName) => switch(colorName){
-    'success' =>    Colors.green,
-    'secondary' =>  Colors.grey,
-    'danger' =>     Colors.red,
-    'warning' =>    Colors.orange,
-    'primary' =>    Colors.blue,
-    _ =>            Colors.blue
-  };
+    // ---------- [💎 complex variables] -- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- //
+    IconData getIcon(String iconName) => switch(iconName){
+      'truck' =>          FontAwesomeIcons.truck,
+      'check' =>          Icons.check,
+      'printer' =>        Icons.print,
+      'package' =>        FontAwesomeIcons.box,
+      'x' =>              Icons.close,
+      'file' =>           FontAwesomeIcons.file,
+      'signature' =>      Icons.edit_document,
+      'esetimunkalap' =>  Icons.content_paste_search,
+      'igenyles' =>       Icons.request_page_outlined,
+      'szezonalis' =>     Icons.calendar_month_outlined,
+      _ =>                Icons.help_outline
+    };
+
+    Color getColor(String colorName) => switch(colorName){
+      'success' =>    Colors.green,
+      'secondary' =>  Colors.grey,
+      'danger' =>     Colors.red,
+      'warning' =>    Colors.orange,
+      'primary' =>    Colors.blue,
+      _ =>            Colors.blue
+    };
 
   // ---------- < Widget [1] > ------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ----------
   @override
@@ -65,7 +71,7 @@ class PanelState extends State<Panel> {//-------- ---------- ---------- --------
         ],
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed:        (!isCalendarPressed)? _calendarButtonPressed : null,
+        onPressed:        (!isCalendarPressed && !isDashboardLocked)? _calendarButtonPressed : null,
         child:            const Icon(Icons.calendar_month),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
@@ -141,7 +147,7 @@ class PanelState extends State<Panel> {//-------- ---------- ---------- --------
                 if(item['message']?.toString().isNotEmpty ?? false) Text(
                   item['message'].toString(),
                   style: const TextStyle(color: Colors.black54, fontStyle: FontStyle.italic),
-                )
+                )                
               ],
             ),
           ),
@@ -151,18 +157,52 @@ class PanelState extends State<Panel> {//-------- ---------- ---------- --------
             runSpacing: 6,
             alignment: WrapAlignment.end,
             children: buttons.map((btn) {
-              return IconButton(
-                tooltip: btn['name']?.toString(),
-                style: IconButton.styleFrom(
-                  backgroundColor: getColor(btn['color']?.toString() ?? ''),
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.all(10),
-                  minimumSize: const Size(42, 42),
-                ),
-                onPressed: () => buttonPressed(btn),
-                icon: Icon(
-                  _getIconForButton(btn),
-                  size: (['esetimunkalap', 'igenyles', 'szezonalis'].contains(btn['type']))? 24 : 18,
+              final buttonId = _getDashboardButtonId(item, btn);
+              final isLoading = loadingDashboardButtonId == buttonId;
+              return SizedBox(
+                width: 42,
+                height: 42,
+                child: Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    IconButton(
+                      tooltip: btn['name']?.toString(),
+                      style: IconButton.styleFrom(
+                        backgroundColor: getColor(btn['color']?.toString() ?? ''),
+                        foregroundColor: Colors.white,
+                        disabledBackgroundColor: getColor(btn['color']?.toString() ?? ''),
+                        disabledForegroundColor: Colors.white,
+                        padding: const EdgeInsets.all(10),
+                        minimumSize: const Size(42, 42),
+                      ),
+                      onPressed: isDashboardLocked ? null : () => buttonPressed(btn, buttonId),
+                      icon: Icon(
+                        _getIconForButton(btn),
+                        size: (['esetimunkalap', 'igenyles', 'szezonalis'].contains(btn['type']))? 24 : 18,
+                      ),
+                    ),
+                    if(isLoading) ...[
+                      Positioned.fill(
+                        child: IgnorePointer(
+                          child: DecoratedBox(
+                            decoration: BoxDecoration(
+                              color: Colors.black.withOpacity(0.35),
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                        ),
+                      ),
+                      const Positioned.fill(
+                        child: Padding(
+                          padding: EdgeInsets.all(3),
+                          child: CircularProgressIndicator(
+                            strokeWidth: 3,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ],
                 ),
               );
             }).toList(),
@@ -177,20 +217,57 @@ class PanelState extends State<Panel> {//-------- ---------- ---------- --------
       rawSection: rawSection,
       normalizeItems: normalizeItems,
       drawListItem: _drawListItem,
-      getButtonFor: _getButtonFor,
+      getButtonFor: _drawButtonIgenyles,
     );
   }
 
-  Widget _getButtonFor(String input){
-    if(input != 'Igénylések') return Container();
+  Widget _drawButtonIgenyles(String input) {
+    if (input != 'Igénylések') return Container();
     return ElevatedButton(
-      onPressed:  _addIgenyles,
-      child:      const Row(children: [Padding(padding: EdgeInsets.all(5), child: Icon(Icons.add)), Text('Hozzáadás')])
+      onPressed: buttonAddIgenyles == ButtonState.default0 && !isDashboardLocked
+          ? _addIgenyles
+          : null,
+      style: ElevatedButton.styleFrom(
+        backgroundColor: Global.getColorOfButton(buttonAddIgenyles),
+        foregroundColor: Global.getColorOfIcon(buttonAddIgenyles),
+        disabledBackgroundColor: Global.getColorOfButton(buttonAddIgenyles),
+        disabledForegroundColor: Global.getColorOfIcon(buttonAddIgenyles),
+        padding: const EdgeInsets.symmetric(
+          horizontal: 14,
+          vertical: 10,
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (buttonAddIgenyles == ButtonState.loading) ...[
+            SizedBox(
+              width: 18,
+              height: 18,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                color: Global.getColorOfIcon(buttonAddIgenyles),
+              ),
+            ),
+            const SizedBox(width: 8),
+          ] else ...[
+            const Icon(Icons.add),
+            const SizedBox(width: 6),
+          ],
+          Text(
+            buttonAddIgenyles == ButtonState.loading
+                ? 'Betöltés...'
+                : 'Hozzáadás',
+          ),
+        ],
+      ),
     );
   }
 
   // ---------- < Methods [1] > ------ ---------- ---------- ---------- ---------- ---------- ---------- ---------- ----------
   IconData _getIconForButton(Map<String, dynamic> btn) => getIcon((['esetimunkalap', 'igenyles', 'szezonalis'].contains(btn['type']))? btn['type'] : btn['icon']?.toString() ?? '');
+
+  String _getDashboardButtonId(Map<String, dynamic> item, Map<String, dynamic> btn) => '${item['value']}_${item['title']}_${btn['type']}_${btn['callback']}_${btn['name']}';
 
   @override
   void initState() {
@@ -199,13 +276,7 @@ class PanelState extends State<Panel> {//-------- ---------- ---------- --------
     refreshTimer = Timer.periodic(
       const Duration(seconds: 30),
       (_) async {
-        if (
-          mounted &&
-          Global.currentRoute == NextRoute.panel &&
-          !isRefreshingPanel
-        ) {
-          await refreshPanel();
-        }
+       if ( mounted && Global.currentRoute == NextRoute.panel && !isRefreshingPanel && !isDashboardLocked && buttonAddIgenyles != ButtonState.loading) {await refreshPanel();}
       },
     );
   }
@@ -231,6 +302,7 @@ class PanelState extends State<Panel> {//-------- ---------- ---------- --------
   }
 
   Future _calendarButtonPressed() async {
+    if(isDashboardLocked) return;
     setState(() => isCalendarPressed = true);
     Global.routeNext = NextRoute.calendar;
     await DataManager(quickCall: QuickCall.askIncompleteDays).beginQuickCall;
@@ -240,7 +312,7 @@ class PanelState extends State<Panel> {//-------- ---------- ---------- --------
     setState((){});
   }
 
-  Future<void> buttonPressed(dynamic item) async{
+  Future<void> buttonPressed(dynamic item, String buttonId) async{
     String workTypeString(String input) {return switch(input){
       'szezonalis' =>     'Szezonális',
       'esetimunkalap' =>  'Eseti',
@@ -254,6 +326,9 @@ class PanelState extends State<Panel> {//-------- ---------- ---------- --------
       _ =>                NextRoute.tabForm
     };}
     if((item['question']?.isNotEmpty ?? false) && !await Global.yesNoDialog(context, title: item['name'], content: item['question'])) return;
+    if(isDashboardLocked) return;
+    setState(() {isDashboardLocked = true; loadingDashboardButtonId = buttonId;});
+    try {
     switch(item['type'].toString()){
       case 'link':  await DataManager(quickCall: QuickCall.callButtonWebLink, input: {'callback': item['callback'], 'name': item['name']}).beginQuickCall;  break;
       case 'php':   await DataManager(quickCall: QuickCall.callButtonPhp, input: {'callback': item['callback']}).beginQuickCall;                            break;
@@ -359,10 +434,14 @@ class PanelState extends State<Panel> {//-------- ---------- ---------- --------
     //else {await DataManager(quickCall: QuickCall.callButtonWebLink, input: {'callback': item['callback'], 'name': item['name']}).beginQuickCall;}
     if(errorMessageDialog?.isNotEmpty ?? false) {await Global.showAlertDialog(context, content: errorMessageDialog!, title: '⚠️ Hiba!');}
     await DataManager(quickCall: QuickCall.panel).beginQuickCall;
-    setState((){});
+    if(mounted) setState((){});
+    } finally {
+      if(mounted) setState(() {isDashboardLocked = false; loadingDashboardButtonId = null;});
+    }
   }
 
   Future<bool> _handlePop() async{
+    if(isDashboardLocked) return false;
     if(!kIsWeb && await Global.yesNoDialog(context, title: 'Kijelentkezés', content: 'Biztosan ki szeretne jelentkezni az alkalmazásból?')) {await Restart.restartApp();}
     return false;
   }
@@ -392,15 +471,36 @@ class PanelState extends State<Panel> {//-------- ---------- ---------- --------
     return const [];
   }
 
-  Future<void> _addIgenyles() async{
+  Future<void> _addIgenyles() async {
+    if(isDashboardLocked || buttonAddIgenyles == ButtonState.loading) return;
+    setState(() {buttonAddIgenyles = ButtonState.loading; isRefreshingPanel = false;});
+    try {
+      Global.routeNext = NextRoute.abroncsIgenyles;
+      await DataManager(
+        input: {'datum': DateTime.now()},
+      ).beginProcess;
+      await DataManager(
+        quickCall: QuickCall.giveDatas,
+      ).beginQuickCall;
+      await Navigator.pushNamed(context, '/dataForm');
+      await DataManager().beginProcess;
+      await DataManager(
+        quickCall: QuickCall.askIncompleteDays,
+      ).beginQuickCall;
+    } finally {if (mounted) {setState(() {buttonAddIgenyles = ButtonState.default0;});}}
+  }
+
+  /*Future<void> _addIgenyles() async{
+    setState(() {isRefreshingPanel = false; buttonAddIgenyles = ButtonState.loading;});
     Global.routeNext = NextRoute.abroncsIgenyles;
     await DataManager(input: {'datum': DateTime.now()}).beginProcess;
     await DataManager(quickCall: QuickCall.giveDatas).beginQuickCall;
     await Navigator.pushNamed(context, '/dataForm');
     await DataManager().beginProcess;
     await DataManager(quickCall: QuickCall.askIncompleteDays).beginQuickCall;
+    isRefreshingPanel = false; buttonAddIgenyles = ButtonState.loading;
     setState((){});
-  }
+  }*/
 
   @override
   void dispose() {
@@ -410,7 +510,7 @@ class PanelState extends State<Panel> {//-------- ---------- ---------- --------
 
   // ---------- < Methods [2] > ------ ---------- ---------- ---------- ---------- ---------- ---------- ---------- ----------
   Future<void> refreshPanel() async {
-    if (isRefreshingPanel || !mounted) return;
+    if(isRefreshingPanel || isDashboardLocked || buttonAddIgenyles == ButtonState.loading || !mounted) return;
     setState(() => isRefreshingPanel = true);
     try {
       await DataManager(quickCall: QuickCall.panel).beginQuickCall;
@@ -490,7 +590,7 @@ class _PanelSectionCardState extends State<PanelSectionCard> {
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
                           ),
-                        ),
+                        ),                        
                       ),
                     ),
                     if (needsSearch)

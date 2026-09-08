@@ -1,7 +1,7 @@
 <?php
 class DatabaseManager{
     // ---------- <Variables [1]> ----- ---------- ---------- ---------- ---------- ---------- ---------- ----------    
-    private $pdoServer =   "79.139.58.246";
+    private $pdoServer =   "172.16.1.11";
     private $pdoUser =     "app";
     private $pdoPassword = "Dh!Flmn2J6uJ";
     private $data;

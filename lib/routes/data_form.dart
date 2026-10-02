@@ -1883,10 +1883,22 @@ class DataFormState extends State<DataForm> {//-- ---------- ---------- --------
                 final item = filteredList[i];
                 return ListTile(
                   title: Text(Global.parse(item['megnevezes']?.toString() ?? '')),
-                  onTap: () => Navigator.of(dialogCtx).pop(<String, dynamic>{
-                    'id': item['id'],
-                    'megnevezes': item['megnevezes'],
-                  }),
+                  onTap: () async {
+                    final isNewTyre = (item is Map) && item.values.any((value) => value is String && value.trim().toLowerCase().contains('(új)'));
+                    if (isNewTyre) {
+                      final itemText = Global.parse(item['megnevezes']?.toString() ?? '');
+                      final confirmed = await Global.yesNoDialog(
+                        dialogCtx,
+                        content: 'Biztos hogy ezt az Új abroncsot választja ki?:\n$itemText',
+                      );
+                      if (!confirmed) return;
+                    }
+                    if (!dialogCtx.mounted) return;
+                    Navigator.of(dialogCtx).pop(<String, dynamic>{
+                      'id': item['id'],
+                      'megnevezes': item['megnevezes'],
+                    });
+                  },
                 );
               },
             ),
@@ -1970,9 +1982,21 @@ class DataFormState extends State<DataForm> {//-- ---------- ---------- --------
                 final item = filteredList[i];
                 return ListTile(
                   title: Text(Global.parse(item['megnevezes']?.toString() ?? '')),
-                  onTap: () => Navigator.of(dialogCtx).pop(<String, dynamic>{
-                    'megnevezes': item['megnevezes'],
-                  }),
+                  onTap: () async {
+                    final isNewTyre = (item is Map) && item.values.any((value) => value is String && value.trim().toLowerCase().contains('(új)'));
+                    if (isNewTyre) {
+                      final itemText = Global.parse(item['megnevezes']?.toString() ?? '');
+                      final confirmed = await Global.yesNoDialog(
+                        dialogCtx,
+                        content: 'Biztos hogy ezt az Új abroncsot választja ki?:\n$itemText',
+                      );
+                      if (!confirmed) return;
+                    }
+                    if (!dialogCtx.mounted) return;
+                    Navigator.of(dialogCtx).pop(<String, dynamic>{
+                      'megnevezes': item['megnevezes'],
+                    });
+                  },
                 );
               },
             ),

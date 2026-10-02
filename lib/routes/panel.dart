@@ -57,11 +57,12 @@ class PanelState extends State<Panel> {//-------- ---------- ---------- --------
   // ---------- < Widget [1] > ------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ----------
   @override
   Widget build(BuildContext context) {
+    final isKeyboardOpen = MediaQuery.viewInsetsOf(context).bottom > 0;
     return WillPopScope(onWillPop: _handlePop, child: Scaffold(
       appBar: AppBar(title: Text("Dashboard - ${DataManager.szervizMegnevezes}")),
       body: Stack(
         children: [
-          _drawPanel,
+          _drawPanel(isKeyboardOpen),
           if (isRefreshingPanel) Container(
             color: Colors.black.withOpacity(0.1),
             child: const Center(
@@ -79,32 +80,39 @@ class PanelState extends State<Panel> {//-------- ---------- ---------- --------
   }
 
   // ---------- < Widget [2] > ------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ----------
-  Widget get _drawPanel {
+  Widget _drawPanel(bool isKeyboardOpen) {
     return LayoutBuilder(
       builder: (context, constraints) {
         final screenSize = MediaQuery.sizeOf(context);
-        final keyboardHeight = MediaQuery.of(context).viewInsets.bottom;
         final isHorizontal = screenSize.width > screenSize.height;
-        final cardCount = data.length.clamp(1, 999);
-        if (isHorizontal && keyboardHeight == 0) {
-          return Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: List.generate(data.length, (index) {
-              final maxCardWidth = constraints.maxWidth / cardCount;
-              return ConstrainedBox(
-                constraints: BoxConstraints(maxWidth: maxCardWidth),
-                child: _drawSectionCard(data[index]),
-              );
-            }),
+
+        if (isHorizontal) {
+          final cardWidth = constraints.maxWidth / 3;
+
+          return SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: List.generate(data.length, (index) {
+                return SizedBox(
+                  width: cardWidth,
+                  height: constraints.maxHeight,
+                  child: _drawSectionCard(data[index]),
+                );
+              }),
+            ),
           );
         }
+
+        final cardHeight = constraints.maxHeight / (isKeyboardOpen ? 2 : 3);
+
         return SingleChildScrollView(
-          padding: EdgeInsets.only(bottom: keyboardHeight + 24),
+          scrollDirection: Axis.vertical,
+          padding: const EdgeInsets.only(bottom: 24),
           child: Column(
             children: List.generate(data.length, (index) {
-              final maxCardHeight = constraints.maxHeight / cardCount;
-              return ConstrainedBox(
-                constraints: BoxConstraints(maxHeight: maxCardHeight),
+              return SizedBox(
+                height: cardHeight,
                 child: _drawSectionCard(data[index]),
               );
             }),
@@ -556,6 +564,21 @@ class _PanelSectionCardState extends State<PanelSectionCard> {
     ].any((v) => v?.toString().toLowerCase().contains(query) ?? false);
   }
 
+  Future<void> _scrollCardIntoView(BuildContext cardContext) async {
+    if (MediaQuery.sizeOf(context).width > MediaQuery.sizeOf(context).height) return;
+    await Future.delayed(const Duration(milliseconds: 600));
+    if (!mounted || !cardContext.mounted) return;
+    await WidgetsBinding.instance.endOfFrame;
+    if (!mounted || !cardContext.mounted) return;
+    await Scrollable.ensureVisible(
+      cardContext,
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeOut,
+      alignment: 0.0,
+      alignmentPolicy: ScrollPositionAlignmentPolicy.explicit,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final section = Map<String, dynamic>.from(widget.rawSection as Map);
@@ -569,7 +592,8 @@ class _PanelSectionCardState extends State<PanelSectionCard> {
         final needsSearch =         estimatedListHeight > constraints.maxHeight - 80;
         final border =              OutlineInputBorder(borderRadius: BorderRadius.circular(30));
 
-        return Card(
+        return Builder(
+          builder: (cardContext) => Card(
           elevation: 2,
           margin: const EdgeInsets.all(8),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -579,40 +603,78 @@ class _PanelSectionCardState extends State<PanelSectionCard> {
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: Padding(
-                        padding: const EdgeInsets.all(5),
-                        child: Text(
-                          section['title']?.toString() ?? '',
-                          style: const TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),                        
+                if (MediaQuery.sizeOf(context).width > MediaQuery.sizeOf(context).height) ...[
+                  Padding(
+                    padding: const EdgeInsets.all(5),
+                    child: Text(
+                      section['title']?.toString() ?? '',
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
-                    if (needsSearch)
-                      SizedBox(
-                        width: constraints.maxWidth * 0.45,
-                        child: TextField(
-                          decoration: InputDecoration(
-                            isDense:        true,
-                            contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                            prefixIcon:     const Icon(Icons.search),
-                            labelText:      'Keresés',
-                            border:         border,
-                            enabledBorder:  border,
-                            focusedBorder:  border,
+                  ),
+                  const SizedBox(height: 6),
+                  Row(
+                    children: [
+                      if (needsSearch)
+                        Expanded(
+                          child: TextField(
+                              decoration: InputDecoration(
+                                isDense: true,
+                                contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                                prefixIcon: const Icon(Icons.search),
+                                labelText: 'Keresés',
+                                border: border,
+                                enabledBorder: border,
+                                focusedBorder: border,
+                              ),
+                              onChanged: (value) => setState(() => searchText = value),
+                            ),
+                        ),
+                      if (needsSearch) const SizedBox(width: 8),
+                      widget.getButtonFor(section['title']?.toString() ?? ''),
+                    ],
+                  ),
+                ] else ...[
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Padding(
+                          padding: const EdgeInsets.all(5),
+                          child: Text(
+                            section['title']?.toString() ?? '',
+                            style: const TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
-                          onChanged: (value) => setState(() => searchText = value),
                         ),
                       ),
-                    const SizedBox(width: 8),
-                    widget.getButtonFor(section['title']?.toString() ?? ''),
-                  ],
-                ),
+                      if (needsSearch)
+                        SizedBox(
+                          width: constraints.maxWidth * 0.45,
+                          child: Builder(
+                            builder: (fieldContext) => TextField(
+                              decoration: InputDecoration(
+                                isDense: true,
+                                contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                                prefixIcon: const Icon(Icons.search),
+                                labelText: 'Keresés',
+                                border: border,
+                                enabledBorder: border,
+                                focusedBorder: border,
+                              ),
+                              onTap: () => _scrollCardIntoView(cardContext),
+                              onChanged: (value) => setState(() => searchText = value),
+                            ),
+                          ),
+                        ),
+                      const SizedBox(width: 8),
+                      widget.getButtonFor(section['title']?.toString() ?? ''),
+                    ],
+                  ),
+                ],
 
                 const SizedBox(height: 8),
 
@@ -632,6 +694,7 @@ class _PanelSectionCardState extends State<PanelSectionCard> {
               ],
             ),
           ),
+        ),
         );
       },
     );

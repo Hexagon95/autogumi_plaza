@@ -23,12 +23,12 @@ import 'package:autogumi_plaza/utils.dart';
 class DataManager{
   void get bookMarks {beginQuickCall; _decisionQuickCall; beginProcess; _decision;}
   // ---------- < Variables [Static] > - ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ----------
-  static String thisVersion =                       '1.48g'; // <--- 🛜 A WEB-es verziót is firssíteni kell!!!!!!
+  static String thisVersion =                       '1.48h'; // <--- 🛜 A WEB-es verziót is firssíteni kell!!!!!!
   static int verzioTest =                           0; // <--- anything other than 0 will draw "[Teszt #]" at the LogIn screen.
   static int logInNotification =                    1; // <--- 0 will have no notification, other than 0 will draw a red stamp on the menu options' top right corner.
   static String webAppLink =                        'https://app.mosaic.hu/flutter_web/szerviz_mezandmol/index.html';
   static String qrCodeGeneratorLink =               'https://app.mosaic.hu/flutter_web/qr_code_generator/index.html';
-  static String infoUpdate =                        '◆ Adatlap kitöltésénél, ha új abroncsot választunk ki, meg kell erősíteni a döntést.';
+  static String infoUpdate =                        '◆ Lapozáskor, ha a gyors mentés hibára fut, a hibaüzenet kiírásra kerül.\n◆ Hiba javítása: munkalaplezárásnál 2x kerül mentésre a muknalap.';
   
   // 🤖 OR 🛜 Edit here!!!! ⬇️                      ⬇️ And here!!!
   static const AppIs constAppIs =                   AppIs.default0; // <--- Set to default0 or manually enforce behaviour of the app.
@@ -714,18 +714,38 @@ class DataManager{
           break;
 
         case QuickCall.saveEsetiMunkalapFelvitele:
+          Map<String, dynamic>? message;
           var queryParameters = {
             'customer':   (foglalasId != null && int.parse(foglalasId!) < 0)? 'mercarius' : customer,
             'parameter':  (input['lezart'] != 1 && input['quickSave'] == null)? jsonEncode(DataFormState.rawData) : jsonEncode(dataQuickCall[0]),
-            'user_id':    userId, //data[0][1]['dolgozo_kod'],
+            'user_id':    userId,
             'lezart':     input['lezart']
           };
+          if(kDebugMode) dev.log(queryParameters.toString());
           Uri uriUrl = Uri.parse('${urlPath}save_eseti_munkalap.php');
-          http.Response response =      await safePost(uriUrl, body: json.encode(queryParameters), headers: headers);
+          http.Response response = await safePost(uriUrl, body: json.encode(queryParameters), headers: headers);
           if(kDebugMode) dev.log(response.body);
-          dataQuickCall[check(5)] =     (['[]', '"[]"', '""[]""'].contains(response.body))? [] : json.decode(json.decode(response.body));
+          dynamic decodedResponse = response.body;
+          for(int i = 0; i < 2 && decodedResponse is String; i++){
+            final value = decodedResponse.trim();
+            if(value.isEmpty){decodedResponse = null; break;}
+            try{decodedResponse = json.decode(value);}
+            catch(_){break;}
+          }
+          dataQuickCall[check(5)] = decodedResponse ?? [];
           if(kDebugMode) dev.log(dataQuickCall[5].toString());
-          SignatureFormState.message =  (dataQuickCall[5].isNotEmpty)? dataQuickCall[5][0] : null;
+          final List<dynamic> messageSearch = [decodedResponse];
+          while(messageSearch.isNotEmpty && message == null){
+            final value = messageSearch.removeLast();
+            if(value is Map){
+              final map = Map<String, dynamic>.from(value);
+              final messageText = map['message']?.toString().trim();
+              if(messageText != null && messageText.isNotEmpty && messageText.toLowerCase() != 'null') message = map;
+            }
+            else if(value is List){messageSearch.addAll(value);}
+          }
+          SignatureFormState.message =  message;
+          DataFormState.message =       message;
           break;
 
         case QuickCall.uploadSignature:
@@ -743,18 +763,37 @@ class DataManager{
           break;
   
         case QuickCall.saveSzezonalisMunkalapFelvitele:
+          Map<String, dynamic>? message;
           if(input['lezart'] == null) input['lezart'] = 0;
           var queryParameters = {
             'customer':   customer,
             'parameter':  jsonEncode(dataQuickCall[0]),
-            'user_id':    userId, //data[0][1]['dolgozo_kod'],
+            'user_id':    userId,
             'lezart':     input['lezart']
           };
-          Uri uriUrl =              Uri.parse('${urlPath}finish_worksheet.php');
-          http.Response response =  await safePost(uriUrl, body: json.encode(queryParameters), headers: headers);
-          dataQuickCall[check(5)] = (['[]', '"[]"', '""[]""'].contains(response.body))? [] : json.decode(json.decode(response.body));
+          Uri uriUrl = Uri.parse('${urlPath}finish_worksheet.php');
+          http.Response response = await safePost(uriUrl, body: json.encode(queryParameters), headers: headers);
+          dynamic decodedResponse = response.body;
+          for(int i = 0; i < 2 && decodedResponse is String; i++){
+            final value = decodedResponse.trim();
+            if(value.isEmpty){decodedResponse = null; break;}
+            try{decodedResponse = json.decode(value);}
+            catch(_){break;}
+          }
+          dataQuickCall[check(5)] = decodedResponse ?? [];
           if(kDebugMode) dev.log(dataQuickCall[5].toString());
-          SignatureFormState.message =  (dataQuickCall[5].isNotEmpty)? dataQuickCall[5][0] : null;
+          final List<dynamic> messageSearch = [decodedResponse];
+          while(messageSearch.isNotEmpty && message == null){
+            final value = messageSearch.removeLast();
+            if(value is Map){
+              final map = Map<String, dynamic>.from(value);
+              final messageText = map['message']?.toString().trim();
+              if(messageText != null && messageText.isNotEmpty && messageText.toLowerCase() != 'null') message = map;
+            }
+            else if(value is List){messageSearch.addAll(value);}
+          }
+          SignatureFormState.message =  message;
+          DataFormState.message =       message;
           break;
 
         case QuickCall.saveAbroncsIgenyles:

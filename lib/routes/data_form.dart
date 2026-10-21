@@ -48,6 +48,7 @@ class DataFormState extends State<DataForm> {//-- ---------- ---------- --------
   static bool isScreenLocked =                        false;
   static int? selectedIndexInCalendar;
   static int? amount;
+  static Map<String, dynamic>? message;
   
   // ---------- [⚡️💎 static complex variables] ---- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- //
   static int get currentProgress{
@@ -404,48 +405,45 @@ class DataFormState extends State<DataForm> {//-- ---------- ---------- --------
     super.dispose();
   }
 
-  Future<void> _quickSave() async {
-    if (quickSaveLock) return;
+  Future<bool> _quickSave() async {
+    if(quickSaveLock) return false;
     quickSaveLock = true;
+    message = null;
     setState(() {buttonSaveProgress = ButtonState.loading;});
     try {
-      // 1) Persist current page's edits into the working payload
-      if (currentProgress == 0) {
+      if(currentProgress == 0){
         DataManager.dataQuickCall[0]['foglalas'] = rawData;
         DataManager.dataQuickCall[1][0] = listOfLookupDatas;
-      } else {
+      }
+      else{
         DataManager.dataQuickCall[0]['poziciok'][currentProgress - 1]['adatok'] = rawData;
         DataManager.dataQuickCall[1][currentProgress] = listOfLookupDatas;
       }
-      // 2) Quick save (not closing document)
-      switch (workType) {
+      switch(workType){
         case 'Eseti':
-          await DataManager(
-            quickCall: QuickCall.saveEsetiMunkalapFelvitele,
-            input: {'lezart': 0, 'quickSave': true},
-          ).beginQuickCall;
+          await DataManager(quickCall: QuickCall.saveEsetiMunkalapFelvitele, input: {'lezart': 0, 'quickSave': true}).beginQuickCall;
           break;
         case 'Szezonális':
-          await DataManager(
-            quickCall: QuickCall.saveSzezonalisMunkalapFelvitele,
-            input: {'lezart': 0, 'quickSave': true},
-          ).beginQuickCall;
+          await DataManager(quickCall: QuickCall.saveSzezonalisMunkalapFelvitele, input: {'lezart': 0, 'quickSave': true}).beginQuickCall;
           break;
         default:
-          // no-op for other types
           break;
       }
-    } catch (e) {
-      if (kDebugMode) print('quickSave error: $e');
-    } finally {
-      quickSaveLock = false;
-      if (mounted) {
-        setState(() {buttonSaveProgress = ButtonState.default0;});
+      if(message != null){
+        if(mounted) await Global.showAlertDialog(context, title: 'ℹ️ ${message!['name']?.toString() ?? 'Hiba'}', content: message!['message']?.toString() ?? 'Ismeretlen hiba');
+        return false;
       }
+      return true;
     }
-    /*if (!mounted) return;
-    // 3) Return to calendar screen (don’t refresh here; Calendar will do it after pop)
-    Navigator.popUntil(context, ModalRoute.withName('/calendar'));*/
+    catch(e){
+      if(kDebugMode) print('quickSave error: $e');
+      if(mounted) await Global.showAlertDialog(context, title: 'Hiba', content: e.toString());
+      return false;
+    }
+    finally{
+      quickSaveLock = false;
+      if(mounted) setState(() {buttonSaveProgress = ButtonState.default0;});
+    }
   }  
 
   Widget _getWidget(List<dynamic> thisData, dynamic input, int index){
@@ -501,7 +499,7 @@ class DataFormState extends State<DataForm> {//-- ---------- ---------- --------
         );
       }
 
-      case 'select': {
+      case 'select': { 
         bool isInLookupData(String input, List<dynamic>? list) {if(list != null) {for(var item in list) {if(item['id'].toString() == input) return true;}}return false;}
         String getItem(dynamic varList, String id) {for(dynamic item in varList) {if(item['id'] == id) return item['megnevezes'];}return '';}
         final List<dynamic>? lookupData = listOfLookupDatas[input['id']];
@@ -1086,7 +1084,7 @@ class DataFormState extends State<DataForm> {//-- ---------- ---------- --------
         setState(() {buttonContinue = ButtonState.loading; enableInteraction['buttonContinue'] = false;});
         switch(currentProgress){
           case 0:
-            await _quickSave();
+            if(!await _quickSave()) break;
             rawData =                                   DataManager.dataQuickCall[0]['poziciok'][0]['adatok'];
             listOfLookupDatas =                         DataManager.dataQuickCall[1][1];
             progress[currentProgress] =                 true;
@@ -1096,7 +1094,7 @@ class DataFormState extends State<DataForm> {//-- ---------- ---------- --------
 
           default:
             if(currentProgress == progress.length - 1) break;
-            await _quickSave();
+            if(!await _quickSave()) break;
             progress[currentProgress] = true;
             await DataManager(quickCall: QuickCall.askPhotos).beginQuickCall;
             rawData =                   DataManager.dataQuickCall[0]['poziciok'][currentProgress - 1]['adatok'];
@@ -1553,6 +1551,7 @@ class DataFormState extends State<DataForm> {//-- ---------- ---------- --------
         else {return false;}
 
       default:
+        if(!await _quickSave()) return false;
         buttonCamera = (currentProgress == 1)? ButtonState.disabled : ButtonState.default0;
         DataManager.dataQuickCall[0]['poziciok'][currentProgress - 1]['adatok'] = rawData;
         DataManager.dataQuickCall[1][currentProgress] =                           listOfLookupDatas;

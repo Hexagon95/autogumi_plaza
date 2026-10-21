@@ -20,6 +20,7 @@ class SqlCommand{
     public function select_MunkalapEsetiPozicioKepek()          {return "SELECT [dbo].[Munkalap_eseti_pozicio_kepek] (:foglalas_id, :pozicio)";}
     public function select_tabletDashboardPanels()              {return "SELECT [dbo].[Tablet_Dashboard_panels] (:user_id)";}
     public function exec_tabletFelhasznaloAdatok()              {return "EXEC [dbo].[Tablet_FelhasznaloAdatok] :eszkoz_id, :user_name, :user_password";}
+    public function exec_tabletFelhasznaloAdatokNew()           {return "EXEC [dbo].[Tablet_FelhasznaloAdatok_new] :eszkoz_id, :user_name, :user_password";}
     public function exec_tabletFelvitele()                      {return "EXEC [dbo].[TabletFelvitele] :eszkoz_id";}
     public function exec_bizonylatKepPozicioFelvitele()         {return "EXEC [dbo].[BizonylatKepPozicioFelvitele] :parameter, :user_id";}
     public function exec_bizonylatKepFelvitele()                {return "EXEC [dbo].[BizonylatDokumentumFelvitele] :parameter, :user_id";}

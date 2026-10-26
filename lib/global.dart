@@ -16,8 +16,28 @@ enum ButtonType   {add, edit, delete, default0}
 class Global{
   // ---------- < Variables [Static] > -------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ----------
   static const List<Map<String, Object?>> defaultIdentity = [{'id': 0, 'userName': '', 'password': ''}];
-  static const List<String> trueString =                    ['1', 'true', 'True', 'TRUE', 'T', 't'];
-  static const List<String> falseString =                   ['0', 'fasle', 'False', 'FALSE', 'F', 'f'];
+  static const List<String> trueString = [
+    '1',
+    'true', 'True', 'TRUE',
+    'igaz', 'Igaz', 'IGAZ',
+    't', 'T',
+    'i', 'I',
+    'igen', 'Igen', 'IGEN',
+    'yes', 'Yes', 'YES',
+    'ok', 'Ok', 'OK',
+  ];
+  static const List<String> falseString = [
+    '0',
+    'false', 'False', 'FALSE',
+    'hamis', 'Hamis', 'HAMIS',
+    'f', 'F',
+    'n', 'N',
+    'h', 'H',
+    'nem', 'Nem', 'NEM',
+    'no', 'No', 'NO',
+    'nok', 'Nok', 'NOK',
+    'cancel', 'Cancel', 'CANCEL',
+  ];
   static List<NextRoute> routes =                           List<NextRoute>.empty(growable: true);
   static NextRoute get currentRoute =>                      routes.last;
   static void get routeBack                                 {do{routes.removeLast();}while(currentRoute == NextRoute.default0); _printRoutes;}

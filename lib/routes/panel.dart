@@ -19,7 +19,8 @@ class Panel extends StatefulWidget {//------------ ---------- ---------- -------
 class PanelState extends State<Panel> {//-------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- <PanelState>
   // ---------- < Variables > ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- //
     // ---------- [⚡️ static variables] --- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- //
-    static List<dynamic> data = [];
+    static List<dynamic> data =     [];
+    static bool isCalendarEnabled = true;
     static String? errorMessageDialog;
 
     // ---------- [🌸 simple variables] --- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- //
@@ -71,10 +72,12 @@ class PanelState extends State<Panel> {//-------- ---------- ---------- --------
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed:        (!isCalendarPressed && !isDashboardLocked)? _calendarButtonPressed : null,
-        child:            const Icon(Icons.calendar_month),
-      ),
+      floatingActionButton: isCalendarEnabled
+        ? FloatingActionButton(
+            onPressed: (!isCalendarPressed && !isDashboardLocked)? _calendarButtonPressed : null,
+            child: const Icon(Icons.calendar_month),
+          )
+        : null,
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
     ));
   }
@@ -310,7 +313,7 @@ class PanelState extends State<Panel> {//-------- ---------- ---------- --------
   }
 
   Future _calendarButtonPressed() async {
-    if(isDashboardLocked) return;
+    if(!isCalendarEnabled || isDashboardLocked) return;
     setState(() => isCalendarPressed = true);
     Global.routeNext = NextRoute.calendar;
     await DataManager(quickCall: QuickCall.askIncompleteDays).beginQuickCall;

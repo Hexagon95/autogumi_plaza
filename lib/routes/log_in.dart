@@ -278,6 +278,8 @@ class LogInState extends State<LogIn>{
     }
 
     // 4) Normal login
+    final originalIdentity = DataManager.identity.toString();
+    void restoreOriginalIdentity(){if(DataManager.identity != null) DataManager.identity!.identity = originalIdentity;}
     await DataManager(
       quickCall: QuickCall.logInNamePassword,
       input: {
@@ -285,8 +287,8 @@ class LogInState extends State<LogIn>{
         'user_password': result['userPassword'],
       },
     ).beginQuickCall;
-
     if (logInNamePassword == null || logInNamePassword.isEmpty) {
+      restoreOriginalIdentity();
       await Global.showAlertDialog(
         context,
         title: 'Ismeretlen felhasználónév!',
@@ -295,8 +297,8 @@ class LogInState extends State<LogIn>{
       if (mounted) setState(() => buttonLogIn = ButtonState.default0);
       return;
     }
-
     if (logInNamePassword[0]['jelszo_ok'].toString() == '0') {
+      restoreOriginalIdentity();
       await Global.showAlertDialog(
         context,
         title: 'Helytelen jelszó!',
@@ -304,6 +306,26 @@ class LogInState extends State<LogIn>{
       );
       if (mounted) setState(() => buttonLogIn = ButtonState.default0);
       return;
+    }
+    if (Global.trueString.contains(logInNamePassword[0]['megszunt']?.toString())) {
+      restoreOriginalIdentity();
+      await Global.showAlertDialog(
+        context,
+        title: 'Érvénytelen felhasználó!',
+        content: 'Ez a felhasználónév már nem érvényes.',
+      );
+      if (mounted) setState(() => buttonLogIn = ButtonState.default0);
+      return;
+    }
+    final bool identityChanged = DataManager.identity.toString() != originalIdentity;
+    if(identityChanged){
+      DataManager.customer = 'mosaic';
+      await DataManager(input: {'number': 0, 'login': 'customer'}).beginProcess;
+      if(errorMessage.isNotEmpty){
+        await Global.showAlertDialog(context, title: 'Hiba!', content: errorMessage);
+        if(mounted) setState(() => buttonLogIn = ButtonState.default0);
+        return;
+      }
     }
     await DataManager.saveLastUserNameSQLite(result['userName']);
 

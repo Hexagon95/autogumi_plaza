@@ -24,9 +24,10 @@ class DataManager{
   void get bookMarks {beginQuickCall; _decisionQuickCall; beginProcess; _decision;}
   // ---------- < Variables [Static] > - ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ----------
   static String thisVersion =                       '1.48h'; // <--- 🛜 A WEB-es verziót is firssíteni kell!!!!!!
-  static int verzioTest =                           0; // <--- anything other than 0 will draw "[Teszt #]" at the LogIn screen.
+  static int verzioTest =                           7; // <--- anything other than 0 will draw "[Teszt #]" at the LogIn screen.
   static int logInNotification =                    1; // <--- 0 will have no notification, other than 0 will draw a red stamp on the menu options' top right corner.
   static String webAppLink =                        'https://app.mosaic.hu/flutter_web/szerviz_mezandmol/index.html';
+  static String webAppLinkTest =                    'https://app.mosaic.hu/flutter_web/szerviz_mezandmol_test/index.html';
   static String qrCodeGeneratorLink =               'https://app.mosaic.hu/flutter_web/qr_code_generator/index.html';
   static String infoUpdate =                        '◆ Lapozáskor, ha a gyors mentés hibára fut, a hibaüzenet kiírásra kerül.\n◆ Hiba javítása: munkalaplezárásnál 2x kerül mentésre a muknalap.';
   
@@ -38,6 +39,9 @@ class DataManager{
   static String urlPath =                           test? 'https://developer.mosaic.hu/android/szerviz_mezandmol/' : 'https://app.mosaic.hu/android/szerviz_mezandmol/';
   static String rootPath =                          test? 'https://developer.mosaic.hu/' : 'https://appdoc.mosaic.hu/';
   static String get sqlUrlLink =>                   'https://app.mosaic.hu/sql/ExternalInputChangeSQL.php?ceg=mezandmol&SQL=';
+
+  static const String nameOfApp =                   'MezandMol Szervíz';
+  static const bool isLoginNamePasswordNew =        true;
 
   static List<dynamic> data =                       List<dynamic>.empty(growable: true);
   static List<dynamic> dataQuickCall =              List<dynamic>.empty(growable: true);
@@ -51,7 +55,6 @@ class DataManager{
   static String szervizMegnevezes =                 '';
   static String actualVersion =                     thisVersion;
   static String customer =                          'mosaic';
-  static const String nameOfApp =                   'MezandMol Szervíz';
   static String get serverErrorText =>              (isServerAvailable)? '' : errorMessage;
   static String errorMessage =                      '';
   static int userId =                               0;
@@ -130,7 +133,7 @@ class DataManager{
             'user_password':  input['user_password'],
           };
           if(kDebugMode)print(queryParameters);
-          Uri uriUrl =                Uri.parse('${urlPath}login_name_password.php');
+          Uri uriUrl =                Uri.parse('$urlPath${(isLoginNamePasswordNew)? 'login_name_password_new.php' : 'login_name_password.php'}');
           http.Response response =    await safePost(uriUrl, body: json.encode(queryParameters), headers: headers);
           dataQuickCall[check(31)] =  (response.body != 'null')? await jsonDecode(response.body) : [];
           if(kDebugMode){
@@ -1106,9 +1109,13 @@ class DataManager{
           break;
 
         case QuickCall.logInNamePassword:
-          LogInState.errorMessage = '';
-          LogInState.logInNamePassword = dataQuickCall[31];
-          userId =          (dataQuickCall[31].isNotEmpty)? int.parse(dataQuickCall[31][0]['id'].toString()) : -1;
+          LogInState.errorMessage =       '';
+          LogInState.logInNamePassword =  dataQuickCall[31];
+          userId = (dataQuickCall[31].isNotEmpty)? int.tryParse(dataQuickCall[31][0]['id'].toString()) ?? -1 : -1;
+          if(dataQuickCall[31].isNotEmpty){            
+            if(dataQuickCall[31][0]['eszkoz_id'] != null && dataQuickCall[31][0]['eszkoz_id'].toString().isNotEmpty) {identity?.identity = dataQuickCall[31][0]['eszkoz_id'].toString();}
+            PanelState.isCalendarEnabled = !Global.falseString.contains(dataQuickCall[31][0]['enable_calendar']?.toString() ?? '');
+          }
           break;
 
         case QuickCall.forgottenPassword:
@@ -1468,5 +1475,5 @@ class Identity{
     }
   }
   @override
-  String toString() => identity; //'00000000000000000000000000000000';
+  String toString() => identity;  //'00000000000000000000000000000000';
 }

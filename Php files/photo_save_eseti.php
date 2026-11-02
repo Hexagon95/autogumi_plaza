@@ -1,65 +1,77 @@
 <?php
+
 header("Access-Control-Allow-Origin: *");
 header("Access-Control-Allow-Headers: Content-Type");
 header("Access-Control-Allow-Methods: GET, POST, OPTIONS");
-if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+
+if($_SERVER['REQUEST_METHOD'] === 'OPTIONS'){
     http_response_code(200);
     exit();
 }
+
 header('Content-Type: application/json; charset=utf-8');
-include 'sql_commands.php';
-include 'database_manager.php';
-include 'tasks/task_photo_sql.php';
 
-$logPath = "../../logs/PhotoTemp_".date("YmdHis").".txt";
+require_once __DIR__ . '/sql/sql_commands.php';
+require_once __DIR__ . '/sql/database_manager.php';
+require_once __DIR__ . '/tasks/task_photo_sql.php';
 
-function randomName($number) {
+function randomName(int $number): string{
     $alphabet = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890';
-    $pass = array(); //remember to declare $pass as an array
-    $alphaLength = strlen($alphabet) - 1; //put the length -1 in cache
-    for ($i = 0; $i < $number; $i++) {
-        $n = rand(0, $alphaLength);
-        $pass[] = $alphabet[$n];
+    $result = '';
+    $alphaLength = strlen($alphabet) - 1;
+
+    for($i = 0; $i < $number; $i++){
+        $result .= $alphabet[random_int(0, $alphaLength)];
     }
-    return implode($pass); //turn the array into a string
+
+    return $result;
 }
 
-$RequestData = json_decode(file_get_contents('php://input'), true);
-$RequestDataParams = json_decode($RequestData['parameter'],true);
+$requestData = json_decode(file_get_contents('php://input'), true);
+$requestData = is_array($requestData)? $requestData : [];
 
-$BizonylatID = $RequestDataParams['id'];
+$requestDataParams = json_decode($requestData['parameter'] ?? '', true);
+$requestDataParams = is_array($requestDataParams)? $requestDataParams : [];
 
-/*$logPath = "../../logs/PhotoTemp_".date("YmdHis").".txt";
-file_put_contents($logPath, print_r($BizonylatID_Data, true), FILE_APPEND);
-file_put_contents($logPath, $BizonylatID, FILE_APPEND);*/
+$bizonylatID = $requestDataParams['id'] ?? 0;
 
-$KepFile = base64_decode($RequestDataParams['kep']);
-$KepFileName = randomName(20);
-$KepFileKonyvtar = "documents/".$RequestData['customer'];
+$kepFile = base64_decode($requestDataParams['kep'] ?? '', true);
+$kepFileName = randomName(20);
+$kepFileKonyvtar = 'documents/' . ($requestData['customer'] ?? '');
 
-$mit = array("☀️","❄️","🌦️","🛞");
-$mire = array("","","","");
-$RequestDataParams['pozicio'] = str_replace($mit,$mire, $RequestDataParams['pozicio']);
-
-$BizonylatDokumentumParams = array(
-    "bizonylat_id" => $BizonylatID,
-    "files" => array(
-        "id" => 0,
-        "konyvtar" => $KepFileKonyvtar,
-        "megnevezes" => $KepFileName.".jpg",
-        "name" => "IMG_".$RequestDataParams['pozicio']."_".date("YmdHis")
-    ),
-    "user_id" => $RequestData['user_id']
+$mit = ["☀️", "❄️", "🌦️", "🛞"];
+$mire = ["", "", "", ""];
+$requestDataParams['pozicio'] = str_replace(
+    $mit,
+    $mire,
+    $requestDataParams['pozicio'] ?? ''
 );
 
+$bizonylatDokumentumParams = [
+    'bizonylat_id' => $bizonylatID,
+    'files' => [
+        'id' => 0,
+        'konyvtar' => $kepFileKonyvtar,
+        'megnevezes' => $kepFileName . '.jpg',
+        'name' => 'IMG_' . $requestDataParams['pozicio'] . '_' . date('YmdHis')
+    ],
+    'user_id' => $requestData['user_id'] ?? 0
+];
 
-//file_put_contents($logPath, print_r($BizonylatDokumentumParams, true).chr(10), FILE_APPEND);
+$kepFileFullKonyvtar = __DIR__ . '/../../../appdoc/' . $kepFileKonyvtar;
+$kepFileFullPath = $kepFileFullKonyvtar . '/' . $kepFileName . '.jpg';
 
-if (!is_dir("../../../appdoc/".$KepFileKonyvtar)) {
-    mkdir("../../../appdoc/".$KepFileKonyvtar, 0777, true);
+if(!is_dir($kepFileFullKonyvtar)){
+    mkdir($kepFileFullKonyvtar, 0777, true);
 }
 
-file_put_contents("../../../appdoc/".$KepFileKonyvtar."/".$KepFileName.".jpg", $KepFile);
+if($kepFile !== false){
+    file_put_contents($kepFileFullPath, $kepFile);
+}
 
-$taskPhotoSave = new Task($BizonylatDokumentumParams, $RequestData['customer']);
+$taskPhotoSave = new Task(
+    $bizonylatDokumentumParams,
+    $requestData['customer'] ?? 'mosaic'
+);
+
 echo json_encode($taskPhotoSave->getResult());

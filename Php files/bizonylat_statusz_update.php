@@ -1,38 +1,43 @@
 <?php
+
 header("Access-Control-Allow-Origin: *");
 header("Access-Control-Allow-Headers: Content-Type");
 header("Access-Control-Allow-Methods: GET, POST, OPTIONS");
-if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+
+if($_SERVER['REQUEST_METHOD'] === 'OPTIONS'){
     http_response_code(200);
     exit();
 }
+
 header('Content-Type: application/json; charset=utf-8');
 
-// Includes
-include 'sql_commands.php';
-include 'database_manager.php';
+require_once __DIR__ . '/sql/sql_commands.php';
+require_once __DIR__ . '/sql/database_manager.php';
 
-// Grab GET parameters
-$bizonylat_id = isset($_GET['id'])      ? $_GET['id']     : null;
-$statusz_id   = isset($_GET['status'])  ? $_GET['status'] : null;
-$user_id      = isset($_GET['user'])    ? $_GET['user']   : null;
+// ---------- <GET Parameters> ---------------------------------------------------
+$bizonylat_id = $_GET['id'] ?? null;
+$statusz_id =   $_GET['status'] ?? null;
+$user_id =      $_GET['user'] ?? null;
 
-// Validate
-if (!$bizonylat_id || !$statusz_id || !$user_id) {
-    echo json_encode(["error" => "Missing required parameters."]);
-    exit;
+// ---------- <Validation> -------------------------------------------------------
+if($bizonylat_id === null || $statusz_id === null || $user_id === null){
+    echo json_encode([
+        'error' => 'Missing required parameters.'
+    ]);
+    exit();
 }
 
-// Prepare SQL & parameters
+// ---------- <SQL> --------------------------------------------------------------
 $sqlCommand = new SqlCommand();
-$procedure = $sqlCommand->exec_bizonylatStatuszUpdate();
 
-$parameters = [
-    'bizonylat_id' => $bizonylat_id,
-    'statusz_id'   => $statusz_id,
-    'user_id'      => $user_id
-];
+$databaseManager = new DatabaseManager(
+    $sqlCommand->exec_bizonylatStatuszUpdate(),
+    [
+        'bizonylat_id' => $bizonylat_id,
+        'statusz_id' =>   $statusz_id,
+        'user_id' =>      $user_id
+    ],
+    'mercarius'
+);
 
-// Execute using burned-in "mercarius" DB
-$databaseManager = new DatabaseManager($procedure, $parameters, 'mercarius');
 echo json_encode($databaseManager->getData());

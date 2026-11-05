@@ -33,9 +33,9 @@ $sqlCommand = new SqlCommand();
 $databaseManager = new DatabaseManager(
     $sqlCommand->exec_bizonylatStatuszUpdate(),
     [
-        'bizonylat_id' => $bizonylat_id,
-        'statusz_id' =>   $statusz_id,
-        'user_id' =>      $user_id
+        'bizonylat_id' => $bizonylat_id ?? null,
+        'statusz_id' =>   $statusz_id ?? null,
+        'user_id' =>      $user_id ?? null
     ],
     'mercarius'
 );

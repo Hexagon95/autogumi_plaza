@@ -38,7 +38,7 @@ class Task{
         $this->databaseManager = new DatabaseManager(
             $this->sqlCommand->select_tabletDashboardPanels(),
             [
-                'user_id' => $this->request['user_id']
+                'user_id' => $this->request['user_id'] ?? null
             ],
             $this->request['customer']
         );

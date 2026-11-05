@@ -41,9 +41,9 @@ class Task{
                 ? $this->sqlCommand->exec_tabletMunkalapMeghiusulas()
                 : $this->sqlCommand->exec_tabletMunkalapEsetiMeghiusulas(),
             [
-                'foglalas_id' => $this->request['foglalas_id'],
-                'indoklas' =>    $this->request['indoklas'],
-                'user_id' =>     $this->request['user_id']
+                'foglalas_id' => $this->request['foglalas_id'] ?? null,
+                'indoklas' =>    $this->request['indoklas'] ?? null,
+                'user_id' =>     $this->request['user_id'] ?? null
             ],
             $this->request['customer']
         );

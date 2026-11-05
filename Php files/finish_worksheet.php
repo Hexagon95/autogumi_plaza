@@ -39,8 +39,8 @@ class Task{
         $this->databaseManager = new DatabaseManager(
             $this->sqlCommand->exec_tabletSzezonalisFelvitele(),
             [
-                'parameter' => $this->request['parameter'],
-                'user_id' =>   $this->request['user_id'],
+                'parameter' => $this->request['parameter'] ?? null,
+                'user_id' =>   $this->request['user_id'] ?? null,
                 'lezart' =>    is_null($this->request['lezart'] ?? null)? 1 : $this->request['lezart']
             ],
             $this->request['customer']

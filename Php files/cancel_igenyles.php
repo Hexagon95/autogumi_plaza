@@ -39,9 +39,9 @@ class Task{
         $this->databaseManager = new DatabaseManager(
             $this->sqlCommand->exec_tabletIgenylesMeghiusulas(),
             [
-                'bizonylat_id' => $this->request['bizonylat_id'],
-                'indoklas' =>    $this->request['indoklas'],
-                'user_id' =>     $this->request['user_id']
+                'bizonylat_id' => $this->request['bizonylat_id'] ?? null,
+                'indoklas' =>    $this->request['indoklas'] ?? null,
+                'user_id' =>     $this->request['user_id'] ?? null
             ],
             $this->request['customer']
         );

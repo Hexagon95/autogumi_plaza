@@ -39,8 +39,8 @@ class Task{
         $this->databaseManager = new DatabaseManager(
             $this->sqlCommand->select_tabletMunkalapEsetiReszletezo(),
             [
-                'eszkoz_id' =>   $this->request['eszkoz_id'],
-                'datum' =>       $this->request['datum'],
+                'eszkoz_id' =>   $this->request['eszkoz_id'] ?? null,
+                'datum' =>       $this->request['datum'] ?? null,
                 'foglalas_id' => $this->request['foglalas_id'] ?? 0,
                 'parent_id' =>   $this->request['parent_id'] ?? 0,
                 'user_id' =>     $this->request['user_id'] ?? 0

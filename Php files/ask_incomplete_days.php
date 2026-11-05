@@ -38,9 +38,9 @@ class Task{
         $this->databaseManager = new DatabaseManager(
             $this->sqlCommand->select_tabletNaptarMunkalapok(),
             [
-                'eszkoz_id' => $this->request['eszkoz_id'],
-                'datum_tol' => $this->request['datum_tol'],
-                'datum_ig' => $this->request['datum_ig']
+                'eszkoz_id' => $this->request['eszkoz_id'] ?? null,
+                'datum_tol' => $this->request['datum_tol'] ?? null,
+                'datum_ig' => $this->request['datum_ig'] ?? null
             ],
             $this->request['customer']
         );

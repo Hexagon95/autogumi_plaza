@@ -39,8 +39,8 @@ class Task{
         $this->databaseManager = new DatabaseManager(
             $this->sqlCommand->select_tabletNaptarRendszamKereso(),
             [
-                'eszkoz_id' => $this->request['eszkoz_id'],
-                'plate_number' => $this->request['plate_number']
+                'eszkoz_id' => $this->request['eszkoz_id'] ?? null,
+                'plate_number' => $this->request['plate_number'] ?? null
             ],
             $this->request['customer']
         );

@@ -50,8 +50,8 @@ class Task{
                     ? $this->sqlCommand->select_MunkalapEsetiPozicioKepek()
                     : $this->sqlCommand->select_MunkalapSzezonalisPozicioKepek(),
                 [
-                    'foglalas_id' => $this->request['foglalas_id'],
-                    'pozicio' => $this->request['pozicio']
+                    'foglalas_id' => $this->request['foglalas_id'] ?? null,
+                    'pozicio' => $this->request['pozicio'] ?? null
                 ],
                 $this->request['customer']
             );

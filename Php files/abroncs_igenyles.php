@@ -37,10 +37,10 @@ class Task{
         $this->databaseManager = new DatabaseManager(
             $this->sqlCommand->select_tabletAbroncsIgenylesReszletezo(),
             [
-                'eszkoz_id' =>   $this->request['eszkoz_id'],
-                'munkalap_id' => $this->request['munkalap_id'],
-                'datum' =>       $this->request['datum'],
-                'foglalas_id' => $this->request['foglalas_id']
+                'eszkoz_id' =>   $this->request['eszkoz_id'] ?? null,
+                'munkalap_id' => $this->request['munkalap_id'] ?? null,
+                'datum' =>       $this->request['datum'] ?? null,
+                'foglalas_id' => $this->request['foglalas_id'] ?? null
             ],
             $this->request['customer']
         );

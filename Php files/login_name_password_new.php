@@ -39,9 +39,9 @@ class Task{
         $this->databaseManager = new DatabaseManager(
             $this->sqlCommand->exec_tabletFelhasznaloAdatokNew(),
             [
-                'eszkoz_id' =>     $this->request['eszkoz_id'],
-                'user_name' =>     $this->request['user_name'],
-                'user_password' => $this->request['user_password']
+                'eszkoz_id' =>     $this->request['eszkoz_id'] ?? null,
+                'user_name' =>     $this->request['user_name'] ?? null,
+                'user_password' => $this->request['user_password'] ?? null
             ],
             $this->request['customer']
         );

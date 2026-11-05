@@ -106,7 +106,7 @@ class Task{
             new DatabaseManager(
                 $this->sqlCommand->exec_tabletFelvitele(),
                 [
-                    'eszkoz_id' => $this->request['eszkoz_id']
+                    'eszkoz_id' => $this->request['eszkoz_id'] ?? null
                 ],
                 $this->request['customer']
             );

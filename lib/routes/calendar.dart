@@ -28,7 +28,7 @@ class CalendarState extends State<Calendar> {
   static List<dynamic> buttonIgenyles =   [];
   static List<String> itemsInList =       [];
   static List<String> jelleg =            [];
-  static List<bool>   closedInList =      [];
+  static List<bool> closedInList =        [];
   static String selectedDate =            DateFormat('yyyy.MM.dd').format(DateTime.now()).toString();
   static String errorMessage =            '';
   static String errorMessagePopUp =       '';
@@ -49,33 +49,31 @@ class CalendarState extends State<Calendar> {
   ];
 
   // ---------- [🌸 simple variables] --- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- //
-  CalendarFormat _calendarFormat =  CalendarFormat.month;
-  static DateTime _focusedDay =     DateTime.now();
-  ButtonState buttonAddWork =       ButtonState.default0;
-  ButtonState buttonListInquries =  ButtonState.default0;
-  bool isListStockInfoOpen =        false;
-  bool isRefreshingPanel =          false;
+  CalendarFormat _calendarFormat = CalendarFormat.month;
+  static DateTime _focusedDay =    DateTime.now();
+  ButtonState buttonAddWork =      ButtonState.default0;
+  ButtonState buttonListInquries = ButtonState.default0;
+  bool isListStockInfoOpen =       false;
+  bool isRefreshingPanel =         false;
   DateTime? _selectedDay;
 
   // ---------- [💎 complex variables] -- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- //
 
-  // ---------- < Widget Build > --------- ---------- ---------- ---------- ---------- ---------- ----------
+  // ---------- < Widget Build > --------- ---------- ---------- ---------- ---------- ----------
   @override
-  Widget build(BuildContext context) {    
+  Widget build(BuildContext context){
     return WillPopScope(onWillPop: () => _handlePop, child: Scaffold(
       appBar: AppBar(
-        title:            Text('${DataManager.szervizMegnevezes}  >  ${(isListStockInfoOpen)? 'Készlet infó' : 'Feladatok'}'),
-        backgroundColor:  Global.getColorOfButton(ButtonState.default0),
+        title: Text('${DataManager.szervizMegnevezes}  >  ${(isListStockInfoOpen)? 'Készlet infó' : 'Feladatok'}'),
+        backgroundColor: Global.getColorOfButton(ButtonState.default0),
       ),
-      floatingActionButton:         Column(mainAxisSize: MainAxisSize.min, children: [_drawButtonInquiries, _drawButtonAddWork]),
+      floatingActionButton: Column(mainAxisSize: MainAxisSize.min, children: [_drawButtonInquiries, _drawButtonAddWork]),
       floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
       body: Stack(children: [
         Column(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [_calendar, Expanded(child: _listOfTasks)]),
-        if (isRefreshingPanel) Container(
+        if(isRefreshingPanel) Container(
           color: Colors.black.withOpacity(0.1),
-          child: const Center(
-            child: CircularProgressIndicator(),
-          ),
+          child: const Center(child: CircularProgressIndicator()),
         ),
       ])
     ));
@@ -89,12 +87,12 @@ class CalendarState extends State<Calendar> {
     lastDay:              kLastDay,
     focusedDay:           _focusedDay,
     calendarFormat:       _calendarFormat,
-    selectedDayPredicate: (day) {      
+    selectedDayPredicate: (day) {
       return isSameDay(_selectedDay, day);
     },
     onDaySelected:      _dayPicked,
-    onFormatChanged:    (format)      {if(_calendarFormat != format) setState(() {_calendarFormat = format;});},
-    onPageChanged:      (focusedDay)  {_focusedDay = focusedDay;},
+    onFormatChanged:    (format) {if(_calendarFormat != format) setState(() {_calendarFormat = format;});},
+    onPageChanged:      (focusedDay) {_focusedDay = focusedDay;},
     eventLoader:        _getEventsForDay,
     startingDayOfWeek:  StartingDayOfWeek.monday,
     calendarStyle:      CalendarStyle(
@@ -102,23 +100,23 @@ class CalendarState extends State<Calendar> {
         color: ((_focusedDay.day == DateTime.now().day && _focusedDay.month == DateTime.now().month) || (_selectedDay?.day == DateTime.now().day && _selectedDay?.month == DateTime.now().month))? Global.getColorOfButton(ButtonState.default0) : const Color.fromARGB(255, 255, 50, 0),
         shape: BoxShape.circle
       ),
-      todayDecoration:    BoxDecoration(color: Global.getColorOfButton(ButtonState.default0), shape: BoxShape.circle),
-      weekendTextStyle:   const TextStyle(color: Color.fromARGB(255, 0, 150, 150))
+      todayDecoration: BoxDecoration(color: Global.getColorOfButton(ButtonState.default0), shape: BoxShape.circle),
+      weekendTextStyle: const TextStyle(color: Color.fromARGB(255, 0, 150, 150))
     )
-  ));  
-  
+  ));
+
   Widget get _listOfTasks => (errorMessage.isEmpty)
-  ? Column(children: [          
+  ? Column(children: [
     Expanded(
       child: Scrollbar(child: ListView.builder(
-        itemCount:    itemsInList.length,
-        itemBuilder:  (BuildContext context, int index) {
+        itemCount: itemsInList.length,
+        itemBuilder: (BuildContext context, int index){
           return Stack(children: [
             Container(decoration: const BoxDecoration(border: Border(bottom: BorderSide(color: Colors.grey))), child: ListTile(
               title: Stack(children: [
                 Padding(
-                  padding:  const EdgeInsets.fromLTRB(100, 0, 0, 0),
-                  child:    Icon(_getIconOfCase(index), color: _getColorOfCase(index), size: 90),
+                  padding: const EdgeInsets.fromLTRB(100, 0, 0, 0),
+                  child: Icon(_getIconOfCase(index), color: _getColorOfCase(index), size: 90),
                 ),
                 Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
                   _drawButtonDelete(index),
@@ -126,22 +124,21 @@ class CalendarState extends State<Calendar> {
                     const Text("rendszam: \npartner: \njelleg: \nidőpont: ", style: TextStyle(fontStyle: FontStyle.italic, fontSize: 15)),
                     Text(itemsInList[index], style: const TextStyle(fontSize: 15)),
                     Visibility(visible: (selectedIndexList != null && index == selectedIndexList), child: const Padding(
-                      padding:  EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-                      child:    SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.lightBlueAccent))
+                      padding: EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+                      child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.lightBlueAccent))
                     ))
                   ]))),
-                  //Visibility(visible:(closedInList[index] && ['Eseti'].contains(jelleg[index])), child: Padding(padding: const EdgeInsets.all(5), child: TextButton(
                   Visibility(visible:(buttonIgenyles[index]['state'] != ButtonState.hidden), child: Padding(padding: const EdgeInsets.all(5), child: TextButton(
-                    onPressed:  () => (buttonIgenyles[index]['state'] == ButtonState.default0)? _buttonIgenylesPressed(index) : null,
-                    style:      ButtonStyle(
-                      backgroundColor:  WidgetStatePropertyAll(Global.getColorOfButton(buttonIgenyles[index]['state'])),
-                      foregroundColor:  WidgetStatePropertyAll(Global.getColorOfIcon(buttonIgenyles[index]['state']))
+                    onPressed: () => (buttonIgenyles[index]['state'] == ButtonState.default0)? _buttonIgenylesPressed(index) : null,
+                    style: ButtonStyle(
+                      backgroundColor: WidgetStatePropertyAll(Global.getColorOfButton(buttonIgenyles[index]['state'])),
+                      foregroundColor: WidgetStatePropertyAll(Global.getColorOfIcon(buttonIgenyles[index]['state']))
                     ),
-                    child:      Row(children: ((){switch(buttonIgenyles[index]['type']){
+                    child: Row(children: ((){switch(buttonIgenyles[index]['type']){
                       case ButtonType.add:  return [(buttonIgenyles[index]['state'] == ButtonState.default0)? const Icon(Icons.add) : _progressIndicator(Global.getColorOfIcon(ButtonState.loading)), const Text(' Új igénylés')];
                       case ButtonType.edit: return [(buttonIgenyles[index]['state'] == ButtonState.default0)? const Icon(Icons.edit_document) : _progressIndicator(Global.getColorOfIcon(ButtonState.loading)), const Text(' Igénylés szerkesztése')];
                       default:              return [Container()];
-                    }})())                 
+                    }})())
                   ))),
                   Visibility(visible: closedInList[index], child: const Padding(
                     padding: EdgeInsets.symmetric(horizontal: 10, vertical: 10),
@@ -149,57 +146,172 @@ class CalendarState extends State<Calendar> {
                   ))
                 ]),
               ]),
-              tileColor:  (selectedIndexList == index)? const Color.fromARGB(255, 200, 255, 200) : (closedInList[index])? const Color.fromRGBO(230, 255, 230, 1) : null,
-              onTap:      () => (selectedIndexList == null)? setState(() {selectedIndexList = index; _functionPress(index);}) : null
+              tileColor: (selectedIndexList == index)? const Color.fromARGB(255, 200, 255, 200) : (closedInList[index])? const Color.fromRGBO(230, 255, 230, 1) : null,
+              onTap: () => (selectedIndexList == null)? setState(() {selectedIndexList = index; _functionPress(index);}) : null
             )),
-            //SizedBox(height: 90, child: Align(alignment: Alignment.bottomCenter, child: _drawButtonIgenyles(index)))
           ]);
         }
       ))
     ),
     Visibility(visible: !DataManager.isServerAvailable, child: Container(height: 20, color: Colors.red, child: Row(
-      mainAxisAlignment:  MainAxisAlignment.center,
-      children:           [Text(DataManager.serverErrorText, style: const TextStyle(color: Color.fromARGB(255, 255, 255, 150)))]
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [Text(DataManager.serverErrorText, style: const TextStyle(color: Color.fromARGB(255, 255, 255, 150)))]
     )))
   ])
   : Center(child: Text(errorMessage, style: const TextStyle(color: Colors.grey), softWrap: true));
 
   // ---------- < Widgets [2] > ---------- ---------- ---------- ---------- ---------- ---------- ----------
   Widget _progressIndicator(Color colorInput) => Padding(padding: const EdgeInsets.symmetric(horizontal: 5), child: SizedBox(
-    width:  20,
+    width: 20,
     height: 20,
-    child:  CircularProgressIndicator(color: colorInput)
+    child: CircularProgressIndicator(color: colorInput)
   ));
+
+  Widget _drawRendszamSectionTitle(String title, IconData icon) => Container(
+    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+    decoration: const BoxDecoration(
+      color: Color.fromRGBO(215, 215, 215, 1),
+      border: Border(
+        left: BorderSide(color: Colors.black12),
+        right: BorderSide(color: Colors.black12),
+        top: BorderSide(color: Colors.black12),
+        bottom: BorderSide(color: Colors.black12),
+      ),
+    ),
+    child: Row(children: [
+      Icon(icon, size: 20, color: Colors.black87),
+      const SizedBox(width: 8),
+      Text(title, style: const TextStyle(fontSize: 17, fontWeight: FontWeight.bold)),
+    ]),
+  );
+
+  Widget _drawRendszamInfoRow(String label, dynamic value) => Container(
+    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+    decoration: const BoxDecoration(
+      color: Colors.white,
+      border: Border(
+        left: BorderSide(color: Colors.black12),
+        right: BorderSide(color: Colors.black12),
+        bottom: BorderSide(color: Colors.black12),
+      ),
+    ),
+    child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      SizedBox(
+        width: 130,
+        child: Text(label, style: const TextStyle(fontStyle: FontStyle.italic, color: Colors.black54)),
+      ),
+      Expanded(child: Text(
+        _rendszamValue(value),
+        style: const TextStyle(fontWeight: FontWeight.w600),
+      )),
+    ]),
+  );
+
+  Widget _drawRendszamWorksheet(dynamic rawItem, BuildContext dialogContext){
+    final Map<String, dynamic> item = rawItem is Map? Map<String, dynamic>.from(rawItem) : {};
+    final String number = item['sorszam']?.toString() ?? '';
+    final String dateText = item['datum']?.toString() ?? '';
+    final String service = item['szerviz']?.toString().trim() ?? '';
+    final String pdf = item['pdf']?.toString().trim() ?? '';
+    final bool isClosed = item['lezart'].toString() == '1';
+    final bool isEseti = number.toUpperCase().startsWith('ME');
+    final DateTime? date = DateTime.tryParse(dateText.replaceAll('.', '-'));
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      decoration: BoxDecoration(
+        color: isClosed? const Color.fromRGBO(230, 255, 230, 1.0) : const Color.fromRGBO(255, 248, 220, 1.0),
+        border: Border.all(color: Colors.black12),
+        borderRadius: BorderRadius.circular(7),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(10),
+        child: Row(children: [
+          Padding(
+            padding: const EdgeInsets.only(right: 12),
+            child: Icon(
+              isEseti? Icons.content_paste_search : Icons.calendar_month_outlined,
+              size: 42,
+              color: isEseti? const Color.fromRGBO(120, 120, 190, 1.0) : Global.getColorOfButton(ButtonState.disabled),
+            ),
+          ),
+          Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text(number, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 3),
+            Text(dateText, style: const TextStyle(fontSize: 14)),
+            if(service.isNotEmpty) ...[
+              const SizedBox(height: 3),
+              Text(service, style: const TextStyle(fontSize: 13, color: Colors.black54)),
+            ],
+          ])),
+          const SizedBox(width: 8),
+          Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+              decoration: BoxDecoration(
+                color: isClosed? const Color.fromRGBO(205, 240, 205, 1.0) : const Color.fromRGBO(255, 225, 150, 1.0),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Text(
+                isClosed? 'Lezárt' : 'Nyitott',
+                style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
+              ),
+            ),
+            const SizedBox(height: 8),
+            if(isClosed && pdf.isNotEmpty) OutlinedButton.icon(
+              onPressed: () async{
+                try{
+                  await DataManager().openInBrowser(pdf);
+                }
+                catch(e){
+                  if(kDebugMode) dev.log(e.toString());
+                  if(mounted) await Global.showAlertDialog(context, title: 'Hiba!', content: 'A PDF megnyitása sikertelen.');
+                }
+              },
+              icon: const Icon(Icons.picture_as_pdf_outlined, size: 19),
+              label: const Text('PDF'),
+            ),
+            if(!isClosed) ElevatedButton.icon(
+              onPressed: date == null? null : () async{
+                Navigator.pop(dialogContext);
+                await _dayPicked(date, date);
+              },
+              icon: const Icon(Icons.calendar_month, size: 19),
+              label: const Text('Ugrás a naphoz'),
+            ),
+          ]),
+        ]),
+      ),
+    );
+  }
 
   // ---------- < Buttons [1] > ---------- ---------- ---------- ---------- ---------- ---------- ----------
   Widget _drawButtonDelete(int index) => (!closedInList[index])
   ? Padding(padding: const EdgeInsets.fromLTRB(0, 0, 20, 0), child: TextButton(
-      onPressed:  () => (buttonDelete[index] == ButtonState.default0)? _buttonDeletePressed(index) : null,
-      child:      Row(children: [
+      onPressed: () => (buttonDelete[index] == ButtonState.default0)? _buttonDeletePressed(index) : null,
+      child: Row(children: [
         Visibility(
-          visible:  buttonDelete[index] == ButtonState.loading,
-          child:    _progressIndicator(Global.getColorOfButton(buttonDelete[index]))
+          visible: buttonDelete[index] == ButtonState.loading,
+          child: _progressIndicator(Global.getColorOfButton(buttonDelete[index]))
         ),
         Icon(Icons.delete, size: 40, color: Global.getColorOfButton(buttonDelete[index]))
       ])
     ))
-  : Container()
-  ;
+  : Container();
 
   Widget get _drawButtonInquiries => Padding(padding: const EdgeInsets.all(5), child: SizedBox(
     height: 60,
-    width:  60,
-    child:  badges.Badge(
+    width: 60,
+    child: badges.Badge(
       badgeContent: Text('0', style: TextStyle(color: Global.getColorOfIcon(ButtonState.disabled), fontWeight: FontWeight.bold, fontSize: 20)),
-      position:     badges.BadgePosition.bottomStart(),
-      badgeStyle:   badges.BadgeStyle(badgeColor: Global.getColorOfButton(ButtonState.disabled)),
-      child:        FloatingActionButton(
-        heroTag:          "btn1",
-        onPressed:        () => (buttonListInquries == ButtonState.default0)? _buttonListInquriesPressed : null,
-        backgroundColor:  Global.getColorOfButton(buttonListInquries),
-        foregroundColor:  Global.getColorOfIcon(buttonListInquries),
-        isExtended:       true,
-        child:            Padding(padding: const EdgeInsets.all(10), child: 
+      position: badges.BadgePosition.bottomStart(),
+      badgeStyle: badges.BadgeStyle(badgeColor: Global.getColorOfButton(ButtonState.disabled)),
+      child: FloatingActionButton(
+        heroTag: "btn1",
+        onPressed: () => (buttonListInquries == ButtonState.default0)? _buttonListInquriesPressed : null,
+        backgroundColor: Global.getColorOfButton(buttonListInquries),
+        foregroundColor: Global.getColorOfIcon(buttonListInquries),
+        isExtended: true,
+        child: Padding(padding: const EdgeInsets.all(10), child:
           (buttonListInquries == ButtonState.loading)? _progressIndicator(Global.getColorOfIcon(buttonListInquries)) : const Text('📄', style: TextStyle(fontSize: 26))
         )
       )
@@ -208,14 +320,14 @@ class CalendarState extends State<Calendar> {
 
   Widget get _drawButtonAddWork => Padding(padding: const EdgeInsets.all(5), child: SizedBox(
     height: 60,
-    width:  60,
-    child:  FloatingActionButton(
-      heroTag:          "btn2",
-      onPressed:        () => (buttonAddWork == ButtonState.default0)? _buttonAddWorkPressed : null,
-      backgroundColor:  Global.getColorOfButton(buttonAddWork),
-      foregroundColor:  Global.getColorOfIcon(buttonAddWork),
-      isExtended:       true,
-      child:            Padding(padding: const EdgeInsets.all(10), child: 
+    width: 60,
+    child: FloatingActionButton(
+      heroTag: "btn2",
+      onPressed: () => (buttonAddWork == ButtonState.default0)? _buttonAddWorkPressed : null,
+      backgroundColor: Global.getColorOfButton(buttonAddWork),
+      foregroundColor: Global.getColorOfIcon(buttonAddWork),
+      isExtended: true,
+      child: Padding(padding: const EdgeInsets.all(10), child:
         (buttonAddWork == ButtonState.loading)? _progressIndicator(Global.getColorOfIcon(buttonAddWork)) : const Icon(Icons.post_add, size: 40)
       )
     )
@@ -233,13 +345,13 @@ class CalendarState extends State<Calendar> {
     });
   }
 
-  IconData _getIconOfCase(int index) {switch(jelleg[index]){
+  IconData _getIconOfCase(int index){switch(jelleg[index]){
     case 'Eseti':     return Icons.content_paste_search;
     case 'Igénylés':  return Icons.request_page_outlined;
     default:          return Icons.calendar_month_outlined;
   }}
 
-  Color _getColorOfCase(int index) {switch(jelleg[index]){
+  Color _getColorOfCase(int index){switch(jelleg[index]){
     case 'Eseti':     return const Color.fromRGBO(200, 200, 255, 1.0);
     case 'Igénylés':  return const Color.fromRGBO(200, 200, 100, 1.0);
     default:          return Global.getColorOfButton(ButtonState.disabled);
@@ -248,12 +360,11 @@ class CalendarState extends State<Calendar> {
   Future _dayPicked(selectedDay, focusedDay) async{
     await DataManager(quickCall: QuickCall.verzio).beginQuickCall;
     if(!kIsWeb && LogInState.updateNeeded) Restart.restartApp();
-
-    if (!isSameDay(_selectedDay, selectedDay)) {
-      _selectedDay =            selectedDay;
-      _focusedDay =             focusedDay;
+    if(!isSameDay(_selectedDay, selectedDay)){
+      _selectedDay = selectedDay;
+      _focusedDay = focusedDay;
       setState((){});
-      selectedDate =            DateFormat('yyyy.MM.dd').format(selectedDay).toString();
+      selectedDate = DateFormat('yyyy.MM.dd').format(selectedDay).toString();
       DataManager dataManager = DataManager();
       await dataManager.beginProcess;
       setState((){});
@@ -261,14 +372,14 @@ class CalendarState extends State<Calendar> {
   }
 
   Future _functionPress(int index) async{
-    errorMessage =                          '';
-    errorMessagePopUp =                     '';
-    errorMessagePopUpTitle =                '';
+    errorMessage = '';
+    errorMessagePopUp = '';
+    errorMessagePopUpTitle = '';
     DataFormState.selectedIndexInCalendar = selectedIndexList;
     await DataManager(quickCall: QuickCall.verzio).beginQuickCall;
     if(!kIsWeb && LogInState.updateNeeded) Restart.restartApp();
-    Global.routeNext =        NextRoute.tabForm;
-    bool isClosedSzezonalis = (['Szezonális'].contains(jelleg[index]) && closedInList[index]);    
+    Global.routeNext = NextRoute.tabForm;
+    bool isClosedSzezonalis = (['Szezonális'].contains(jelleg[index]) && closedInList[index]);
     if(!isClosedSzezonalis) await DataManager(input: {'jelleg': jelleg[index]}).beginProcess;
     if(!isClosedSzezonalis && errorMessagePopUp.isNotEmpty){
       await Global.showAlertDialog(context, title: (errorMessagePopUpTitle.isNotEmpty)? errorMessagePopUpTitle : 'Hiba', content: errorMessagePopUp);
@@ -283,7 +394,7 @@ class CalendarState extends State<Calendar> {
     }
     DataFormState.workType = jelleg[index];
     DataFormState.isClosed = closedInList[index];
-    selectedIndexList =      null;
+    selectedIndexList = null;
     setState((){});
     await Navigator.pushNamed(context, '/dataForm');
     await DataManager().beginProcess;
@@ -292,7 +403,7 @@ class CalendarState extends State<Calendar> {
   }
 
   Future<bool> get _handlePop async{
-    if(isListStockInfoOpen) {return false;}
+    if(isListStockInfoOpen) return false;
     Global.routeBack;
     return true;
   }
@@ -300,25 +411,28 @@ class CalendarState extends State<Calendar> {
   Future _buttonDeletePressed(int index) async{
     setState(() => buttonDelete[index] = ButtonState.loading);
     await DataManager(quickCall: QuickCall.askEsetiMunkalapMeghiusulasOkai).beginQuickCall;
-    String? varString = await Global.dropdownInputDialog(context, options: reasonOfDelete, title: 'Munka Meghíusult', content: 'Indok:'); //textInputDialog(context, title: 'Munka Meghíusult', content: 'Indok:');
+    String? varString = await Global.dropdownInputDialog(context, options: reasonOfDelete, title: 'Munka Meghíusult', content: 'Indok:');
     if(varString != null){
       await DataManager(quickCall: QuickCall.cancelWork, input: {'index': index, 'indoklas': varString, 'jelleg': jelleg[index]}).beginQuickCall;
       if(DataManager.dataQuickCall[3].isNotEmpty) {await Global.showAlertDialog(context, title: 'Hiba!', content: DataManager.dataQuickCall[3].toString());}
-      else {
+      else{
         await DataManager().beginProcess;
         await DataManager(quickCall: QuickCall.askIncompleteDays).beginQuickCall;
         setState((){});
-        //await Navigator.pushReplacement(context,MaterialPageRoute(builder: (context) => const Calendar()));
       }
     }
-    else {buttonDelete[index] = ButtonState.default0; setState((){});}
+    else{
+      buttonDelete[index] = ButtonState.default0;
+      setState((){});
+    }
   }
 
   Future get _buttonListInquriesPressed async{
     setState(() => buttonListInquries = ButtonState.loading);
-    String? varString = await Global.textButtonListDialog(context,
-      listItems:  const[],
-      title:      'Bejövő 📄 Igénylések'
+    String? varString = await Global.textButtonListDialog(
+      context,
+      listItems: const[],
+      title: 'Bejövő 📄 Igénylések'
     );
     switch(varString){
       case null:
@@ -339,38 +453,36 @@ class CalendarState extends State<Calendar> {
 
   Future get _buttonAddWorkPressed async{
     setState(() => buttonAddWork = ButtonState.loading);
-    String? varString = await Global.textButtonListDialog(context,
-      listItems:      const['Eseti Munkalap', 'Szezonális Munkalap', '📄 Igénylés', '🔍 Rendszám keresése', '🗓 Ugrás a mai napra'],
-      disabledItems:  [
-        if(DateUtils.dateOnly(_focusedDay).isAfter(DateUtils.dateOnly(DateTime.now())))   'Eseti Munkalap',
-        if(DataManager.isIgenylesDisabled)                                                '📄 Igénylés',
+    String? varString = await Global.textButtonListDialog(
+      context,
+      listItems: const['Eseti Munkalap', 'Szezonális Munkalap', '📄 Igénylés', '🔍 Rendszám keresése', '🗓 Ugrás a mai napra'],
+      disabledItems: [
+        if(DateUtils.dateOnly(_focusedDay).isAfter(DateUtils.dateOnly(DateTime.now()))) 'Eseti Munkalap',
+        if(DataManager.isIgenylesDisabled) '📄 Igénylés',
       ],
-      title:          'Új Bizonylat Felvitele'
+      title: 'Új Bizonylat Felvitele'
     );
     buttonAddWork = ButtonState.default0;
-    if(varString != null) {switch(varString){      
-
+    if(varString != null){switch(varString){
       case 'Eseti Munkalap':
         Global.routeNext = NextRoute.esetiMunkalapFelvitele;
         await DataManager(input: {'datum': _focusedDay}).beginProcess;
         await DataManager(quickCall: QuickCall.giveDatas).beginQuickCall;
         await Navigator.pushNamed(context, '/dataForm');
-        if (DataManager.dataQuickCall[5] != null &&
-            DataManager.dataQuickCall[5].length > 1) {
+        if(DataManager.dataQuickCall[5] != null && DataManager.dataQuickCall[5].length > 1){
           final foglalasId = DataManager.dataQuickCall[5][1];
           final parentId = DataManager.dataQuickCall[5][2];
           setState(() => isRefreshingPanel = true);
-          // IMPORTANT: switch route BEFORE loading full munkalap form
           Global.routeNext = NextRoute.tabForm;
           await DataManager(input: {
             'jelleg': 'Eseti',
             'foglalasId': foglalasId,
           }).beginProcess;
           await DataManager(quickCall: QuickCall.tabForm, input: {
-            'jelleg':       'Eseti',
-            'datum':        DateTime.now(),
-            'foglalas_id':  foglalasId,
-            'parent_id':    parentId,
+            'jelleg': 'Eseti',
+            'datum': DateTime.now(),
+            'foglalas_id': foglalasId,
+            'parent_id': parentId,
           }).beginQuickCall;
           await DataManager(quickCall: QuickCall.giveDatas).beginQuickCall;
           await DataManager().formOpen;
@@ -383,7 +495,7 @@ class CalendarState extends State<Calendar> {
         }
         await DataManager().beginProcess;
         await DataManager(quickCall: QuickCall.askIncompleteDays).beginQuickCall;
-        setState(() {});
+        setState((){});
         break;
 
       case 'Szezonális Munkalap':
@@ -407,78 +519,82 @@ class CalendarState extends State<Calendar> {
         break;
 
       case '🔍 Rendszám keresése':
-        String? varString = await Global.textInputDialog(
+        String? plateNumber = await Global.textInputDialog(
           context,
-          title:    '🔍 Rendszám keresése',
-          content:  'Rendszám megadása:',
-          special:  'Rendszám'
+          title: '🔍 Rendszám keresése',
+          content: 'Rendszám megadása:',
+          special: 'Rendszám'
         );
-        if(varString != null){
-          await DataManager(quickCall: QuickCall.askPlateNumber, input: {'plate_number': varString}).beginQuickCall;
+        if(plateNumber != null && plateNumber.trim().isNotEmpty){
+          setState(() => isRefreshingPanel = true);
           try{
-            if(plateNumberResponse != null && plateNumberResponse['mercarius'] != null && plateNumberResponse['mercarius'].toString() == '1'){
-              if(plateNumberResponse['idopont'] != null && plateNumberResponse['idopont'].toString().isNotEmpty){
-                if(plateNumberResponse['szerviz_ok'] != null && plateNumberResponse['szerviz_ok'].toString() == '1'){
-                  DateTime varDateTime = DateTime.parse(Global.replaceAllInAString(plateNumberResponse['idopont'].toString(), '.', '-'));
-                  await _dayPicked(varDateTime, varDateTime);
-                }
-                else {await Global.showAlertDialog(context, title: 'Eltérő szervíz!', content: 'Időpontfoglalás: ${plateNumberResponse['szerviz']} ${plateNumberResponse['idopont']}');}
+            await DataManager(
+              quickCall: QuickCall.askRendszamKereso,
+              input: {
+                'rendszam': plateNumber.trim().toUpperCase()
               }
-              else {await Global.showAlertDialog(context, title: 'Hiba!', content: 'Nincs időpontfoglalása.');}
-            }
-            else {await Global.showAlertDialog(context, title: 'Hiba!', content: 'Nem Mercarius által kezelt jármű.');}
+            ).beginQuickCall;
+            if(!mounted) return;
+            plateNumberResponse = (DataManager.dataQuickCall.length > 11)? DataManager.dataQuickCall[11] : null;
+            setState(() => isRefreshingPanel = false);
+            if(kDebugMode) dev.log(plateNumberResponse.toString());
+            await _showRendszamKeresoDialog(plateNumberResponse);
           }
           catch(e){
             if(kDebugMode) dev.log(e.toString());
+            if(mounted) await Global.showAlertDialog(context, title: 'Hiba!', content: 'A rendszám keresése sikertelen.');
+          }
+          finally{
+            if(mounted && isRefreshingPanel) setState(() => isRefreshingPanel = false);
           }
         }
-        break;      
+        break;
 
       case '🗓 Ugrás a mai napra':
         await _dayPicked(DateTime.now(), DateTime.now());
         break;
 
-      default: break;
+      default:
+        break;
     }}
     setState((){});
   }
 
-  Future _buttonIgenylesPressed(int index) async {switch(buttonIgenyles[index]['type']){
-
+  Future _buttonIgenylesPressed(int index) async{switch(buttonIgenyles[index]['type']){
     case ButtonType.add:
       if(await Global.yesNoDialog(context, title: 'Igénylés létrehozása', content: 'Kíván új igénylést létrehozni a lezárt munkalap adataival?')){
         setState(() => buttonIgenyles[index]['state'] = ButtonState.loading);
         Global.routeNext = NextRoute.abroncsIgenyles;
         await DataManager(input: {
-          'datum':        _focusedDay,
-          'munkalap_id':  DataManager.data[2][index]['id'].toString()
+          'datum': _focusedDay,
+          'munkalap_id': DataManager.data[2][index]['id'].toString()
         }).beginProcess;
         await DataManager(quickCall: QuickCall.giveDatas).beginQuickCall;
         buttonIgenyles[index]['state'] = ButtonState.default0;
         dynamic result = await Navigator.pushNamed(context, '/dataForm');
         DataManager.dataQuickCall[5];
-        if([true].contains(result)){ try{
-          errorMessage =                          '';
-          errorMessagePopUp =                     '';
-          errorMessagePopUpTitle =                '';
-          Global.routeNext =        NextRoute.tabForm;
+        if([true].contains(result)){try{
+          errorMessage = '';
+          errorMessagePopUp = '';
+          errorMessagePopUpTitle = '';
+          Global.routeNext = NextRoute.tabForm;
           await DataManager(quickCall: QuickCall.tabForm, input: {
-            'jelleg':       'Igénylés',
-            'foglalas_id':  DataManager.dataQuickCall[5][1],
-            'datum':        DateTime.now(),
+            'jelleg': 'Igénylés',
+            'foglalas_id': DataManager.dataQuickCall[5][1],
+            'datum': DateTime.now(),
           }).beginQuickCall;
           await DataManager(quickCall: QuickCall.giveDatas).beginQuickCall;
-          await DataManager().formOpen;      
+          await DataManager().formOpen;
           DataFormState.workType = 'Igénylés';
           DataFormState.isClosed = false;
-          selectedIndexList =      null;
+          selectedIndexList = null;
           setState((){});
           await Navigator.pushNamed(context, '/dataForm');
           await DataManager().beginProcess;
           await DataManager(quickCall: QuickCall.askIncompleteDays).beginQuickCall;
           setState((){});
-
-        } catch(_){}}
+        }
+        catch(_){}}
         await DataManager().beginProcess;
         await DataManager(quickCall: QuickCall.askIncompleteDays).beginQuickCall;
         setState((){});
@@ -487,21 +603,21 @@ class CalendarState extends State<Calendar> {
 
     case ButtonType.edit:
       setState(() => buttonIgenyles[index]['state'] = ButtonState.loading);
-      errorMessage =            '';
-      errorMessagePopUp =       '';
-      errorMessagePopUpTitle =  '';
-      Global.routeNext =        NextRoute.tabForm;
+      errorMessage = '';
+      errorMessagePopUp = '';
+      errorMessagePopUpTitle = '';
+      Global.routeNext = NextRoute.tabForm;
       await DataManager(quickCall: QuickCall.tabForm, input: {
-        'jelleg':       'Igénylés',
-        'foglalas_id':  DataManager.data[2][index]['id'],
-        'datum':        DateTime.now(),
-        'munkalap_id':  DataManager.data[2][index]['edit_igenyles'], 
+        'jelleg': 'Igénylés',
+        'foglalas_id': DataManager.data[2][index]['id'],
+        'datum': DateTime.now(),
+        'munkalap_id': DataManager.data[2][index]['edit_igenyles'],
       }).beginQuickCall;
       await DataManager(quickCall: QuickCall.giveDatas).beginQuickCall;
-      await DataManager().formOpen;      
+      await DataManager().formOpen;
       DataFormState.workType = 'Igénylés';
       DataFormState.isClosed = false;
-      selectedIndexList =      null;
+      selectedIndexList = null;
       setState((){});
       await Navigator.pushNamed(context, '/dataForm');
       buttonIgenyles[index]['state'] = ButtonState.default0;
@@ -510,18 +626,119 @@ class CalendarState extends State<Calendar> {
       setState((){});
       break;
 
-    default: break;
-        
+    default:
+      break;
   }}
 
+  // ---------- < Methods [2] > ---------- ---------- ---------- ---------- ---------- ---------- ----------
+  Future<void> _showRendszamKeresoDialog(dynamic response) async{
+    final Map<String, dynamic> data = (response is Map)? Map<String, dynamic>.from(response) : {};
+    final List<dynamic> vehicleList = (data['adatok'] is List)? data['adatok'] : [];
+    final List<dynamic> bookingList = (data['idopontfoglalas'] is List)? data['idopontfoglalas'] : [];
+    final List<dynamic> worksheetList = (data['munkalapok'] is List)? data['munkalapok'] : [];
+    final Map<String, dynamic>? vehicle = vehicleList.isNotEmpty && vehicleList.first is Map? Map<String, dynamic>.from(vehicleList.first as Map) : null;
+    final Map<String, dynamic>? booking = bookingList.isNotEmpty && bookingList.first is Map? Map<String, dynamic>.from(bookingList.first as Map) : null;
+    final bool hasData = vehicle != null || booking != null || worksheetList.isNotEmpty;
+    await showDialog<void>(
+      context: context,
+      builder: (dialogContext){
+        final Size screenSize = MediaQuery.sizeOf(dialogContext);
+        return Dialog(
+          insetPadding: const EdgeInsets.all(16),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          child: SizedBox(
+            width: screenSize.width > 860? 820.0 : screenSize.width - 32,
+            height: screenSize.height * 0.86,
+            child: Column(children: [
+              Container(
+                padding: const EdgeInsets.fromLTRB(20, 12, 8, 12),
+                decoration: BoxDecoration(
+                  color: Global.getColorOfButton(ButtonState.default0),
+                  borderRadius: const BorderRadius.only(
+                    topLeft: Radius.circular(12),
+                    topRight: Radius.circular(12),
+                  ),
+                ),
+                child: Row(children: [
+                  const Icon(Icons.manage_search, color: Colors.white, size: 28),
+                  const SizedBox(width: 10),
+                  const Expanded(child: Text(
+                    'Rendszám keresés',
+                    style: TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold),
+                  )),
+                  IconButton(
+                    onPressed: () => Navigator.pop(dialogContext),
+                    icon: const Icon(Icons.close, color: Colors.white),
+                  ),
+                ]),
+              ),
+              Expanded(child: hasData
+                ? SingleChildScrollView(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+                      if(vehicle != null) ...[
+                        _drawRendszamSectionTitle('Jármű adatok', Icons.directions_car),
+                        _drawRendszamInfoRow('Rendszám', vehicle['rendszam']),
+                        _drawRendszamInfoRow('Típus', vehicle['tipus']),
+                        _drawRendszamInfoRow('Abroncs modul', vehicle['abroncs_modul']),
+                      ],
+                      if(booking != null) ...[
+                        const SizedBox(height: 18),
+                        _drawRendszamSectionTitle('Időpontfoglalás', Icons.event_available),
+                        _drawRendszamInfoRow('Időpont', booking['idopont']),
+                        _drawRendszamInfoRow('Szerviz', booking['szerviz']),
+                        _drawRendszamInfoRow('Név', booking['foglalo_nev']),
+                        _drawRendszamInfoRow('Telefon', booking['telefon']),
+                        _drawRendszamInfoRow('E-mail', booking['email']),
+                      ],
+                      if(worksheetList.isNotEmpty) ...[
+                        const SizedBox(height: 18),
+                        _drawRendszamSectionTitle('Munkalapok (${worksheetList.length})', Icons.description_outlined),
+                        const SizedBox(height: 6),
+                        ...worksheetList.map((item) => _drawRendszamWorksheet(item, dialogContext)),
+                      ],
+                    ]),
+                  )
+                : const Center(child: Padding(
+                    padding: EdgeInsets.all(30),
+                    child: Text(
+                      'A megadott rendszámhoz nem található adat.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(fontSize: 17, color: Colors.grey),
+                    ),
+                  ))
+              ),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(10),
+                decoration: const BoxDecoration(border: Border(top: BorderSide(color: Colors.black12))),
+                child: Align(
+                  alignment: Alignment.centerRight,
+                  child: TextButton.icon(
+                    onPressed: () => Navigator.pop(dialogContext),
+                    icon: const Icon(Icons.close),
+                    label: const Text('Bezárás'),
+                  ),
+                ),
+              ),
+            ]),
+          ),
+        );
+      },
+    );
+  }
+
+  String _rendszamValue(dynamic value){
+    final String text = value?.toString().trim() ?? '';
+    return text.isEmpty? '—' : text;
+  }
+
+  // ---------- < Methods [3] > ---------- ---------- ---------- ---------- ---------- ---------- ----------
   List<Event> _getEventsForDay(DateTime day){
     List<Event> listEvent = List<Event>.empty(growable: true);
-    for(dynamic item in incompleteDays) {if(item['datum'] == day.toString().split(' ')[0]){
+    for(dynamic item in incompleteDays){if(item['datum'] == day.toString().split(' ')[0]){
       for(int i = 0; i < item['munkalap_db']; i++) {listEvent.add(const Event(''));}
     }}
     return listEvent;
   }
-
-  // ---------- < Methods [2] > ---------- ---------- ---------- ---------- ---------- ---------- ----------
-  // ---------- < Methods [3] > ---------- ---------- ---------- ---------- ---------- ---------- ----------
 }

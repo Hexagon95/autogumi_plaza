@@ -298,53 +298,73 @@ class SignatureFormState extends State<SignatureForm> {
   Future get _checkPressed async {
     if(closeLock) return;
     closeLock = true;
-    try {
+    try{
       String title = 'Adatlap elmentése';
       String content = 'Menteni kívánja a változtatásokat és lezárja az adatlapot?';
-      if (!((_controller.isNotEmpty || DataFormState.buttonListPictures.isNotEmpty) &&
-          await Global.yesNoDialog(context, title: title, content: content))) {
+      if(!((_controller.isNotEmpty || DataFormState.buttonListPictures.isNotEmpty) &&
+          await Global.yesNoDialog(context, title: title, content: content))){
         return;
+      }
+      if(DataFormState.workType == 'Szezonális' &&
+          DataFormState.buttonListPictures.isEmpty &&
+          _controller.isNotEmpty){
+        final DateTime? bookingDate = DateTime.tryParse(CalendarState.selectedDate.replaceAll('.', '-'));
+        if(bookingDate == null){
+          throw Exception('A foglalás dátuma nem olvasható: ${CalendarState.selectedDate}');
+        }
+        final DateTime now = DateTime.now();
+        final DateTime bookingDay = DateTime(bookingDate.year, bookingDate.month, bookingDate.day);
+        final DateTime recordingDay = DateTime(now.year, now.month, now.day);
+        if(bookingDay.isBefore(recordingDay)){
+          final String? lateReason = await _askLateReason();
+          if(lateReason == null) return;
+          DataManager.dataQuickCall[0]['keses_oka'] = lateReason;
+        }
       }
       _controller.disabled = true;
       setState(() => buttonCheck = ButtonState.loading);
       final Uint8List? data = await _controller.toPngBytes();
-      if (data != null) signatureBase64 = base64.encode(data);
+      if(data != null) signatureBase64 = base64.encode(data);
       DataManager.dataQuickCall[0]['beallitasok'][getIndexFromOptions('Átvevő aláírása')]['value'] = signatureBase64;
       DataManager.dataQuickCall[0]['beallitasok'][getIndexFromOptions('Átvevő neve')]['value'] = editingController.text;
-      switch (DataFormState.workType) {
+      switch(DataFormState.workType){
         case 'Igénylés':
           await DataManager(
             quickCall: QuickCall.saveAbroncsIgenyles,
             input: {'lezart': 1},
           ).beginQuickCall;
           break;
+
         case 'Eseti':
           await DataManager(
             quickCall: QuickCall.saveEsetiMunkalapFelvitele,
             input: {'lezart': 1},
           ).beginQuickCall;
           break;
+
         default:
           Global.routeNext = NextRoute.signature;
           await DataManager().beginProcess;
           Global.routeBack;
           break;
       }
-      if (message == null ||
+      if(message == null ||
           ['NULL', 'Null', 'null', '', ' ', '[]', '[ ]', '{}', '{ }'].contains(message.toString()) ||
-          (message is Map && [null, '', ' ', 'null'].contains(message['message']))) {
+          (message is Map && [null, '', ' ', 'null'].contains(message['message']))){
         resetVariables;
         CalendarState.selectedIndexList = null;
-        if (mounted) {
+        if(mounted){
           Navigator.pop(context, {'result': true});
         }
-      } else {
-        if (message is List) message = message[0];
-        await Global.showAlertDialog(context, content: message['message'], title: message['name']);
-        if (mounted) setState(() => buttonCheck = ButtonState.default0);
       }
-    } catch (e) {
-      if (mounted) {
+      else{
+        if(message is List) message = message[0];
+        await Global.showAlertDialog(context, content: message['message'], title: message['name']);
+        if(mounted) setState(() => buttonCheck = ButtonState.default0);
+      }
+    }
+    catch(e){
+      if(mounted){
         await Global.showAlertDialog(
           context,
           title: 'Hiba',
@@ -404,4 +424,57 @@ class SignatureFormState extends State<SignatureForm> {
   int getIndexFromOptions(String input) {for(int i = 0; i < DataManager.dataQuickCall[0]['beallitasok'].length; i++){
     if(DataManager.dataQuickCall[0]['beallitasok'][i]['name'] == input) return i;
   } throw Exception('Nincs ilyen Beállítás!');}
+
+  Future<String?> _askLateReason() async{
+    final TextEditingController reasonController = TextEditingController();
+    String value = '';
+    final String? result = await showDialog<String>(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          title: const Text(
+            'Késés oka',
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text('Add meg a késés okát'),
+              const SizedBox(height: 10),
+              TextField(
+                controller: reasonController,
+                autofocus: true,
+                maxLines: 4,
+                minLines: 2,
+                onChanged: (newValue) => setDialogState(() => value = newValue),
+                decoration: InputDecoration(
+                  border: const OutlineInputBorder(),
+                  hintText: 'Minimum 10 karakter',
+                  errorText: value.isNotEmpty && value.trim().length < 10
+                    ? 'Legalább 10 karakter szükséges.'
+                    : null,
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext, null),
+              child: const Text('Mégsem'),
+            ),
+            TextButton(
+              onPressed: value.trim().length >= 10
+                ? () => Navigator.pop(dialogContext, value.trim())
+                : null,
+              child: const Text('Ok'),
+            ),
+          ],
+        ),
+      ),
+    );
+    reasonController.dispose();
+    return result;
+  }
 } 

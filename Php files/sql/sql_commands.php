@@ -2,16 +2,17 @@
 
 class SqlCommand{
     // ---------- <SQL Scripts> ------- ---------- ---------- ---------- ---------- ---------- ---------- ----------
+    public function select_verzioAutogumiPlaza(): string                {return "SELECT [verzio_autogumi_plaza] FROM [dbo].[Parameters]";}
     public function select_tabletMunkalapSzezonalisReszletezo(): string {return "SELECT * FROM [local].[Tablet_Munkalap_szezonalis_reszletezo] (:eszkoz_id, :datum, :foglalas_id)";}
     public function select_tabletMunkalapEsetiReszletezo(): string      {return "SELECT * FROM [local].[Tablet_Munkalap_eseti_reszletezo] (:eszkoz_id, :datum, :foglalas_id, :parent_id, :user_id)";}
     public function select_tabletAbroncsIgenylesReszletezo(): string    {return "SELECT * FROM [local].[Tablet_Abroncs_igenyles_reszletezo] (:eszkoz_id, :munkalap_id, :datum, :foglalas_id)";}
     public function select_tabletNaptarMunkalapok(): string             {return "SELECT * FROM [local].[Tablet_Naptar_munkalapok] (:eszkoz_id, :datum_tol, :datum_ig)";}
     public function select_tabletNaptarRendszamKereso(): string         {return "SELECT * FROM [local].[Tablet_Naptar_Rendszam_kereso] (:eszkoz_id, :plate_number)";}
+    public function select_tabletRendszamKereso(): string               {return "SELECT * FROM [local].[Tablet_Rendszam_kereso] (:rendszam, :user_id)";}
     public function select_tabletLista(): string                        {return "SELECT * FROM [dbo].[tablet_lista] WHERE [eszkoz_id] = :eszkoz_id";}
     public function select_tabletNapiMunkalapok(): string               {return "SELECT * FROM [dbo].[TabletNapiMunkalapok] (:eszkoz_id, :datum)";}
     public function select_askEsetiMunkalapMeghiusulasOkai(): string    {return "SELECT * FROM [dbo].[Eseti_munkalap_meghiusulas_okai] ()";}
     public function exec_bizonylatID_SQL(): string                      {return "SELECT id FROM [dbo].[Bizonylat] WHERE parent_id=:id";}
-    public function select_verzioAutogumiPlaza(): string                {return "SELECT [verzio_autogumi_plaza] FROM [dbo].[Parameters]";}
     public function select_MunkalapSzezonalisPozicioKepek(): string     {return "SELECT [dbo].[Munkalap_szezonalis_pozicio_kepek] (:foglalas_id, :pozicio)";}
     public function select_MunkalapEsetiPozicioKepek(): string          {return "SELECT [dbo].[Munkalap_eseti_pozicio_kepek] (:foglalas_id, :pozicio)";}
     public function select_tabletDashboardPanels(): string              {return "SELECT [dbo].[Tablet_Dashboard_panels] (:user_id)";}

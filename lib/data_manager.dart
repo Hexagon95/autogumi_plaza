@@ -23,7 +23,7 @@ import 'package:autogumi_plaza/utils.dart';
 class DataManager{
   void get bookMarks {beginQuickCall; _decisionQuickCall; beginProcess; _decision;}
   // ---------- < Variables [Static] > - ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ----------
-  static String thisVersion =                       '1.48h'; // <--- 🛜 A WEB-es verziót is firssíteni kell!!!!!!
+  static String thisVersion =                       '1.49'; // <--- 🛜 A WEB-es verziót is firssíteni kell!!!!!!
   static int verzioTest =                           0; // <--- anything other than 0 will draw "[Teszt #]" at the LogIn screen.
   static int logInNotification =                    0; // <--- 0 will have no notification, other than 0 will draw a red stamp on the menu options' top right corner.
   static String webAppLink =                        'https://app.mosaic.hu/flutter_web/szerviz_mezandmol/index.html';
@@ -872,6 +872,24 @@ class DataManager{
         case QuickCall.callButtonWebLink:
           try {await openInBrowser(input['callback']);}
           catch(e) {PanelState.errorMessageDialog = 'Nem sikerült végrehajtani az alábbi linket: ${input['name']}\n${input['callback']}'; debugPrint('WebLink hiba: ${input['callback']}');}
+          break;
+
+        case QuickCall.askRendszamKereso:
+          CalendarState.plateNumberResponse = null;
+          var queryParameters = {
+            'customer': customer,
+            'rendszam': input['rendszam'],
+            'user_id':  userId,
+          };
+          Uri uriUrl = Uri.parse('${urlPath}rendszam_kereso.php');
+          http.Response response = await safePost(
+            uriUrl,
+            body:     json.encode(queryParameters),
+            headers:  headers,
+          );
+          if(kDebugMode) dev.log(response.body);
+          dataQuickCall[check(11)] = json.decode(json.decode(response.body)[0]['b']);
+          if(kDebugMode) dev.log(dataQuickCall[11].toString());
           break;
           
         default:break;
